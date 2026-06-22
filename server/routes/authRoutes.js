@@ -206,6 +206,7 @@ router.put('/profile', protect, async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
     if (user) {
+      user.name        = req.body.name        || user.name;
       user.hostel      = req.body.hostel      || user.hostel;
       user.faculty     = req.body.faculty     || user.faculty;
       user.department  = req.body.department  || user.department;

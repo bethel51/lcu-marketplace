@@ -154,8 +154,34 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateProfile = async (profileDetails) => {
+    if (!token) return null;
+    try {
+      const response = await fetch(`${API_URL}/api/auth/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(profileDetails)
+      });
+      const data = await response.json();
+      if (response.ok) {
+        const updatedUser = { ...user, ...data };
+        setUser(updatedUser);
+        localStorage.setItem('lcu_user', JSON.stringify(updatedUser));
+        return data;
+      } else {
+        throw new Error(data.message || 'Profile update failed');
+      }
+    } catch (err) {
+      console.error('Error updating profile:', err);
+      throw err;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout, fetchProfile, verifyStudent, verifyOtp, resendOtp }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, logout, fetchProfile, verifyStudent, verifyOtp, resendOtp, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );
