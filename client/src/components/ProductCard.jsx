@@ -16,7 +16,7 @@ export default function ProductCard({ product }) {
   };
 
   return (
-    <div style={styles.card} className="glass-panel animate-fade-in">
+    <div className="premium-card animate-fade-in">
       {/* Category & Status Badges */}
       <div style={styles.badgeContainer}>
         <span style={styles.categoryBadge}>{getCategoryEmoji(category)} {category}</span>
@@ -24,9 +24,9 @@ export default function ProductCard({ product }) {
       </div>
 
       {/* Image container */}
-      <div style={styles.imgContainer}>
+      <div className="premium-card-img-container">
         {image ? (
-          <img src={image} alt={name} style={styles.image} />
+          <img src={image} alt={name} className="premium-card-img" />
         ) : (
           <div style={styles.placeholderImg}>
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -40,9 +40,9 @@ export default function ProductCard({ product }) {
       </div>
 
       {/* Card Info */}
-      <div style={styles.info}>
-        <div style={styles.priceRow}>
-          <span style={styles.price}>₦{price.toLocaleString()}</span>
+      <div className="premium-card-info">
+        <div className="premium-card-price-row">
+          <span className="premium-card-price">₦{price.toLocaleString()}</span>
           {seller?.isVerifiedStudent && (
             <span style={styles.verifiedBadge} title="Verified LCU Student">
               ✓ LCU Verified
@@ -50,13 +50,13 @@ export default function ProductCard({ product }) {
           )}
         </div>
         
-        <h3 style={styles.title}>{name}</h3>
+        <h3 className="premium-card-title">{name}</h3>
         
-        <div style={styles.footer}>
-          <span style={styles.location}>
+        <div className="premium-card-footer">
+          <span className="premium-card-location">
             📍 {hostelLocation}
           </span>
-          <Link to={`/product/${_id}`} className="btn-secondary" style={styles.viewBtn}>
+          <Link to={`/product/${_id}`} className="btn-secondary premium-card-btn">
             View Details
           </Link>
         </div>
@@ -66,15 +66,6 @@ export default function ProductCard({ product }) {
 }
 
 const styles = {
-  card: {
-    display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden',
-    position: 'relative',
-    transition: 'var(--transition-smooth)',
-    cursor: 'pointer',
-    border: '1px solid var(--border-color)',
-  },
   badgeContainer: {
     position: 'absolute',
     top: '12px',
@@ -85,8 +76,8 @@ const styles = {
   },
   categoryBadge: {
     backgroundColor: 'rgba(12, 35, 64, 0.85)',
-    color: 'var(--gold)',
-    border: '1px solid var(--gold)',
+    color: '#90caf9',
+    border: '1px solid rgba(144, 202, 249, 0.5)',
     fontSize: '0.75rem',
     fontWeight: '600',
     padding: '4px 8px',
@@ -100,80 +91,19 @@ const styles = {
     padding: '4px 8px',
     borderRadius: '100px',
   },
-  imgContainer: {
-    height: '180px',
-    width: '100%',
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
-    overflow: 'hidden',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderBottom: '1px solid var(--border-color)',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-    transition: 'var(--transition-smooth)',
-  },
   placeholderImg: {
     color: 'var(--text-gray)',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
   },
-  info: {
-    padding: '16px',
-    display: 'flex',
-    flexDirection: 'column',
-    flexGrow: 1,
-    justifyContent: 'space-between',
-    gap: '12px',
-  },
-  priceRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  price: {
-    fontSize: '1.25rem',
-    fontWeight: '700',
-    color: 'var(--gold)',
-  },
   verifiedBadge: {
     fontSize: '0.7rem',
-    backgroundColor: 'rgba(29, 78, 216, 0.2)',
-    color: '#3b82f6',
-    border: '1px solid rgba(59, 130, 246, 0.4)',
+    backgroundColor: 'rgba(29, 78, 216, 0.15)',
+    color: '#60a5fa',
+    border: '1px solid rgba(96, 165, 250, 0.3)',
     padding: '2px 6px',
     borderRadius: '4px',
     fontWeight: '600',
-  },
-  title: {
-    fontSize: '1rem',
-    color: '#fff',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    fontWeight: '500',
-  },
-  footer: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: '4px',
-  },
-  location: {
-    fontSize: '0.8rem',
-    color: 'var(--text-gray)',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    maxWidth: '120px',
-  },
-  viewBtn: {
-    padding: '6px 12px',
-    fontSize: '0.75rem',
-    borderRadius: '6px',
   }
 };
