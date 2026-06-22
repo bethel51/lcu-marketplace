@@ -75,6 +75,10 @@ export default function ProductDetails() {
   };
 
   useEffect(() => {
+    if (!token) {
+      navigate('/auth', { state: { from: `/product/${id}` } });
+      return;
+    }
     fetchProduct();
     fetchUserProfile();
   }, [id, token]);
