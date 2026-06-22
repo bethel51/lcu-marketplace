@@ -566,6 +566,21 @@ button, input, select, textarea { font-family: inherit; outline: none; }
   border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;
   display: flex; align-items: center; gap: 8px;
 }
+.hero-search-input {
+  width: 100%;
+  padding: 14px 20px 14px 48px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 99px;
+  color: #fff;
+  font-size: 1.02rem;
+  transition: var(--transition-smooth);
+}
+.hero-search-input:focus {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25);
+}
 @media (max-width: 992px) {
   .home-layout-grid { grid-template-columns: 1fr !important; }
   .filter-sidebar { position: static !important; margin-bottom: 16px; }

@@ -76,7 +76,6 @@ export default function Home() {
   };
 
   useEffect(() => {
-    // Debounce product fetching slightly for search and price inputs
     const delayDebounceFn = setTimeout(() => {
       fetchProducts();
     }, 300);
@@ -84,26 +83,50 @@ export default function Home() {
     return () => clearTimeout(delayDebounceFn);
   }, [search, hostel, faculty, minPrice, maxPrice]);
 
+  const handleResetFilters = () => {
+    setSearch('');
+    setCategory('');
+    setHostel('All');
+    setFaculty('All');
+    setMinPrice('');
+    setMaxPrice('');
+  };
+
   return (
     <div style={styles.container} className="container animate-fade-in">
-      <div className="home-layout-grid">
-        {/* Left Sidebar Filters */}
+      {/* Premium Hub Banner Hero */}
+      <header style={styles.hero} className="glass-panel hero-card">
+        <h1 style={styles.heroTitle} className="hero-title">
+          LCU Student <span style={{ color: 'var(--gold)' }}>Marketplace</span>
+        </h1>
+        <p style={styles.heroSub}>
+          The exclusive hub for Lead City University students to safely list, trade, and discover campus items.
+        </p>
+
+        {/* Search Bar Embedded in Hero for a cleaner flow */}
+        <div style={styles.heroSearchContainer}>
+          <span style={styles.searchIcon}>🔍</span>
+          <input
+            type="text"
+            placeholder="Search for listings (e.g. laptop, textbooks, hostel fan...)"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="hero-search-input"
+          />
+        </div>
+      </header>
+
+      {/* Modern Layout Row: Filters Left, Main Listings Right */}
+      <div className="home-layout-grid" style={{ gap: '28px' }}>
+        
+        {/* Left Sidebar Filter Section */}
         <aside className="filter-sidebar">
-          <h3 className="filter-sidebar-title">🔍 Search & Filters</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '14px', marginBottom: '18px' }}>
+            <h3 className="filter-sidebar-title" style={{ margin: 0, border: 'none', padding: 0 }}>⚙️ Filters</h3>
+            <button onClick={handleResetFilters} style={styles.resetBtn}>Reset</button>
+          </div>
           
           <div style={styles.filterGroup}>
-            <label style={styles.filterLabel}>Search Keywords</label>
-            <input
-              type="text"
-              placeholder="e.g. Fridge, Laptop..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="glass-input"
-              style={styles.searchInput}
-            />
-          </div>
-
-          <div style={{ ...styles.filterGroup, marginTop: '16px' }}>
             <label style={styles.filterLabel}>Hostel Location</label>
             <select
               value={hostel}
@@ -158,16 +181,6 @@ export default function Home() {
 
         {/* Right Main Content Area */}
         <div className="main-content-area">
-          {/* Hero section */}
-          <header style={styles.hero} className="glass-panel hero-card">
-            <h1 style={styles.heroTitle} className="hero-title">
-              LCU Student <span style={{ color: 'var(--gold)' }}>Marketplace</span>
-            </h1>
-            <p style={styles.heroSub}>
-              Buy, sell, and swap gadgets, textbooks, hostel equipment, or list your student services securely.
-            </p>
-          </header>
-
           {/* Category Tabs */}
           <div style={styles.categoryContainer} className="category-scroll">
             {categories.map((cat) => {
@@ -233,45 +246,46 @@ const styles = {
     paddingBottom: '60px',
   },
   hero: {
-    padding: '40px',
+    padding: '48px 32px',
     textAlign: 'center',
     marginBottom: '32px',
     border: '1px solid var(--border-color)',
-    background: 'var(--bg-hero-gradient)',
-  },
-  heroTitle: {
-    fontSize: '2.5rem',
-    marginBottom: '12px',
-    fontWeight: '800',
-  },
-  heroSub: {
-    color: 'var(--text-gray)',
-    maxWidth: '600px',
-    margin: '0 auto',
-    fontSize: '1rem',
-    lineHeight: '1.5',
-  },
-  filtersBar: {
-    padding: '24px',
+    background: 'linear-gradient(135deg, rgba(12, 35, 64, 0.9) 0%, rgba(18, 29, 51, 0.8) 100%)',
+    position: 'relative',
+    overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
-    gap: '16px',
-    marginBottom: '32px',
-    border: '1px solid var(--border-color)',
+    alignItems: 'center',
   },
-  searchContainer: {
+  heroTitle: {
+    fontSize: '2.8rem',
+    marginBottom: '12px',
+    fontWeight: '800',
+    letterSpacing: '-0.03em',
+  },
+  heroSub: {
+    color: 'var(--text-secondary)',
+    maxWidth: '650px',
+    margin: '0 auto 28px',
+    fontSize: '1.05rem',
+    lineHeight: '1.6',
+  },
+  heroSearchContainer: {
+    position: 'relative',
     width: '100%',
+    maxWidth: '580px',
+    margin: '0 auto',
+    zIndex: 2,
   },
-  searchInput: {
-    width: '100%',
-  },
-  dropdownsContainer: {
-    display: 'flex',
-    gap: '20px',
-    flexWrap: 'wrap',
+  searchIcon: {
+    position: 'absolute',
+    left: '16px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    fontSize: '1.1rem',
+    opacity: 0.7,
   },
   filterGroup: {
-    flex: '1 1 200px',
     display: 'flex',
     flexDirection: 'column',
     gap: '6px',
@@ -279,7 +293,7 @@ const styles = {
   filterLabel: {
     fontSize: '0.8rem',
     fontWeight: '600',
-    color: 'var(--text-gray)',
+    color: 'var(--text-secondary)',
   },
   select: {
     width: '100%',
@@ -312,7 +326,7 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     gap: '16px',
-    color: 'var(--text-gray)',
+    color: 'var(--text-secondary)',
     height: '200px',
   },
   emptyState: {
@@ -326,5 +340,15 @@ const styles = {
   },
   priceInput: {
     width: '100%',
+  },
+  resetBtn: {
+    background: 'none',
+    border: 'none',
+    color: 'var(--gold)',
+    fontWeight: '600',
+    fontSize: '0.82rem',
+    cursor: 'pointer',
+    padding: '2px 8px',
+    transition: 'var(--transition-smooth)',
   }
 };
