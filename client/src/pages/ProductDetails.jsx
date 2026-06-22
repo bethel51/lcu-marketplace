@@ -75,12 +75,8 @@ export default function ProductDetails() {
   };
 
   useEffect(() => {
-    if (!token) {
-      navigate('/auth', { state: { from: `/product/${id}` } });
-      return;
-    }
     fetchProduct();
-    fetchUserProfile();
+    if (token) fetchUserProfile();
   }, [id, token]);
 
   const handleWishlist = async () => {
@@ -279,7 +275,7 @@ export default function ProductDetails() {
                     className="btn-secondary"
                     style={{ ...styles.actionBtn, color: hasReported ? 'var(--text-gray)' : 'var(--error)' }}
                   >
-                    ⚠️ {hasReported ? 'Listing Reported' : 'Report Scam'}
+                    {hasReported ? '✓ Reported' : '⚠️ Report Scam / Stolen'}
                   </button>
                 </div>
                 {reportMessage && <p style={styles.reportFeedback}>{reportMessage}</p>}

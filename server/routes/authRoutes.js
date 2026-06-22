@@ -5,7 +5,7 @@ import Product from '../models/Product.js';
 import { protect } from '../middleware/auth.js';
 import multer from 'multer';
 import path from 'path';
-import { sendOTPEmail, sendWelcomeEmail } from '../utils/email.js';
+import { sendOTPEmail, sendWelcomeEmail, sendResetPasswordEmail } from '../utils/email.js';
 
 const router = express.Router();
 
@@ -328,6 +328,52 @@ router.post('/admin/verify-student/:id', protect, async (req, res) => {
     await user.save();
     
     res.json({ message: `Verification status updated successfully.`, user });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Forgot Password - Send OTP
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'No account found with this student email.' });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    user.otpCode = otp;
+    user.otpExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+    await user.save();
+
+    await sendResetPasswordEmail(email, user.name, otp);
+
+    res.json({ message: 'A password reset verification code has been sent to your email.' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Reset Password - Verify OTP and update password
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    if (user.otpCode !== otp || user.otpExpires < new Date()) {
+      return res.status(400).json({ message: 'Invalid or expired reset code.' });
+    }
+
+    user.password = newPassword;
+    user.otpCode = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+
+    res.json({ message: 'Password reset successfully! You can now log in with your new password.' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -227,38 +227,48 @@ export default function Dashboard() {
       {/* ── Main layout ─────────────────────────────────────── */}
       <div className="profile-grid" style={{ marginTop:'24px', alignItems:'start' }}>
 
-        {/* LEFT SIDEBAR */}
+        {/* ═══════════════════ LEFT SIDEBAR ═══════════════════ */}
         <aside className="db-sidebar-card">
-          {/* User info */}
-          <div className="db-sidebar-section">
-            <p className="db-sidebar-section-title">My Profile</p>
-            <div className="db-info-row">
-              <span className="db-info-label">Full Name</span>
-              <span className="db-info-value">{profileData?.name || user?.name}</span>
+
+          {/* ── Profile header ──────────────────────────────── */}
+          <div className="db-sidebar-section" style={{ textAlign:'center', paddingBottom:'24px' }}>
+            <div style={{ width:'76px', height:'76px', borderRadius:'50%', background:'linear-gradient(135deg, var(--secondary-blue) 0%, var(--gold) 100%)', border:'3px solid var(--border-strong)', color:'#fff', fontSize:'2rem', fontWeight:'800', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 14px', boxShadow:'0 6px 20px rgba(59,130,246,0.3)' }}>
+              {user?.name?.charAt(0).toUpperCase()}
             </div>
-            <div className="db-info-row">
-              <span className="db-info-label">Email</span>
-              <span className="db-info-value" style={{ fontSize:'0.82rem', wordBreak:'break-all' }}>{user?.email}</span>
-            </div>
-            <div className="db-info-row">
-              <span className="db-info-label">Matric Number</span>
-              <span className="db-info-value">{profileData?.matricNumber || '—'}</span>
-            </div>
-            <div className="db-info-row">
-              <span className="db-info-label">Department</span>
-              <span className="db-info-value">{profileData?.department || '—'}</span>
-            </div>
-            <div className="db-info-row">
-              <span className="db-info-label">Hostel / Location</span>
-              <span className="db-info-value">{profileData?.hostel || '—'}</span>
-            </div>
-            <div className="db-info-row">
-              <span className="db-info-label">Phone</span>
-              <span className="db-info-value">{profileData?.phoneNumber || '—'}</span>
+            <h3 style={{ fontSize:'1.1rem', fontWeight:'800', color:'var(--text-primary)', marginBottom:'3px' }}>{profileData?.name || user?.name}</h3>
+            <p style={{ fontSize:'0.78rem', color:'var(--text-muted)', marginBottom:'10px', wordBreak:'break-all' }}>{user?.email}</p>
+            {/* Status badges */}
+            <div style={{ display:'flex', gap:'6px', justifyContent:'center', flexWrap:'wrap' }}>
+              {user?.isEmailVerified
+                ? <span style={{ fontSize:'0.7rem', fontWeight:'700', padding:'3px 10px', borderRadius:'999px', background:'rgba(16,185,129,0.12)', color:'var(--success)', border:'1px solid rgba(16,185,129,0.3)' }}>✉️ Email Verified</span>
+                : <span style={{ fontSize:'0.7rem', fontWeight:'700', padding:'3px 10px', borderRadius:'999px', background:'rgba(239,68,68,0.1)', color:'var(--error)', border:'1px solid rgba(239,68,68,0.25)' }}>✉️ Unverified</span>
+              }
+              {user?.isVerifiedStudent
+                ? <span style={{ fontSize:'0.7rem', fontWeight:'700', padding:'3px 10px', borderRadius:'999px', background:'rgba(59,130,246,0.12)', color:'var(--gold)', border:'1px solid rgba(59,130,246,0.25)' }}>🎓 LCU Verified</span>
+                : <span style={{ fontSize:'0.7rem', fontWeight:'700', padding:'3px 10px', borderRadius:'999px', background:'rgba(245,158,11,0.1)', color:'var(--warning)', border:'1px solid rgba(245,158,11,0.25)' }}>⏳ Unverified</span>
+              }
+              {user?.isAdmin && <span style={{ fontSize:'0.7rem', fontWeight:'700', padding:'3px 10px', borderRadius:'999px', background:'rgba(239,68,68,0.12)', color:'#f87171', border:'1px solid rgba(239,68,68,0.25)' }}>🔑 Admin</span>}
             </div>
           </div>
 
-          {/* Quick Actions */}
+          {/* ── Info rows ────────────────────────────────────── */}
+          <div className="db-sidebar-section">
+            <p className="db-sidebar-section-title">Profile Information</p>
+            {[
+              { icon:'🪪', label:'Matric No.', value: profileData?.matricNumber || '—' },
+              { icon:'🏛️', label:'Faculty',    value: profileData?.faculty || '—' },
+              { icon:'📚', label:'Department', value: profileData?.department || '—' },
+              { icon:'🏠', label:'Hostel',     value: profileData?.hostel || '—' },
+              { icon:'📞', label:'Phone',      value: profileData?.phoneNumber || '—' },
+            ].map(row => (
+              <div key={row.label} className="db-info-row">
+                <span className="db-info-label">{row.icon} {row.label}</span>
+                <span className="db-info-value" style={{ maxWidth:'140px', textAlign:'right', fontSize:'0.82rem', wordBreak:'break-word' }}>{row.value}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* ── Quick Actions ─────────────────────────────────── */}
           <div className="db-sidebar-section">
             <p className="db-sidebar-section-title">Quick Actions</p>
             <div className="db-quick-actions">
@@ -268,44 +278,39 @@ export default function Dashboard() {
               <Link to="/chat" className="db-quick-btn">
                 <span className="db-quick-btn-icon">💬</span> Messages Inbox
               </Link>
-              <Link to="/" className="db-quick-btn">
+              <Link to="/marketplace" className="db-quick-btn">
                 <span className="db-quick-btn-icon">🛍️</span> Browse Marketplace
               </Link>
             </div>
           </div>
 
-          {/* Account status */}
-          <div className="db-sidebar-section">
-            <p className="db-sidebar-section-title">Account Status</p>
-            <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                <span style={{ fontSize:'0.82rem', color:'var(--text-secondary)' }}>Email Verified</span>
-                <span style={{ fontSize:'0.8rem', fontWeight:'700', color: user?.isEmailVerified ? 'var(--success)' : 'var(--error)' }}>
-                  {user?.isEmailVerified ? '✓ Yes' : '✗ No'}
-                </span>
-              </div>
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                <span style={{ fontSize:'0.82rem', color:'var(--text-secondary)' }}>Student Badge</span>
-                <span style={{ fontSize:'0.8rem', fontWeight:'700', color: user?.isVerifiedStudent ? 'var(--success)' : 'var(--warning)' }}>
-                  {user?.isVerifiedStudent ? '✓ Verified' : '⏳ Pending'}
-                </span>
-              </div>
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                <span style={{ fontSize:'0.82rem', color:'var(--text-secondary)' }}>Total Listings</span>
-                <span style={{ fontSize:'0.8rem', fontWeight:'700', color:'var(--text-primary)' }}>{myProducts.length}</span>
-              </div>
+          {/* ── Stats ────────────────────────────────────────── */}
+          <div className="db-sidebar-section" style={{ borderBottom:'none' }}>
+            <p className="db-sidebar-section-title">Account Stats</p>
+            <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
+              {[
+                { label:'Active Listings', value: myProducts.filter(p => p.status === 'Available').length, color:'var(--metric-1-color)' },
+                { label:'Items Sold',      value: myProducts.filter(p => p.status === 'Sold').length,      color:'var(--metric-2-color)' },
+                { label:'Wishlist Items',  value: wishCount, color:'var(--metric-3-color)' },
+                { label:'Seller Rating',   value: avgRating,  color:'var(--metric-4-color)' },
+              ].map(stat => (
+                <div key={stat.label} style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                  <span style={{ fontSize:'0.8rem', color:'var(--text-secondary)' }}>{stat.label}</span>
+                  <span style={{ fontSize:'0.88rem', fontWeight:'800', color: stat.color }}>{stat.value}</span>
+                </div>
+              ))}
             </div>
           </div>
+
         </aside>
 
         {/* RIGHT MAIN CONTENT */}
         <main>
-          {/* Tabs */}
+          {/* Tabs — settings removed (use Edit Profile in navbar) */}
           <div className="db-tabs">
             {[
               { id: 'listings', label: `📦 My Listings (${myProducts.length})` },
               { id: 'wishlist', label: `❤️ Wishlist (${wishCount})` },
-              { id: 'settings', label: '⚙️ Profile Settings' },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -407,93 +412,7 @@ export default function Dashboard() {
             )
           )}
 
-          {/* ── SETTINGS TAB ─────────────────────────────────── */}
-          {activeTab === 'settings' && (
-            <div style={{ background:'var(--card-bg)', border:'1px solid var(--glass-border)', borderRadius:'var(--border-radius)', overflow:'hidden' }}>
-              {/* Header */}
-              <div style={{ padding:'20px 24px', borderBottom:'1px solid var(--tab-border)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                <div>
-                  <h3 style={{ fontSize:'1.05rem', color:'var(--text-primary)', fontWeight:'700' }}>Profile Settings</h3>
-                  <p style={{ fontSize:'0.82rem', color:'var(--text-secondary)', marginTop:'3px' }}>Update your hostel, faculty, and contact info</p>
-                </div>
-                <button
-                  onClick={handleSaveSettings}
-                  disabled={editSaving}
-                  className="btn-primary"
-                  style={{ padding:'9px 22px', fontSize:'0.88rem' }}
-                >
-                  {editSaving ? 'Saving…' : '💾 Save Changes'}
-                </button>
-              </div>
-
-              {/* Form */}
-              <div style={{ padding:'24px' }}>
-                {/* Read-only info */}
-                <p style={{ fontSize:'0.75rem', fontWeight:'700', letterSpacing:'0.07em', textTransform:'uppercase', color:'var(--text-muted)', marginBottom:'14px' }}>Account Info (Read Only)</p>
-                <div className="db-settings-grid" style={{ marginBottom:'28px' }}>
-                  <div className="db-settings-field">
-                    <label className="db-settings-label">Full Name</label>
-                    <div className="db-settings-value">{profileData?.name || user?.name}</div>
-                  </div>
-                  <div className="db-settings-field">
-                    <label className="db-settings-label">Email Address</label>
-                    <div className="db-settings-value" style={{ fontSize:'0.85rem' }}>{user?.email}</div>
-                  </div>
-                  <div className="db-settings-field">
-                    <label className="db-settings-label">Matric Number</label>
-                    <div className="db-settings-value">{profileData?.matricNumber || '—'}</div>
-                  </div>
-                  <div className="db-settings-field">
-                    <label className="db-settings-label">Account Role</label>
-                    <div className="db-settings-value">{user?.isAdmin ? '🔑 Administrator' : '🎓 Student'}</div>
-                  </div>
-                </div>
-
-                {/* Editable fields */}
-                <p style={{ fontSize:'0.75rem', fontWeight:'700', letterSpacing:'0.07em', textTransform:'uppercase', color:'var(--text-muted)', marginBottom:'14px' }}>Edit Info</p>
-                <div className="db-settings-grid">
-                  <div className="db-settings-field">
-                    <label className="db-settings-label">Hostel / Location</label>
-                    <select value={editHostel} onChange={e => setEditHostel(e.target.value)} className="glass-input" style={{ padding:'11px 14px' }}>
-                      {HOSTELS.map(h => <option key={h} value={h} style={{ background:'var(--bg-input)', color:'var(--text-primary)' }}>{h}</option>)}
-                    </select>
-                  </div>
-                  <div className="db-settings-field">
-                    <label className="db-settings-label">Phone Number</label>
-                    <input
-                      type="tel" maxLength="11" placeholder="e.g. 08012345678"
-                      value={editPhone} onChange={e => setEditPhone(e.target.value.replace(/\D/g, ''))}
-                      className="glass-input" style={{ padding:'11px 14px' }}
-                    />
-                  </div>
-                  <div className="db-settings-field">
-                    <label className="db-settings-label">Faculty</label>
-                    <select value={editFaculty} onChange={e => { setEditFaculty(e.target.value); setEditDept(''); }} className="glass-input" style={{ padding:'11px 14px' }}>
-                      {FACULTIES.map(f => <option key={f} value={f} style={{ background:'var(--bg-input)', color:'var(--text-primary)' }}>{f}</option>)}
-                    </select>
-                  </div>
-                  <div className="db-settings-field">
-                    <label className="db-settings-label">Department</label>
-                    <select value={editDept} onChange={e => setEditDept(e.target.value)} className="glass-input" style={{ padding:'11px 14px' }}>
-                      <option value="" style={{ background:'var(--bg-input)', color:'var(--text-primary)' }}>— Select —</option>
-                      {currentDepts.map(d => <option key={d} value={d} style={{ background:'var(--bg-input)', color:'var(--text-primary)' }}>{d}</option>)}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Password change hint */}
-                <div style={{ marginTop:'28px', padding:'16px 20px', background:'var(--metric-1-bg)', border:'1px solid var(--metric-1-border)', borderRadius:'10px', display:'flex', alignItems:'center', gap:'12px' }}>
-                  <span style={{ fontSize:'1.3rem' }}>🔒</span>
-                  <div>
-                    <p style={{ fontSize:'0.85rem', fontWeight:'600', color:'var(--text-primary)' }}>Password Change</p>
-                    <p style={{ fontSize:'0.78rem', color:'var(--text-secondary)', marginTop:'2px' }}>
-                      To change your password, logout and use the "Forgot Password" option on the login page.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Settings tab removed — use "Edit Profile" from the Navbar dropdown */}
         </main>
       </div>
     </div>

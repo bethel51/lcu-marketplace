@@ -56,9 +56,13 @@ function AppContent() {
             <Routes>
               {/* Public routes */}
               <Route path="/"            element={<Landing />} />
-              <Route path="/marketplace" element={<Marketplace />} />
+              <Route path="/marketplace" element={
+                <PrivateRoute><Marketplace /></PrivateRoute>
+              } />
               <Route path="/auth"        element={<Auth />} />
-              <Route path="/product/:id" element={<ProductDetails />} />
+              <Route path="/product/:id" element={
+                <PrivateRoute><ProductDetails /></PrivateRoute>
+              } />
 
               {/* Private student features */}
               <Route path="/post" element={
