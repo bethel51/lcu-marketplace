@@ -18,12 +18,12 @@ export default function AdminDashboard() {
   // Safety check: redirect non-admins
   useEffect(() => {
     if (!token || !user) {
-      navigate('/auth');
+      navigate('/admin-login');
       return;
     }
     if (!user.isAdmin) {
       showToast('Access denied: Admins only.', 'error');
-      navigate('/');
+      navigate('/admin-login');
     }
   }, [user, token, navigate]);
 

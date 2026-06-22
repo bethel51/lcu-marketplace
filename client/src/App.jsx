@@ -14,6 +14,7 @@ const PostProduct = lazy(() => import('./pages/PostProduct'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Chat = lazy(() => import('./pages/Chat'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const AdminLogin = lazy(() => import('./pages/AdminLogin'));
 
 // Scroll to top helper
 function ScrollToTop() {
@@ -42,7 +43,7 @@ function PrivateRoute({ children }) {
 // Guarded Route — admins only
 function AdminRoute({ children }) {
   const { user } = useAuth();
-  return user && user.isAdmin ? children : <Navigate to="/" replace />;
+  return user && user.isAdmin ? children : <Navigate to="/admin-login" replace />;
 }
 
 function AppContent() {
@@ -79,6 +80,7 @@ function AppContent() {
               } />
 
               {/* Admin control portal */}
+              <Route path="/admin-login" element={<AdminLogin />} />
               <Route path="/admin" element={
                 <AdminRoute><AdminDashboard /></AdminRoute>
               } />
