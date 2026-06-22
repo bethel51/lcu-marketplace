@@ -1,10 +1,11 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [theme, setTheme] = React.useState(() => {
@@ -20,6 +21,11 @@ export default function Navbar() {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
+  // Close menu on route change
+  React.useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
+
   const toggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
@@ -27,69 +33,121 @@ export default function Navbar() {
   const handleLogout = () => {
     setMenuOpen(false);
     logout();
-    navigate('/auth');
+    navigate('/');
   };
 
+  const isActive = (path) => location.pathname === path;
+
   return (
-    <nav style={styles.nav} className="glass-panel">
-      <div style={styles.navContainer} className="container nav-container">
-        <Link to="/" style={styles.brand} onClick={() => setMenuOpen(false)}>
-          {/* Official LCU logo image */}
-          <img src="/logo.png" alt="LCU Logo" style={styles.logoImage} />
-          <div style={styles.brandText}>
-            <span style={styles.brandTitle}>Lead City</span>
-            <span style={styles.brandSub}>MARKETPLACE</span>
-          </div>
-        </Link>
+    <>
+      {/* Overlay for mobile drawer */}
+      {menuOpen && (
+        <div
+          className="nav-overlay"
+          onClick={() => setMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
 
-        {/* Hamburger Menu Icon */}
-        <button onClick={() => setMenuOpen(!menuOpen)} className="hamburger">
-          {menuOpen ? '✕' : '☰'}
-        </button>
+      <nav style={styles.nav} className="glass-panel">
+        <div style={styles.navContainer} className="container nav-container">
 
-        <div className={`nav-links ${menuOpen ? 'open' : ''}`} style={styles.links}>
-          <button onClick={toggleTheme} style={styles.themeToggle} className="btn-secondary" aria-label="Toggle theme">
-            {theme === 'light' ? '🌙' : '☀️'}
+          {/* ─── Brand ───────────────────────────────────────── */}
+          <Link to="/" style={styles.brand} onClick={() => setMenuOpen(false)}>
+            <img src="/logo.png" alt="LCU Logo" style={styles.logoImage} />
+            <div style={styles.brandText}>
+              <span style={styles.brandTitle}>Lead City</span>
+              <span style={styles.brandSub}>MARKETPLACE</span>
+            </div>
+          </Link>
+
+          {/* ─── Hamburger ───────────────────────────────────── */}
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="hamburger"
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          >
+            {menuOpen ? '✕' : '☰'}
           </button>
-          
-          {user ? (
-            <>
-              <Link to="/" style={styles.link} onClick={() => setMenuOpen(false)}>Marketplace</Link>
-              <Link to="/chat" style={styles.link} className="chat-link-btn" onClick={() => setMenuOpen(false)}>
-                Messages
-              </Link>
-              {user.isAdmin && (
-                <Link to="/admin" style={{ ...styles.link, color: 'var(--gold)', fontWeight: 'bold' }} onClick={() => setMenuOpen(false)}>
-                  Admin Panel
+
+          {/* ─── Nav Links ───────────────────────────────────── */}
+          <div className={`nav-links ${menuOpen ? 'open' : ''}`} style={styles.links}>
+
+            <button
+              onClick={toggleTheme}
+              style={styles.themeToggle}
+              className="btn-secondary"
+              aria-label="Toggle theme"
+            >
+              {theme === 'light' ? '🌙' : '☀️'}
+            </button>
+
+            {user ? (
+              <>
+                <Link
+                  to="/marketplace"
+                  style={{ ...styles.link, color: isActive('/marketplace') ? 'var(--gold)' : 'var(--text-gray)' }}
+                >
+                  Marketplace
                 </Link>
-              )}
-              <Link to="/profile" style={styles.link} onClick={() => setMenuOpen(false)}>
-                Dashboard
-                {user.wishlist && user.wishlist.length > 0 && (
-                  <span style={styles.wishlistBadgeNav}>{user.wishlist.length}</span>
+                <Link
+                  to="/chat"
+                  style={{ ...styles.link, color: isActive('/chat') ? 'var(--gold)' : 'var(--text-gray)' }}
+                  className="chat-link-btn"
+                >
+                  Messages
+                </Link>
+                {user.isAdmin && (
+                  <Link
+                    to="/admin"
+                    style={{ ...styles.link, color: 'var(--gold)', fontWeight: 'bold' }}
+                  >
+                    Admin Panel
+                  </Link>
                 )}
-              </Link>
-              
-              <Link to="/post" className="btn-primary" style={styles.postBtn} onClick={() => setMenuOpen(false)}>
-                + Post Product
-              </Link>
-              
-              <div style={styles.userContainer} className="nav-user-container">
-                <div style={styles.avatar}>
-                  {user.name.charAt(0).toUpperCase()}
-                  {user.isVerifiedStudent && <span style={styles.badgeMini} title="Verified Student">✓</span>}
+                <Link
+                  to="/profile"
+                  style={{ ...styles.link, color: isActive('/profile') ? 'var(--gold)' : 'var(--text-gray)' }}
+                >
+                  Dashboard
+                  {user.wishlist && user.wishlist.length > 0 && (
+                    <span style={styles.wishlistBadgeNav}>{user.wishlist.length}</span>
+                  )}
+                </Link>
+
+                <Link to="/post" className="btn-primary" style={styles.postBtn}>
+                  + Post Item
+                </Link>
+
+                <div style={styles.userContainer} className="nav-user-container">
+                  <div style={styles.avatar}>
+                    {user.name.charAt(0).toUpperCase()}
+                    {user.isVerifiedStudent && (
+                      <span style={styles.badgeMini} title="LCU Verified Student">✓</span>
+                    )}
+                  </div>
+                  <button onClick={handleLogout} className="btn-secondary" style={styles.logoutBtn}>
+                    Logout
+                  </button>
                 </div>
-                <button onClick={handleLogout} className="btn-secondary" style={styles.logoutBtn}>
-                  Logout
-                </button>
-              </div>
-            </>
-          ) : (
-            <Link to="/auth" className="btn-primary" onClick={() => setMenuOpen(false)}>Login / Sign Up</Link>
-          )}
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/marketplace"
+                  style={{ ...styles.link, color: isActive('/marketplace') ? 'var(--gold)' : 'var(--text-gray)' }}
+                >
+                  Browse
+                </Link>
+                <Link to="/auth" className="btn-primary" style={styles.postBtn}>
+                  Login / Sign Up
+                </Link>
+              </>
+            )}
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+    </>
   );
 }
 
@@ -113,6 +171,7 @@ const styles = {
     alignItems: 'center',
     gap: '12px',
     cursor: 'pointer',
+    flexShrink: 0,
   },
   logoImage: {
     width: '40px',
@@ -159,7 +218,6 @@ const styles = {
     transition: 'var(--transition-smooth)',
   },
   link: {
-    color: 'var(--text-gray)',
     fontWeight: '500',
     fontSize: '0.95rem',
     transition: 'var(--transition-smooth)',
@@ -221,5 +279,5 @@ const styles = {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-  }
+  },
 };

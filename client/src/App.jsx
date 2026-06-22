@@ -3,7 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import Navbar from './components/Navbar';
-import Home from './pages/Home';
+import Landing from './pages/Landing';
+import Marketplace from './pages/Marketplace';
 import Auth from './pages/Auth';
 import ProductDetails from './pages/ProductDetails';
 import PostProduct from './pages/PostProduct';
@@ -12,13 +13,13 @@ import Chat from './pages/Chat';
 import AdminDashboard from './pages/AdminDashboard';
 import './App.css';
 
-// Guarded Route component to check session existence
+// Guarded Route — must be logged in
 function PrivateRoute({ children }) {
   const { user } = useAuth();
   return user ? children : <Navigate to="/auth" replace />;
 }
 
-// Guarded Route for admins
+// Guarded Route — admins only
 function AdminRoute({ children }) {
   const { user } = useAuth();
   return user && user.isAdmin ? children : <Navigate to="/" replace />;
@@ -31,39 +32,32 @@ function AppContent() {
         <Navbar />
         <div style={styles.main}>
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/auth" element={<Auth />} />
+            {/* Public routes */}
+            <Route path="/"            element={<Landing />} />
+            <Route path="/marketplace" element={<Marketplace />} />
+            <Route path="/auth"        element={<Auth />} />
             <Route path="/product/:id" element={<ProductDetails />} />
-            
+
             {/* Private student features */}
             <Route path="/post" element={
-              <PrivateRoute>
-                <PostProduct />
-              </PrivateRoute>
+              <PrivateRoute><PostProduct /></PrivateRoute>
             } />
             <Route path="/edit/:id" element={
-              <PrivateRoute>
-                <PostProduct />
-              </PrivateRoute>
+              <PrivateRoute><PostProduct /></PrivateRoute>
             } />
             <Route path="/profile" element={
-              <PrivateRoute>
-                <Dashboard />
-              </PrivateRoute>
+              <PrivateRoute><Dashboard /></PrivateRoute>
             } />
             <Route path="/chat" element={
-              <PrivateRoute>
-                <Chat />
-              </PrivateRoute>
+              <PrivateRoute><Chat /></PrivateRoute>
             } />
-            
+
             {/* Admin control portal */}
             <Route path="/admin" element={
-              <AdminRoute>
-                <AdminDashboard />
-              </AdminRoute>
+              <AdminRoute><AdminDashboard /></AdminRoute>
             } />
-            
+
+            {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
@@ -101,5 +95,5 @@ const styles = {
     color: 'var(--text-gray)',
     fontSize: '0.8rem',
     backgroundColor: 'var(--bg-footer)',
-  }
+  },
 };

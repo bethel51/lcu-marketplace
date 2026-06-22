@@ -327,6 +327,7 @@ const styles = {
     maxWidth: '640px',
     padding: '40px',
     border: '1px solid var(--border-color)',
+    margin: '0 auto',
   },
   title: {
     fontSize: '2rem',

@@ -1,8 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function ProductCard({ product }) {
   const { _id, name, price, image, category, hostelLocation, seller, status } = product;
+  const { user } = useAuth();
+  const isSameHostel = user?.hostel && hostelLocation && user.hostel.toLowerCase().trim() === hostelLocation.toLowerCase().trim();
 
   const getCategoryEmoji = (cat) => {
     switch (cat) {
@@ -20,6 +23,7 @@ export default function ProductCard({ product }) {
       {/* Floating Badges */}
       <div style={styles.badgeContainer}>
         <span style={styles.categoryBadge}>{getCategoryEmoji(category)} {category}</span>
+        {isSameHostel && <span style={styles.hostelBadge}>🏠 Same Hostel</span>}
         {status === 'Sold' && <span style={styles.soldBadge}>SOLD</span>}
       </div>
 
@@ -116,6 +120,17 @@ const styles = {
     fontWeight:   '600',
     padding:      '4px 9px',
     borderRadius: '999px',
+  },
+  hostelBadge: {
+    background:   'linear-gradient(135deg, rgba(16, 185, 129, 0.9) 0%, rgba(5, 150, 105, 0.9) 100%)',
+    backdropFilter: 'blur(8px)',
+    color:        '#fff',
+    border:       '1px solid rgba(16, 185, 129, 0.3)',
+    fontSize:     '0.7rem',
+    fontWeight:   '700',
+    padding:      '4px 9px',
+    borderRadius: '999px',
+    boxShadow:    '0 2px 8px rgba(16, 185, 129, 0.25)',
   },
   soldBadge: {
     background:   'rgba(239, 68, 68, 0.9)',
