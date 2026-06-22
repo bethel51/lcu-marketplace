@@ -28,6 +28,41 @@ const generateToken = (id) => {
   });
 };
 
+// One-time Admin setup helper
+router.post('/setup-admin', async (req, res) => {
+  try {
+    const adminEmail = 'beatsnitro101@gmail.com';
+    let user = await User.findOne({ email: adminEmail });
+    
+    if (user) {
+      user.password = 'password';
+      user.isAdmin = true;
+      user.isEmailVerified = true;
+      user.isVerifiedStudent = true;
+      await user.save();
+      return res.json({ message: 'Admin account password reset & credentials updated successfully.' });
+    }
+
+    user = await User.create({
+      name: 'System Administrator',
+      email: adminEmail,
+      password: 'password',
+      hostel: 'Administration',
+      faculty: 'Administration',
+      department: 'Central IT',
+      matricNumber: 'LCU/UG/00/00000',
+      phoneNumber: '08000000000',
+      isVerifiedStudent: true,
+      isEmailVerified: true,
+      isAdmin: true
+    });
+
+    res.status(201).json({ message: 'Admin account initialized successfully!' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Register
 router.post('/register', async (req, res) => {
   try {

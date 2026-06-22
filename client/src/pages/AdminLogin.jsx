@@ -40,6 +40,29 @@ export default function AdminLogin() {
     }
   };
 
+  const handleSetupAdmin = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${API_URL}/api/auth/setup-admin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(data.message || 'Admin credentials created/reset successfully!', 'success');
+        setEmail('beatsnitro101@gmail.com');
+        setPassword('password');
+      } else {
+        setError(data.message || 'Failed to setup admin account.');
+      }
+    } catch (err) {
+      setError('Connection failed. Verify your server connection.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div style={styles.container} className="container">
       <div style={styles.card} className="glass-panel">
@@ -89,6 +112,17 @@ export default function AdminLogin() {
             {loading ? 'Authenticating System...' : 'Access Admin Dashboard →'}
           </button>
         </form>
+
+        <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <button
+            onClick={handleSetupAdmin}
+            disabled={loading}
+            className="btn-secondary"
+            style={{ width: '100%', borderStyle: 'dashed', borderColor: 'var(--gold)' }}
+          >
+            ⚙️ One-Click Setup/Reset Admin Credentials
+          </button>
+        </div>
 
         <div style={styles.footerLink}>
           <Link to="/" style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
