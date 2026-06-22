@@ -4,745 +4,497 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 import { API_URL } from '../config';
 
+const HOSTELS = [
+  'Bronze Hostel','Silver Hostel','Gold Hostel','Platinum Hostel',
+  'Jasper Hall','Emerald Hall','Pearl Hall','Sapphire Hall','Off-Campus'
+];
+const FACULTIES = [
+  'Information Technology & Applied Sciences',
+  'Basic Medical & Health Sciences',
+  'Social & Management Sciences',
+  'Arts, Education & Humanities',
+  'Law'
+];
+const DEPTS_BY_FACULTY = {
+  'Information Technology & Applied Sciences': ['Computer Science','Information Technology','Cyber Security','Software Engineering','Biochemistry','Industrial Chemistry','Microbiology','Physics with Electronics'],
+  'Basic Medical & Health Sciences': ['Medicine & Surgery','Nursing Science','Medical Laboratory Science','Pharmacology','Physiotherapy','Public Health'],
+  'Social & Management Sciences': ['Accounting','Banking & Finance','Business Administration','Economics','Mass Communication','Political Science','Sociology'],
+  'Arts, Education & Humanities': ['English Language','History & International Studies','Philosophy','Education & English','Education & Mathematics'],
+  'Law': ['Law'],
+};
+
 export default function Dashboard() {
   const { user, token, fetchProfile, verifyStudent } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast();
-  
-  const [profileData, setProfileData] = useState(null);
-  const [myProducts, setMyProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  
-  // Profile edit states
-  const [isEditingInfo, setIsEditingInfo] = useState(false);
-  const [editHostel, setEditHostel] = useState('');
-  const [editFaculty, setEditFaculty] = useState('');
 
-  const hostelsList = [
-    'Bronze Hostel',
-    'Silver Hostel',
-    'Gold Hostel',
-    'Platinum Hostel',
-    'Jasper Hall',
-    'Emerald Hall',
-    'Pearl Hall',
-    'Sapphire Hall',
-    'Off-Campus'
-  ];
+  const [profileData, setProfileData]   = useState(null);
+  const [myProducts,  setMyProducts]    = useState([]);
+  const [loading,     setLoading]       = useState(true);
+  const [activeTab,   setActiveTab]     = useState('listings');
 
-  const facultiesList = [
-    'Information Technology & Applied Sciences',
-    'Basic Medical & Health Sciences',
-    'Social & Management Sciences',
-    'Arts, Education & Humanities',
-    'Law'
-  ];
-  
-  // Verification states
-  const [showVerifyForm, setShowVerifyForm] = useState(false);
-  const [matricNumber, setMatricNumber] = useState('');
-  const [idCardImage, setIdCardImage] = useState('');
-  const [idCardFile, setIdCardFile] = useState(null);
-  
-  const [activeTab, setActiveTab] = useState('listings'); // 'listings' or 'wishlist'
+  // ── Profile-settings state ──────────────────────────────────
+  const [editHostel,      setEditHostel]      = useState('Off-Campus');
+  const [editFaculty,     setEditFaculty]     = useState(FACULTIES[0]);
+  const [editDept,        setEditDept]        = useState('');
+  const [editPhone,       setEditPhone]       = useState('');
+  const [editSaving,      setEditSaving]      = useState(false);
 
-  const loadDashboardData = async () => {
+  // ── Verification state ──────────────────────────────────────
+  const [showVerifyForm,  setShowVerifyForm]  = useState(false);
+  const [matricInput,     setMatricInput]     = useState('');
+  const [idCardFile,      setIdCardFile]      = useState(null);
+  const [idCardLabel,     setIdCardLabel]     = useState('');
+
+  // ─────────────────────────────────────────────────────────────
+  const loadDashboard = async () => {
     setLoading(true);
     try {
-      // 1. Fetch user profile (wishlist details included)
       const profile = await fetchProfile();
       if (profile) {
         setProfileData(profile);
         setEditHostel(profile.hostel || 'Off-Campus');
-        setEditFaculty(profile.faculty || 'Basic Medical & Health Sciences');
+        setEditFaculty(profile.faculty || FACULTIES[0]);
+        setEditDept(profile.department || '');
+        setEditPhone(profile.phoneNumber || '');
       }
-      
-      // 2. Fetch products created by this user
       if (user?._id) {
-        const response = await fetch(`${API_URL}/api/products?status=All`);
-        if (response.ok) {
-          const allProducts = await response.json();
-          const filtered = allProducts.filter(p => p.seller?._id === user._id || p.seller === user._id);
-          setMyProducts(filtered);
+        const res = await fetch(`${API_URL}/api/products?status=All`);
+        if (res.ok) {
+          const all = await res.json();
+          setMyProducts(all.filter(p => p.seller?._id === user._id || p.seller === user._id));
         }
       }
-    } catch (err) {
-      setError('Failed to fetch dashboard metrics.');
+    } catch {
+      showToast('Failed to load dashboard data', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (token) {
-      loadDashboardData();
-    }
-  }, [token]);
+  useEffect(() => { if (token) loadDashboard(); }, [token]);
 
-  const handleSaveProfile = async () => {
+  // ── Save profile settings ────────────────────────────────────
+  const handleSaveSettings = async () => {
     if (!token) return;
+    setEditSaving(true);
     try {
-      const response = await fetch(`${API_URL}/api/auth/profile`, {
+      const res = await fetch(`${API_URL}/api/auth/profile`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          hostel: editHostel,
-          faculty: editFaculty
-        })
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ hostel: editHostel, faculty: editFaculty, department: editDept, phoneNumber: editPhone })
       });
-      const data = await response.json();
-      if (response.ok) {
+      const data = await res.json();
+      if (res.ok) {
         showToast('Profile updated successfully! 🎓', 'success');
-        setIsEditingInfo(false);
-        loadDashboardData();
+        loadDashboard();
       } else {
-        showToast(data.message || 'Failed to update profile settings', 'error');
+        showToast(data.message || 'Update failed', 'error');
       }
-    } catch (err) {
-      showToast('Error updating profile settings', 'error');
+    } catch {
+      showToast('Error updating profile', 'error');
+    } finally {
+      setEditSaving(false);
     }
   };
 
+  // ── Verify student ────────────────────────────────────────────
   const handleVerifySubmit = async (e) => {
     e.preventDefault();
-    if (!matricNumber.trim()) return;
+    if (!matricInput.trim()) return;
     await verifyStudent(idCardFile);
-    showToast('Verification request submitted successfully! 🎓', 'success');
+    showToast('Verification request submitted! 🎓', 'success');
     setShowVerifyForm(false);
-    setMatricNumber('');
-    setIdCardImage('');
-    setIdCardFile(null);
-    loadDashboardData();
+    setMatricInput(''); setIdCardFile(null); setIdCardLabel('');
+    loadDashboard();
   };
 
-  const handleIdCardUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setIdCardFile(file);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setIdCardImage(reader.result);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleToggleSold = async (productId, currentStatus) => {
-    if (!token) return;
-    
-    const newStatus = currentStatus === 'Available' ? 'Sold' : 'Available';
+  // ── Listing actions ───────────────────────────────────────────
+  const handleToggleSold = async (id, status) => {
+    const next = status === 'Available' ? 'Sold' : 'Available';
     try {
-      const response = await fetch(`${API_URL}/api/products/${productId}`, {
+      const res = await fetch(`${API_URL}/api/products/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ status: newStatus })
+        headers: { 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ status: next })
       });
-      
-      if (response.ok) {
-        showToast(`Listing status updated to ${newStatus}! 🤝`, 'success');
-        loadDashboardData();
-      }
-    } catch (err) {
-      showToast('Failed to toggle status', 'error');
-    }
+      if (res.ok) { showToast(`Marked as ${next}! 🤝`, 'success'); loadDashboard(); }
+    } catch { showToast('Failed to update status', 'error'); }
   };
 
-  const handleDeleteListing = async (productId) => {
-    if (!window.confirm('Are you sure you want to delete this listing?')) return;
-    if (!token) return;
-
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this listing permanently?')) return;
     try {
-      const response = await fetch(`${API_URL}/api/products/${productId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+      const res = await fetch(`${API_URL}/api/products/${id}`, {
+        method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` }
       });
-      
-      if (response.ok) {
-        showToast('Listing deleted successfully!', 'success');
-        loadDashboardData();
-      }
-    } catch (err) {
-      showToast('Failed to delete listing', 'error');
-    }
+      if (res.ok) { showToast('Listing deleted!', 'success'); loadDashboard(); }
+    } catch { showToast('Failed to delete', 'error'); }
   };
 
-  if (loading) {
-    return (
-      <div style={styles.center} className="container">
-        <div style={styles.loaderContainer}>
-          <div style={styles.spinner}></div>
-          <p style={{ marginTop: '16px', color: 'var(--text-gray)' }}>Loading your dashboard command center...</p>
-        </div>
-      </div>
-    );
-  }
+  // ── Derived stats ─────────────────────────────────────────────
+  const activeCount  = myProducts.filter(p => p.status === 'Available').length;
+  const soldCount    = myProducts.filter(p => p.status === 'Sold').length;
+  const wishCount    = profileData?.wishlist?.length || 0;
+  const ratings      = profileData?.ratings || [];
+  const avgRating    = ratings.length > 0
+    ? (ratings.reduce((a,c) => a + c.rating, 0) / ratings.length).toFixed(1)
+    : '—';
 
-  // Count active and sold listings
-  const activeCount = myProducts.filter(p => p.status === 'Available').length;
-  const soldCount = myProducts.filter(p => p.status === 'Sold').length;
-  
-  // Calculate average seller rating
-  const sellerRatings = profileData?.ratings || [];
-  const averageRating = sellerRatings.length > 0
-    ? (sellerRatings.reduce((acc, curr) => acc + curr.rating, 0) / sellerRatings.length).toFixed(1)
-    : 'N/A';
+  // ── Loading ───────────────────────────────────────────────────
+  if (loading) return (
+    <div style={{ height:'60vh', display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:'16px' }} className="container">
+      <div style={{ width:'44px', height:'44px', border:'4px solid var(--border-color)', borderTop:'4px solid var(--gold)', borderRadius:'50%', animation:'spin 1s linear infinite' }} />
+      <p style={{ color:'var(--text-secondary)', fontSize:'0.9rem' }}>Loading your dashboard…</p>
+    </div>
+  );
+
+  const currentDepts = DEPTS_BY_FACULTY[editFaculty] || [];
 
   return (
-    <div style={styles.container} className="container animate-fade-in">
-      {/* Dashboard Welcome Header */}
+    <div className="container animate-fade-in" style={{ paddingTop:'28px', paddingBottom:'60px' }}>
+
+      {/* ── Welcome Header ─────────────────────────────────── */}
       <header className="db-header">
         <div className="db-header-left">
           <div className="db-avatar-container">
-            <div className="db-avatar">
-              {user?.name.charAt(0).toUpperCase()}
-            </div>
+            <div className="db-avatar">{user?.name?.charAt(0).toUpperCase()}</div>
           </div>
           <div>
-            <h1 className="db-welcome-title">Welcome back, {user?.name}! 🎓</h1>
-            <p style={styles.subWelcomeText}>{user?.email} | Lead City University Student Hub</p>
+            <h1 className="db-welcome-title">Hey, {user?.name?.split(' ')[0]}! 👋</h1>
+            <p className="db-welcome-sub">Lead City University Student Hub</p>
+            <div className="db-welcome-meta">
+              <span className="db-meta-chip">📧 {user?.email}</span>
+              {profileData?.faculty && <span className="db-meta-chip">🏛️ {profileData.faculty}</span>}
+              {profileData?.matricNumber && <span className="db-meta-chip">🪪 {profileData.matricNumber}</span>}
+            </div>
           </div>
         </div>
 
-        {/* Verification Status Banner */}
         <div className="db-verify-box">
           {user?.isVerifiedStudent ? (
-            <span style={styles.verifiedBadge}>✓ LCU Verified Badge Active</span>
+            <span className="db-verified-badge">✓ LCU Verified Student</span>
           ) : showVerifyForm ? (
-            <form onSubmit={handleVerifySubmit} style={styles.verifyForm}>
+            <form onSubmit={handleVerifySubmit} style={{ display:'flex', flexDirection:'column', gap:'8px', alignItems:'flex-end' }}>
               <input
-                type="text"
-                required
-                placeholder="LCU Matric Number"
-                value={matricNumber}
-                onChange={(e) => setMatricNumber(e.target.value)}
-                className="glass-input"
-                style={styles.verifyInput}
+                type="text" required placeholder="Your matric number"
+                value={matricInput} onChange={e => setMatricInput(e.target.value)}
+                className="glass-input" style={{ width:'220px', padding:'8px 12px', fontSize:'0.85rem' }}
               />
-              <input
-                type="file"
-                required
-                accept="image/*"
-                onChange={handleIdCardUpload}
-                id="dashboard-id-upload"
-                style={{ display: 'none' }}
-              />
-              <label htmlFor="dashboard-id-upload" style={styles.idUploadLabel}>
-                {idCardImage ? '✓ Selected' : 'Upload ID'}
-              </label>
-              <button type="submit" className="btn-primary" style={styles.verifyBtnSmall}>Verify</button>
-              <button type="button" onClick={() => setShowVerifyForm(false)} className="btn-secondary" style={styles.verifyBtnSmall}>X</button>
+              <div style={{ display:'flex', gap:'8px', alignItems:'center' }}>
+                <label htmlFor="id-upload" style={{ padding:'7px 12px', border:'1px dashed var(--border-color)', borderRadius:'7px', fontSize:'0.8rem', cursor:'pointer', color:'var(--text-secondary)', background:'var(--bg-input)', whiteSpace:'nowrap' }}>
+                  {idCardLabel || '📎 Upload ID Card'}
+                </label>
+                <input id="id-upload" type="file" accept="image/*" style={{ display:'none' }} onChange={e => { setIdCardFile(e.target.files[0]); setIdCardLabel(e.target.files[0]?.name || ''); }} />
+                <button type="submit" className="btn-primary" style={{ padding:'7px 14px', fontSize:'0.82rem' }}>Submit</button>
+                <button type="button" onClick={() => setShowVerifyForm(false)} className="btn-secondary" style={{ padding:'7px 12px', fontSize:'0.82rem' }}>✕</button>
+              </div>
             </form>
           ) : (
-            <button onClick={() => setShowVerifyForm(true)} className="btn-primary" style={styles.requestVerifyBtn}>
-              Request Verification Badge
+            <button onClick={() => setShowVerifyForm(true)} className="btn-primary" style={{ padding:'9px 20px', fontSize:'0.85rem' }}>
+              🎓 Get Verified
             </button>
+          )}
+          {!user?.isVerifiedStudent && (
+            <p style={{ fontSize:'0.73rem', color:'var(--text-muted)', textAlign:'right', maxWidth:'220px' }}>
+              Upload your student ID to get a verified badge
+            </p>
           )}
         </div>
       </header>
 
-      {/* Metrics Row */}
+      {/* ── Metrics ────────────────────────────────────────── */}
       <section className="db-metrics">
         <div className="db-metric-card">
-          <span className="db-metric-icon">🏠</span>
-          <div style={styles.metricInfo}>
-            <span className="db-metric-value">{activeCount}</span>
-            <span className="db-metric-label">Active Listings</span>
-          </div>
+          <div className="db-metric-icon">📦</div>
+          <div><div className="db-metric-value">{activeCount}</div><div className="db-metric-label">Active Listings</div></div>
         </div>
-
         <div className="db-metric-card">
-          <span className="db-metric-icon">🤝</span>
-          <div style={styles.metricInfo}>
-            <span className="db-metric-value">{soldCount}</span>
-            <span className="db-metric-label">Sold Items</span>
-          </div>
+          <div className="db-metric-icon">🤝</div>
+          <div><div className="db-metric-value">{soldCount}</div><div className="db-metric-label">Items Sold</div></div>
         </div>
-
         <div className="db-metric-card">
-          <span className="db-metric-icon">❤️</span>
-          <div style={styles.metricInfo}>
-            <span className="db-metric-value">{profileData?.wishlist?.length || 0}</span>
-            <span className="db-metric-label">Wishlist Items</span>
-          </div>
+          <div className="db-metric-icon">❤️</div>
+          <div><div className="db-metric-value">{wishCount}</div><div className="db-metric-label">Wishlist Items</div></div>
         </div>
-
         <div className="db-metric-card">
-          <span className="db-metric-icon">★</span>
-          <div style={styles.metricInfo}>
-            <span className="db-metric-value">{averageRating} {averageRating !== 'N/A' && '⭐'}</span>
-            <span className="db-metric-label">Seller Rating</span>
-          </div>
+          <div className="db-metric-icon">⭐</div>
+          <div><div className="db-metric-value">{avgRating}</div><div className="db-metric-label">Seller Rating</div></div>
         </div>
       </section>
 
-      {/* Main Grid: Details Sidebar & Main tabs content */}
-      <div className="profile-grid" style={{ marginTop: '30px' }}>
-        
-        {/* Left column: Student metadata & quick links */}
+      {/* ── Main layout ─────────────────────────────────────── */}
+      <div className="profile-grid" style={{ marginTop:'24px', alignItems:'start' }}>
+
+        {/* LEFT SIDEBAR */}
         <aside className="db-sidebar-card">
-          <h3 style={styles.sidebarTitle}>Personal Information</h3>
-          {isEditingInfo ? (
-            <div style={styles.metaList}>
-              <div style={styles.metaItem}>
-                <label style={styles.metaLabel}>Hostel Location:</label>
-                <select
-                  value={editHostel}
-                  onChange={(e) => setEditHostel(e.target.value)}
-                  className="glass-input"
-                  style={{ width: '100%', marginTop: '4px', padding: '8px' }}
-                >
-                  {hostelsList.map(h => (
-                    <option key={h} value={h} style={{ background: 'var(--bg-input)', color: 'var(--text-white)' }}>{h}</option>
-                  ))}
-                </select>
+          {/* User info */}
+          <div className="db-sidebar-section">
+            <p className="db-sidebar-section-title">My Profile</p>
+            <div className="db-info-row">
+              <span className="db-info-label">Full Name</span>
+              <span className="db-info-value">{profileData?.name || user?.name}</span>
+            </div>
+            <div className="db-info-row">
+              <span className="db-info-label">Email</span>
+              <span className="db-info-value" style={{ fontSize:'0.82rem', wordBreak:'break-all' }}>{user?.email}</span>
+            </div>
+            <div className="db-info-row">
+              <span className="db-info-label">Matric Number</span>
+              <span className="db-info-value">{profileData?.matricNumber || '—'}</span>
+            </div>
+            <div className="db-info-row">
+              <span className="db-info-label">Department</span>
+              <span className="db-info-value">{profileData?.department || '—'}</span>
+            </div>
+            <div className="db-info-row">
+              <span className="db-info-label">Hostel / Location</span>
+              <span className="db-info-value">{profileData?.hostel || '—'}</span>
+            </div>
+            <div className="db-info-row">
+              <span className="db-info-label">Phone</span>
+              <span className="db-info-value">{profileData?.phoneNumber || '—'}</span>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="db-sidebar-section">
+            <p className="db-sidebar-section-title">Quick Actions</p>
+            <div className="db-quick-actions">
+              <Link to="/post" className="db-quick-btn primary">
+                <span className="db-quick-btn-icon">＋</span> Post a New Listing
+              </Link>
+              <Link to="/chat" className="db-quick-btn">
+                <span className="db-quick-btn-icon">💬</span> Messages Inbox
+              </Link>
+              <Link to="/" className="db-quick-btn">
+                <span className="db-quick-btn-icon">🛍️</span> Browse Marketplace
+              </Link>
+            </div>
+          </div>
+
+          {/* Account status */}
+          <div className="db-sidebar-section">
+            <p className="db-sidebar-section-title">Account Status</p>
+            <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                <span style={{ fontSize:'0.82rem', color:'var(--text-secondary)' }}>Email Verified</span>
+                <span style={{ fontSize:'0.8rem', fontWeight:'700', color: user?.isEmailVerified ? 'var(--success)' : 'var(--error)' }}>
+                  {user?.isEmailVerified ? '✓ Yes' : '✗ No'}
+                </span>
               </div>
-              <div style={{ ...styles.metaItem, marginTop: '12px' }}>
-                <label style={styles.metaLabel}>Faculty Affiliation:</label>
-                <select
-                  value={editFaculty}
-                  onChange={(e) => setEditFaculty(e.target.value)}
-                  className="glass-input"
-                  style={{ width: '100%', marginTop: '4px', padding: '8px' }}
-                >
-                  {facultiesList.map(f => (
-                    <option key={f} value={f} style={{ background: 'var(--bg-input)', color: 'var(--text-white)' }}>{f}</option>
-                  ))}
-                </select>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                <span style={{ fontSize:'0.82rem', color:'var(--text-secondary)' }}>Student Badge</span>
+                <span style={{ fontSize:'0.8rem', fontWeight:'700', color: user?.isVerifiedStudent ? 'var(--success)' : 'var(--warning)' }}>
+                  {user?.isVerifiedStudent ? '✓ Verified' : '⏳ Pending'}
+                </span>
               </div>
-              <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
-                <button onClick={handleSaveProfile} className="btn-primary" style={{ padding: '6px 12px', fontSize: '0.8rem', flex: 1 }}>
-                  Save
-                </button>
-                <button onClick={() => setIsEditingInfo(false)} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem', flex: 1 }}>
-                  Cancel
-                </button>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                <span style={{ fontSize:'0.82rem', color:'var(--text-secondary)' }}>Total Listings</span>
+                <span style={{ fontSize:'0.8rem', fontWeight:'700', color:'var(--text-primary)' }}>{myProducts.length}</span>
               </div>
             </div>
-          ) : (
-            <>
-              <div style={styles.metaList}>
-                <div style={styles.metaItem}>
-                  <span style={styles.metaLabel}>Hostel Location:</span>
-                  <span style={styles.metaVal}>{profileData?.hostel || user?.hostel}</span>
-                </div>
-                <div style={styles.metaItem}>
-                  <span style={styles.metaLabel}>Faculty Affiliation:</span>
-                  <span style={styles.metaVal}>{profileData?.faculty || user?.faculty}</span>
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  setEditHostel(profileData?.hostel || user?.hostel || 'Off-Campus');
-                  setEditFaculty(profileData?.faculty || user?.faculty || 'Basic Medical & Health Sciences');
-                  setIsEditingInfo(true);
-                }}
-                className="btn-secondary"
-                style={{ width: '100%', padding: '10px', fontSize: '0.85rem', marginTop: '16px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px' }}
-              >
-                ✏️ Edit Details
-              </button>
-            </>
-          )}
-
-          <h3 style={{ ...styles.sidebarTitle, marginTop: '24px' }}>Quick Actions</h3>
-          <div style={styles.quickActions}>
-            <Link to="/post" className="btn-primary" style={styles.actionLink}>
-              + Post a New Listing
-            </Link>
-            <Link to="/chat" className="btn-secondary" style={styles.actionLink}>
-              💬 Open Chat Inbox
-            </Link>
           </div>
         </aside>
 
-        {/* Right column: Manage tab views */}
-        <main style={styles.mainContent}>
+        {/* RIGHT MAIN CONTENT */}
+        <main>
+          {/* Tabs */}
           <div className="db-tabs">
-            <button
-              onClick={() => setActiveTab('listings')}
-              className={`db-tab-btn ${activeTab === 'listings' ? 'active' : ''}`}
-            >
-              Manage My Listings ({myProducts.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('wishlist')}
-              className={`db-tab-btn ${activeTab === 'wishlist' ? 'active' : ''}`}
-            >
-              My Saved Wishlist ({profileData?.wishlist?.length || 0})
-            </button>
+            {[
+              { id: 'listings', label: `📦 My Listings (${myProducts.length})` },
+              { id: 'wishlist', label: `❤️ Wishlist (${wishCount})` },
+              { id: 'settings', label: '⚙️ Profile Settings' },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`db-tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
 
-          <div style={{ marginTop: '20px' }}>
-            {activeTab === 'listings' && (
-              myProducts.length > 0 ? (
-                <div className="db-card-list">
-                  {myProducts.map((p) => (
-                    <div key={p._id} className="db-product-card">
-                      {p.image ? (
-                        <img src={p.image} alt={p.name} className="db-product-image" />
-                      ) : (
-                        <div className="db-product-placeholder">No Image</div>
-                      )}
-                      <div className="db-product-info">
-                        <h4 className="db-product-title">{p.name}</h4>
-                        <span className="db-product-price">₦{p.price.toLocaleString()}</span>
-                        <div className="db-product-meta">
-                          📍 {p.hostelLocation}
-                          <span className={`db-status-badge ${p.status === 'Sold' ? 'sold' : 'available'}`}>
-                            {p.status}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="db-actions">
-                        <button
-                          onClick={() => handleToggleSold(p._id, p.status)}
-                          className="btn-primary"
-                          style={{
-                            background: p.status === 'Sold' ? 'var(--success)' : 'rgba(255,255,255,0.05)',
-                            color: '#fff',
-                            border: p.status === 'Sold' ? 'none' : '1px solid var(--border-color)',
-                            boxShadow: 'none',
-                            padding: '8px 12px',
-                            fontSize: '0.8rem',
-                            borderRadius: '6px'
-                          }}
-                        >
-                          {p.status === 'Sold' ? 'Mark Available' : 'Mark Sold'}
-                        </button>
-                        <Link
-                          to={`/edit/${p._id}`}
-                          className="btn-secondary"
-                          style={{ padding: '8px 12px', fontSize: '0.8rem', borderRadius: '6px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-                        >
-                          Edit
-                        </Link>
-                        <button
-                          onClick={() => handleDeleteListing(p._id)}
-                          className="btn-secondary"
-                          style={{ padding: '8px 12px', fontSize: '0.8rem', borderRadius: '6px', color: 'var(--error)', borderColor: 'rgba(239,68,68,0.3)' }}
-                        >
-                          Delete
-                        </button>
+          {/* ── LISTINGS TAB ─────────────────────────────────── */}
+          {activeTab === 'listings' && (
+            myProducts.length > 0 ? (
+              <div className="db-card-list">
+                {myProducts.map(p => (
+                  <div key={p._id} className="db-product-card">
+                    {p.image
+                      ? <img src={p.image} alt={p.name} className="db-product-image" />
+                      : <div className="db-product-placeholder">🖼️</div>
+                    }
+                    <div className="db-product-info">
+                      <h4 className="db-product-title">{p.name}</h4>
+                      <span className="db-product-price">₦{p.price.toLocaleString()}</span>
+                      <div className="db-product-meta">
+                        <span>📍 {p.hostelLocation}</span>
+                        <span className={`db-status-badge ${p.status === 'Sold' ? 'sold' : 'available'}`}>{p.status}</span>
                       </div>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={styles.emptyState} className="glass-panel">
-                  <p>You haven't posted any products yet.</p>
-                  <Link to="/post" className="btn-primary" style={{ marginTop: '12px' }}>Post a Product</Link>
-                </div>
-              )
-            )}
+                    <div className="db-actions">
+                      <button
+                        onClick={() => handleToggleSold(p._id, p.status)}
+                        className="btn-secondary"
+                        style={{ padding:'8px 14px', fontSize:'0.8rem', whiteSpace:'nowrap',
+                          color: p.status === 'Sold' ? 'var(--success)' : 'var(--text-secondary)',
+                          borderColor: p.status === 'Sold' ? 'rgba(16,185,129,0.4)' : 'var(--border-color)'
+                        }}
+                      >
+                        {p.status === 'Sold' ? '↩ Relist' : '✓ Mark Sold'}
+                      </button>
+                      <Link
+                        to={`/edit/${p._id}`}
+                        className="btn-secondary"
+                        style={{ padding:'8px 14px', fontSize:'0.8rem' }}
+                      >
+                        ✏️ Edit
+                      </Link>
+                      <button
+                        onClick={() => handleDelete(p._id)}
+                        className="btn-danger"
+                        style={{ padding:'8px 14px' }}
+                      >
+                        🗑
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="db-empty-state">
+                <div className="db-empty-icon">📭</div>
+                <p className="db-empty-title">No listings yet</p>
+                <p style={{ fontSize:'0.85rem', marginBottom:'20px' }}>Start selling by posting your first product on the marketplace.</p>
+                <Link to="/post" className="btn-primary">+ Post a Listing</Link>
+              </div>
+            )
+          )}
 
-            {activeTab === 'wishlist' && (
-              profileData?.wishlist?.length > 0 ? (
-                <div className="db-card-list">
-                  {profileData.wishlist.map((p) => (
-                    <div key={p._id} className="db-product-card">
-                      {p.image ? (
-                        <img src={p.image} alt={p.name} className="db-product-image" />
-                      ) : (
-                        <div className="db-product-placeholder">No Image</div>
-                      )}
-                      <div className="db-product-info">
-                        <h4 className="db-product-title">{p.name}</h4>
-                        <span className="db-product-price">₦{p.price.toLocaleString()}</span>
-                        <div className="db-product-meta">
-                          📍 {p.hostelLocation}
-                        </div>
-                      </div>
-                      <div className="db-actions">
-                        <Link to={`/product/${p._id}`} className="btn-primary" style={{ padding: '8px 12px', fontSize: '0.8rem', borderRadius: '6px' }}>
-                          View Product
-                        </Link>
-                      </div>
+          {/* ── WISHLIST TAB ──────────────────────────────────── */}
+          {activeTab === 'wishlist' && (
+            profileData?.wishlist?.length > 0 ? (
+              <div className="db-card-list">
+                {profileData.wishlist.map(p => (
+                  <div key={p._id} className="db-product-card">
+                    {p.image
+                      ? <img src={p.image} alt={p.name} className="db-product-image" />
+                      : <div className="db-product-placeholder">🖼️</div>
+                    }
+                    <div className="db-product-info">
+                      <h4 className="db-product-title">{p.name}</h4>
+                      <span className="db-product-price">₦{p.price?.toLocaleString()}</span>
+                      <div className="db-product-meta"><span>📍 {p.hostelLocation}</span></div>
                     </div>
-                  ))}
+                    <div className="db-actions">
+                      <Link to={`/product/${p._id}`} className="btn-primary" style={{ padding:'8px 16px', fontSize:'0.82rem' }}>
+                        View →
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="db-empty-state">
+                <div className="db-empty-icon">💔</div>
+                <p className="db-empty-title">Your wishlist is empty</p>
+                <p style={{ fontSize:'0.85rem', marginBottom:'20px' }}>Browse the marketplace and save items you love.</p>
+                <Link to="/" className="btn-secondary">🛍️ Browse Marketplace</Link>
+              </div>
+            )
+          )}
+
+          {/* ── SETTINGS TAB ─────────────────────────────────── */}
+          {activeTab === 'settings' && (
+            <div style={{ background:'var(--card-bg)', border:'1px solid var(--glass-border)', borderRadius:'var(--border-radius)', overflow:'hidden' }}>
+              {/* Header */}
+              <div style={{ padding:'20px 24px', borderBottom:'1px solid var(--tab-border)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                <div>
+                  <h3 style={{ fontSize:'1.05rem', color:'var(--text-primary)', fontWeight:'700' }}>Profile Settings</h3>
+                  <p style={{ fontSize:'0.82rem', color:'var(--text-secondary)', marginTop:'3px' }}>Update your hostel, faculty, and contact info</p>
                 </div>
-              ) : (
-                <div style={styles.emptyState} className="glass-panel">
-                  <p>Your saved wishlist is currently empty.</p>
-                  <Link to="/" className="btn-secondary" style={{ marginTop: '12px' }}>Browse Marketplace</Link>
+                <button
+                  onClick={handleSaveSettings}
+                  disabled={editSaving}
+                  className="btn-primary"
+                  style={{ padding:'9px 22px', fontSize:'0.88rem' }}
+                >
+                  {editSaving ? 'Saving…' : '💾 Save Changes'}
+                </button>
+              </div>
+
+              {/* Form */}
+              <div style={{ padding:'24px' }}>
+                {/* Read-only info */}
+                <p style={{ fontSize:'0.75rem', fontWeight:'700', letterSpacing:'0.07em', textTransform:'uppercase', color:'var(--text-muted)', marginBottom:'14px' }}>Account Info (Read Only)</p>
+                <div className="db-settings-grid" style={{ marginBottom:'28px' }}>
+                  <div className="db-settings-field">
+                    <label className="db-settings-label">Full Name</label>
+                    <div className="db-settings-value">{profileData?.name || user?.name}</div>
+                  </div>
+                  <div className="db-settings-field">
+                    <label className="db-settings-label">Email Address</label>
+                    <div className="db-settings-value" style={{ fontSize:'0.85rem' }}>{user?.email}</div>
+                  </div>
+                  <div className="db-settings-field">
+                    <label className="db-settings-label">Matric Number</label>
+                    <div className="db-settings-value">{profileData?.matricNumber || '—'}</div>
+                  </div>
+                  <div className="db-settings-field">
+                    <label className="db-settings-label">Account Role</label>
+                    <div className="db-settings-value">{user?.isAdmin ? '🔑 Administrator' : '🎓 Student'}</div>
+                  </div>
                 </div>
-              )
-            )}
-          </div>
+
+                {/* Editable fields */}
+                <p style={{ fontSize:'0.75rem', fontWeight:'700', letterSpacing:'0.07em', textTransform:'uppercase', color:'var(--text-muted)', marginBottom:'14px' }}>Edit Info</p>
+                <div className="db-settings-grid">
+                  <div className="db-settings-field">
+                    <label className="db-settings-label">Hostel / Location</label>
+                    <select value={editHostel} onChange={e => setEditHostel(e.target.value)} className="glass-input" style={{ padding:'11px 14px' }}>
+                      {HOSTELS.map(h => <option key={h} value={h} style={{ background:'var(--bg-input)', color:'var(--text-primary)' }}>{h}</option>)}
+                    </select>
+                  </div>
+                  <div className="db-settings-field">
+                    <label className="db-settings-label">Phone Number</label>
+                    <input
+                      type="tel" maxLength="11" placeholder="e.g. 08012345678"
+                      value={editPhone} onChange={e => setEditPhone(e.target.value.replace(/\D/g, ''))}
+                      className="glass-input" style={{ padding:'11px 14px' }}
+                    />
+                  </div>
+                  <div className="db-settings-field">
+                    <label className="db-settings-label">Faculty</label>
+                    <select value={editFaculty} onChange={e => { setEditFaculty(e.target.value); setEditDept(''); }} className="glass-input" style={{ padding:'11px 14px' }}>
+                      {FACULTIES.map(f => <option key={f} value={f} style={{ background:'var(--bg-input)', color:'var(--text-primary)' }}>{f}</option>)}
+                    </select>
+                  </div>
+                  <div className="db-settings-field">
+                    <label className="db-settings-label">Department</label>
+                    <select value={editDept} onChange={e => setEditDept(e.target.value)} className="glass-input" style={{ padding:'11px 14px' }}>
+                      <option value="" style={{ background:'var(--bg-input)', color:'var(--text-primary)' }}>— Select —</option>
+                      {currentDepts.map(d => <option key={d} value={d} style={{ background:'var(--bg-input)', color:'var(--text-primary)' }}>{d}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Password change hint */}
+                <div style={{ marginTop:'28px', padding:'16px 20px', background:'var(--metric-1-bg)', border:'1px solid var(--metric-1-border)', borderRadius:'10px', display:'flex', alignItems:'center', gap:'12px' }}>
+                  <span style={{ fontSize:'1.3rem' }}>🔒</span>
+                  <div>
+                    <p style={{ fontSize:'0.85rem', fontWeight:'600', color:'var(--text-primary)' }}>Password Change</p>
+                    <p style={{ fontSize:'0.78rem', color:'var(--text-secondary)', marginTop:'2px' }}>
+                      To change your password, logout and use the "Forgot Password" option on the login page.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </main>
       </div>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    paddingTop: '32px',
-    paddingBottom: '60px',
-  },
-  center: {
-    height: '60vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loaderContainer: {
-    textAlign: 'center',
-  },
-  spinner: {
-    width: '40px',
-    height: '40px',
-    border: '4px solid var(--border-color)',
-    borderTop: '4px solid var(--gold)',
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite',
-    margin: '0 auto',
-  },
-  headerPanel: {
-    padding: '30px',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: '20px',
-    border: '1px solid var(--border-color)',
-  },
-  headerLeft: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '20px',
-  },
-  avatarLarge: {
-    width: '70px',
-    height: '70px',
-    borderRadius: '50%',
-    backgroundColor: 'var(--primary-blue)',
-    border: '3px solid var(--gold)',
-    color: 'var(--gold)',
-    fontSize: '2rem',
-    fontWeight: 'bold',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: '0 0 20px rgba(59, 130, 246, 0.3)',
-  },
-  welcomeText: {
-    fontSize: '1.8rem',
-    color: '#fff',
-  },
-  subWelcomeText: {
-    color: 'var(--text-gray)',
-    fontSize: '0.9rem',
-    marginTop: '4px',
-  },
-  verifyBanner: {
-    display: 'flex',
-    alignItems: 'center',
-  },
-  verifiedBadge: {
-    padding: '8px 16px',
-    borderRadius: '6px',
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
-    color: 'var(--success)',
-    border: '1px solid rgba(16, 185, 129, 0.3)',
-    fontWeight: '600',
-    fontSize: '0.85rem',
-  },
-  requestVerifyBtn: {
-    fontSize: '0.85rem',
-    padding: '10px 20px',
-  },
-  verifyForm: {
-    display: 'flex',
-    gap: '8px',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-  },
-  verifyInput: {
-    padding: '6px 12px',
-    fontSize: '0.8rem',
-    width: '150px',
-  },
-  idUploadLabel: {
-    padding: '6px 10px',
-    border: '1px dashed var(--border-color)',
-    borderRadius: '6px',
-    fontSize: '0.8rem',
-    cursor: 'pointer',
-    backgroundColor: 'rgba(0,0,0,0.2)',
-  },
-  verifyBtnSmall: {
-    padding: '6px 12px',
-    fontSize: '0.8rem',
-  },
-  metricsRow: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '20px',
-    marginTop: '24px',
-  },
-  metricCard: {
-    padding: '20px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '16px',
-    border: '1px solid var(--border-color)',
-    transition: 'var(--transition-smooth)',
-  },
-  metricEmoji: {
-    fontSize: '2rem',
-    color: 'var(--gold)',
-  },
-  metricInfo: {
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  metricValue: {
-    fontSize: '1.6rem',
-    fontWeight: '800',
-    color: '#fff',
-  },
-  metricLabel: {
-    fontSize: '0.8rem',
-    color: 'var(--text-gray)',
-    marginTop: '2px',
-  },
-  sidebarPanel: {
-    padding: '24px',
-    border: '1px solid var(--border-color)',
-    height: 'fit-content',
-  },
-  sidebarTitle: {
-    fontSize: '1.1rem',
-    color: 'var(--gold)',
-    marginBottom: '16px',
-    borderBottom: '1px solid var(--border-color)',
-    paddingBottom: '8px',
-  },
-  metaList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px',
-  },
-  metaItem: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
-  },
-  metaLabel: {
-    fontSize: '0.8rem',
-    color: 'var(--text-gray)',
-  },
-  metaVal: {
-    fontSize: '0.9rem',
-    color: '#fff',
-    fontWeight: '600',
-  },
-  quickActions: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px',
-  },
-  actionLink: {
-    width: '100%',
-    padding: '10px',
-    fontSize: '0.85rem',
-    textAlign: 'center',
-  },
-  mainContent: {
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  tabsHeader: {
-    display: 'flex',
-    gap: '24px',
-    borderBottom: '1px solid var(--border-color)',
-    flexWrap: 'wrap',
-  },
-  tabBtn: {
-    background: 'none',
-    border: 'none',
-    padding: '12px 16px',
-    fontSize: '1.05rem',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'var(--transition-smooth)',
-  },
-  listingsContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '16px',
-  },
-  listingRow: {
-    padding: '16px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '20px',
-    border: '1px solid var(--border-color)',
-    flexWrap: 'wrap',
-  },
-  rowImgContainer: {
-    width: '70px',
-    height: '70px',
-    backgroundColor: 'rgba(0,0,0,0.2)',
-    borderRadius: '6px',
-    overflow: 'hidden',
-  },
-  rowImg: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-  },
-  rowPlaceholderImg: {
-    width: '100%',
-    height: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '0.65rem',
-    color: 'var(--text-gray)',
-    textAlign: 'center',
-  },
-  rowDetails: {
-    flexGrow: 1,
-    minWidth: '200px',
-  },
-  rowTitle: {
-    fontSize: '1rem',
-    color: '#fff',
-    marginBottom: '4px',
-  },
-  rowPrice: {
-    fontSize: '0.95rem',
-    color: 'var(--gold)',
-    fontWeight: '700',
-  },
-  rowMeta: {
-    fontSize: '0.75rem',
-    color: 'var(--text-gray)',
-    marginTop: '2px',
-  },
-  rowActions: {
-    display: 'flex',
-    gap: '10px',
-    flexWrap: 'wrap',
-  },
-  rowBtn: {
-    padding: '8px 12px',
-    fontSize: '0.8rem',
-    cursor: 'pointer',
-    borderRadius: '6px',
-  },
-  emptyState: {
-    padding: '40px',
-    textAlign: 'center',
-    color: 'var(--text-gray)',
-    border: '1px solid var(--border-color)',
-  }
-};
-

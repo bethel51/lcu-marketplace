@@ -31,11 +31,23 @@ const generateToken = (id) => {
 // Register
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password, hostel, faculty, requestVerification } = req.body;
+    const { name, email, password, hostel, faculty, department, matricNumber, phoneNumber, requestVerification } = req.body;
     
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
+    }
+
+    // Validate Matric Number format: lcu/ug/xx/xxxxx (case-insensitive)
+    const matricRegex = /^lcu\/ug\/\d{2}\/\d{5}$/i;
+    if (!matricNumber || !matricRegex.test(matricNumber)) {
+      return res.status(400).json({ message: 'Matric number must be in the format: lCU/UG/xx/xxxxx' });
+    }
+
+    // Check if matric number is already taken
+    const matricExists = await User.findOne({ matricNumber: matricNumber.toUpperCase() });
+    if (matricExists) {
+      return res.status(400).json({ message: 'Matric number already registered' });
     }
     
     // Auto-verify if email contains lcu or if they requested verification (realistic student badge system)
@@ -50,6 +62,9 @@ router.post('/register', async (req, res) => {
       password,
       hostel: hostel || 'None',
       faculty: faculty || 'None',
+      department: department || 'None',
+      matricNumber: matricNumber.toUpperCase(),
+      phoneNumber: phoneNumber || '',
       isVerifiedStudent,
       isEmailVerified: false,
       otpCode: otp,
@@ -88,6 +103,9 @@ router.post('/login', async (req, res) => {
         email: user.email,
         hostel: user.hostel,
         faculty: user.faculty,
+        department: user.department,
+        matricNumber: user.matricNumber,
+        phoneNumber: user.phoneNumber,
         isVerifiedStudent: user.isVerifiedStudent,
         isAdmin: user.isAdmin,
         token: generateToken(user._id)
@@ -135,6 +153,9 @@ router.post('/verify-otp', async (req, res) => {
       email: user.email,
       hostel: user.hostel,
       faculty: user.faculty,
+      department: user.department,
+      matricNumber: user.matricNumber,
+      phoneNumber: user.phoneNumber,
       isVerifiedStudent: user.isVerifiedStudent,
       isAdmin: user.isAdmin,
       token: generateToken(user._id)
@@ -185,8 +206,10 @@ router.put('/profile', protect, async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
     if (user) {
-      user.hostel = req.body.hostel || user.hostel;
-      user.faculty = req.body.faculty || user.faculty;
+      user.hostel      = req.body.hostel      || user.hostel;
+      user.faculty     = req.body.faculty     || user.faculty;
+      user.department  = req.body.department  || user.department;
+      user.phoneNumber = req.body.phoneNumber !== undefined ? req.body.phoneNumber : user.phoneNumber;
       await user.save();
       
       const populated = await User.findById(user._id).select('-password').populate('wishlist');
@@ -198,6 +221,7 @@ router.put('/profile', protect, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
 
 // Request Verification Badge
 router.post('/verify-student', protect, upload.single('idCard'), async (req, res) => {

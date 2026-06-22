@@ -10,7 +10,10 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [hostel, setHostel] = useState('Off-Campus');
-  const [faculty, setFaculty] = useState('Basic Medical Sciences');
+  const [faculty, setFaculty] = useState('Information Technology & Applied Sciences');
+  const [department, setDepartment] = useState('');
+  const [matricNumber, setMatricNumber] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [requestVerification, setRequestVerification] = useState(true);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -43,7 +46,17 @@ export default function Auth() {
           }
         }
       } else {
-        const res = await register(name, email, password, hostel, faculty, requestVerification);
+        // Validate matric number format
+        const matricPattern = /^lcu\/ug\/\d{2}\/\d{5}$/i;
+        if (!matricPattern.test(matricNumber)) {
+          setError('Matric number must be in the format: LCU/UG/00/00000');
+          return;
+        }
+        if (!phoneNumber.match(/^[0-9]{11}$/)) {
+          setError('Phone number must be 11 digits (e.g. 08012345678)');
+          return;
+        }
+        const res = await register(name, email, password, hostel, faculty, department, matricNumber, phoneNumber, requestVerification);
         setSuccessMsg(res.message || 'OTP verification code has been sent to your email.');
         setIsVerifyingOtp(true);
       }
@@ -82,6 +95,45 @@ export default function Auth() {
     'Arts, Education & Humanities',
     'Law'
   ];
+
+  const departmentsByFaculty = {
+    'Information Technology & Applied Sciences': [
+      'Computer Science',
+      'Information Technology',
+      'Cyber Security',
+      'Software Engineering',
+      'Biochemistry',
+      'Industrial Chemistry',
+      'Microbiology',
+      'Physics with Electronics',
+    ],
+    'Basic Medical & Health Sciences': [
+      'Medicine & Surgery',
+      'Nursing Science',
+      'Medical Laboratory Science',
+      'Pharmacology',
+      'Physiotherapy',
+      'Public Health',
+    ],
+    'Social & Management Sciences': [
+      'Accounting',
+      'Banking & Finance',
+      'Business Administration',
+      'Economics',
+      'Mass Communication',
+      'Political Science',
+      'Sociology',
+    ],
+    'Arts, Education & Humanities': [
+      'English Language',
+      'History & International Studies',
+      'Philosophy',
+      'Education & English',
+      'Education & Mathematics',
+    ],
+    'Law': ['Law'],
+  };
+  const currentDepts = departmentsByFaculty[faculty] || [];
 
   return (
     <div style={styles.container} className="animate-fade-in">
@@ -186,7 +238,7 @@ export default function Auth() {
                     <label style={styles.label}>Faculty</label>
                     <select
                       value={faculty}
-                      onChange={(e) => setFaculty(e.target.value)}
+                      onChange={(e) => { setFaculty(e.target.value); setDepartment(''); }}
                       className="glass-input"
                       style={styles.select}
                     >
@@ -194,6 +246,50 @@ export default function Auth() {
                         <option key={f} value={f} style={styles.option}>{f}</option>
                       ))}
                     </select>
+                  </div>
+
+                  <div style={styles.field}>
+                    <label style={styles.label}>Department</label>
+                    <select
+                      value={department}
+                      required
+                      onChange={(e) => setDepartment(e.target.value)}
+                      className="glass-input"
+                      style={styles.select}
+                    >
+                      <option value="" disabled style={styles.option}>-- Select Department --</option>
+                      {currentDepts.map(d => (
+                        <option key={d} value={d} style={styles.option}>{d}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div style={styles.field}>
+                    <label style={styles.label}>Matric Number</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. LCU/UG/22/12345"
+                      value={matricNumber}
+                      onChange={(e) => setMatricNumber(e.target.value.toUpperCase())}
+                      className="glass-input"
+                    />
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #888)' }}>
+                      Format: LCU/UG/YY/NNNNN (e.g. LCU/UG/22/12345)
+                    </span>
+                  </div>
+
+                  <div style={styles.field}>
+                    <label style={styles.label}>Phone Number</label>
+                    <input
+                      type="tel"
+                      required
+                      maxLength="11"
+                      placeholder="e.g. 08012345678"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
+                      className="glass-input"
+                    />
                   </div>
 
                   <div style={styles.checkboxContainer}>
@@ -205,7 +301,7 @@ export default function Auth() {
                       style={styles.checkbox}
                     />
                     <label htmlFor="verify" style={styles.checkboxLabel}>
-                      Request LCU student verification badge (Auto-Verified for demo)
+                      Request LCU student verification badge
                     </label>
                   </div>
                 </>
@@ -249,7 +345,7 @@ const styles = {
   },
   card: {
     width: '100%',
-    maxWidth: '480px',
+    maxWidth: '540px',
     padding: '40px',
     border: '1px solid var(--border-color)',
   },

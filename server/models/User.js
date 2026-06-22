@@ -23,6 +23,18 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: 'None'
   },
+  department: {
+    type: String,
+    default: 'None'
+  },
+  matricNumber: {
+    type: String,
+    default: 'None'
+  },
+  phoneNumber: {
+    type: String,
+    default: ''
+  },
   isVerifiedStudent: {
     type: Boolean,
     default: false
