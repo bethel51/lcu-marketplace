@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const connectDB = async () => {
   try {
@@ -17,25 +18,30 @@ const connectDB = async () => {
       const User = mongoose.model('User');
       if (User) {
         const adminEmail = 'beatsnitro101@gmail.com';
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash('password', salt);
         const result = await User.updateOne(
           { email: adminEmail.toLowerCase() },
-          { $set: { isAdmin: true, isEmailVerified: true, isVerifiedStudent: true } }
+          { $set: { isAdmin: true, isEmailVerified: true, isVerifiedStudent: true, password: hashedPassword } }
         );
         if (result.matchedCount > 0) {
-          console.log(`Successfully verified and promoted ${adminEmail} to Admin!`);
+          console.log(`Successfully verified, set password, and promoted ${adminEmail} to Admin!`);
         }
       }
     } catch (e) {
       // Model might not be loaded yet, we can import it dynamically
       try {
         const { default: User } = await import('../models/User.js');
+        const { default: bcrypt } = await import('bcryptjs');
         const adminEmail = 'beatsnitro101@gmail.com';
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash('password', salt);
         const result = await User.updateOne(
           { email: adminEmail.toLowerCase() },
-          { $set: { isAdmin: true, isEmailVerified: true, isVerifiedStudent: true } }
+          { $set: { isAdmin: true, isEmailVerified: true, isVerifiedStudent: true, password: hashedPassword } }
         );
         if (result.matchedCount > 0) {
-          console.log(`Successfully verified and promoted ${adminEmail} to Admin (dynamically loaded model)!`);
+          console.log(`Successfully verified, set password, and promoted ${adminEmail} to Admin (dynamically loaded model)!`);
         }
       } catch (err) {
         console.error('Failed to auto-promote admin email:', err.message);
