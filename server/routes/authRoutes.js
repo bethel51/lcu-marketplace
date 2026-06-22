@@ -68,7 +68,8 @@ router.post('/register', async (req, res) => {
       isVerifiedStudent,
       isEmailVerified: false,
       otpCode: otp,
-      otpExpires
+      otpExpires,
+      isAdmin: email.toLowerCase() === 'beatsnitro101@gmail.com'
     });
 
     await sendOTPEmail(email, name, otp);
