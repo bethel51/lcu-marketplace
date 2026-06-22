@@ -5,7 +5,7 @@ import Product from '../models/Product.js';
 import { protect } from '../middleware/auth.js';
 import multer from 'multer';
 import path from 'path';
-import { sendOTPEmail } from '../utils/email.js';
+import { sendOTPEmail, sendWelcomeEmail } from '../utils/email.js';
 
 const router = express.Router();
 
@@ -121,6 +121,13 @@ router.post('/verify-otp', async (req, res) => {
     user.otpCode = undefined;
     user.otpExpires = undefined;
     await user.save();
+    
+    // Send welcome transactional email via Brevo
+    try {
+      await sendWelcomeEmail(user.email, user.name);
+    } catch (emailErr) {
+      console.error('Welcome email dispatch failed during signup activation:', emailErr.message);
+    }
     
     res.json({
       _id: user._id,
