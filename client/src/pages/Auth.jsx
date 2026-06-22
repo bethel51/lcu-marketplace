@@ -137,7 +137,7 @@ export default function Auth() {
 
   return (
     <div style={styles.container} className="animate-fade-in">
-      <div style={styles.card} className="glass-panel">
+      <div style={styles.card} className="glass-panel auth-card">
         <div style={styles.header}>
           <h2 style={styles.title}>
             {isVerifyingOtp 

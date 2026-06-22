@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { API_URL } from '../config';
+import { VerifiedBadge } from '../components/ProductCard';
 
 export default function AdminDashboard() {
   const { user, token } = useAuth();
@@ -246,7 +247,7 @@ export default function AdminDashboard() {
                     </td>
                     <td style={styles.td}>
                       {u.isVerifiedStudent ? (
-                        <span style={{ color: 'var(--success)', fontWeight: '600', fontSize: '0.85rem' }}>✓ Student Verified</span>
+                        <VerifiedBadge size="sm" />
                       ) : (
                         <span style={{ color: 'var(--text-gray)', fontSize: '0.85rem' }}>Unverified</span>
                       )}

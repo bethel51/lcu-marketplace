@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { API_URL } from '../config';
+import { VerifiedBadge } from '../components/ProductCard';
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -315,7 +316,7 @@ export default function ProductDetails() {
                 <div style={styles.sellerNameRow}>
                   <span style={styles.sellerName}>{product.seller.name}</span>
                   {product.seller.isVerifiedStudent && (
-                    <span style={styles.verifiedBadge}>Verified Student</span>
+                    <VerifiedBadge size="sm" />
                   )}
                 </div>
                 <div style={styles.sellerMeta}>

@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 import { API_URL } from '../config';
+import { VerifiedBadge } from '../components/ProductCard';
 
 const HOSTELS = [
   'Bronze Hostel','Silver Hostel','Gold Hostel','Platinum Hostel',
@@ -173,7 +174,7 @@ export default function Dashboard() {
 
         <div className="db-verify-box">
           {user?.isVerifiedStudent ? (
-            <span className="db-verified-badge">✓ LCU Verified Student</span>
+            <VerifiedBadge size="lg" />
           ) : showVerifyForm ? (
             <form onSubmit={handleVerifySubmit} style={{ display:'flex', flexDirection:'column', gap:'8px', alignItems:'flex-end' }}>
               <input

@@ -31,17 +31,9 @@ function AppContent() {
         <Navbar />
         <div style={styles.main}>
           <Routes>
-            <Route path="/" element={
-              <PrivateRoute>
-                <Home />
-              </PrivateRoute>
-            } />
+            <Route path="/" element={<Home />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/product/:id" element={
-              <PrivateRoute>
-                <ProductDetails />
-              </PrivateRoute>
-            } />
+            <Route path="/product/:id" element={<ProductDetails />} />
             
             {/* Private student features */}
             <Route path="/post" element={

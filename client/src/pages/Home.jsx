@@ -169,7 +169,7 @@ export default function Home() {
           </header>
 
           {/* Category Tabs */}
-          <div style={styles.categoryContainer}>
+          <div style={styles.categoryContainer} className="category-scroll">
             {categories.map((cat) => {
               const count = cat === 'All' 
                 ? allProducts.length 
