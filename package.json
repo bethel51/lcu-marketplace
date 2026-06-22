@@ -4,8 +4,8 @@
   "description": "Root configuration for Lead City University Marketplace",
   "private": true,
   "scripts": {
-    "install:server": "npm install --prefix server",
-    "install:client": "npm install --prefix client",
+    "install:server": "npm install --prefix server --production=false",
+    "install:client": "npm install --prefix client --production=false",
     "install-all": "npm run install:server && npm run install:client",
     "build:client": "npm run build --prefix client",
     "start": "npm start --prefix server",
