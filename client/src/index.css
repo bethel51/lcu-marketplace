@@ -787,14 +787,16 @@ button, input, select, textarea { font-family: inherit; outline: none; }
   inset: 0;
   pointer-events: none;
   z-index: 0;
+  contain: paint;
 }
 .hero-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(80px);
+  filter: blur(30px);
   opacity: 0.45;
   will-change: transform;
   transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
 }
 .hero-orb-1 {
   width: 520px; height: 520px;

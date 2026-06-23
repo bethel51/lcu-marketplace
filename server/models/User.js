@@ -39,6 +39,14 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  isVerificationFeePaid: {
+    type: Boolean,
+    default: false
+  },
+  walletBalance: {
+    type: Number,
+    default: 0
+  },
   isEmailVerified: {
     type: Boolean,
     default: false

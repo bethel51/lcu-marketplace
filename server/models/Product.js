@@ -40,6 +40,14 @@ const productSchema = new mongoose.Schema({
     enum: ['Available', 'Sold'],
     default: 'Available'
   },
+  isBoosted: {
+    type: Boolean,
+    default: false
+  },
+  boostExpiry: {
+    type: Date,
+    default: null
+  },
   reports: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'

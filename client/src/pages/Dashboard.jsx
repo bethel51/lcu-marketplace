@@ -33,6 +33,7 @@ export default function Dashboard() {
   const [myProducts,  setMyProducts]    = useState([]);
   const [loading,     setLoading]       = useState(true);
   const [activeTab,   setActiveTab]     = useState('listings');
+  const [orders,      setOrders]        = useState({ bought: [], sold: [] });
 
   // ── Profile-settings state ──────────────────────────────────
   const [editHostel,      setEditHostel]      = useState('Off-Campus');
@@ -64,6 +65,15 @@ export default function Dashboard() {
         if (res.ok) {
           const all = await res.json();
           setMyProducts(all.filter(p => p.seller?._id === user._id || p.seller === user._id));
+        }
+
+        // Fetch user orders/transactions
+        const ordersRes = await fetch(`${API_URL}/api/payments/my-orders`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (ordersRes.ok) {
+          const ordersData = await ordersRes.json();
+          setOrders(ordersData);
         }
       }
     } catch {
@@ -133,6 +143,144 @@ export default function Dashboard() {
     } catch { showToast('Failed to delete', 'error'); }
   };
 
+  const handleConfirmDelivery = async (orderId) => {
+    if (!window.confirm('Have you physically received the product? This will permanently release the escrowed funds to the seller.')) return;
+    try {
+      const res = await fetch(`${API_URL}/api/payments/confirm-delivery/${orderId}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast('Escrow funds released to the seller! 🤝', 'success');
+        loadDashboard();
+      } else {
+        showToast(data.message || 'Failed to release funds', 'error');
+      }
+    } catch {
+      showToast('Error releasing funds', 'error');
+    }
+  };
+
+  const handleBoostListing = async (productId) => {
+    try {
+      const response = await fetch(`${API_URL}/api/payments/initialize`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          orderType: 'boost',
+          productId
+        })
+      });
+      const resData = await response.json();
+      if (!response.ok) {
+        showToast(resData.message || 'Boost initialization failed', 'error');
+        return;
+      }
+      const { txRef, amount, email, name, phoneNumber, flwPublicKey } = resData;
+
+      window.FlutterwaveCheckout({
+        public_key: flwPublicKey,
+        tx_ref: txRef,
+        amount: amount,
+        currency: 'NGN',
+        payment_options: 'card, banktransfer, ussd',
+        customer: { email, phone_number: phoneNumber, name },
+        customizations: {
+          title: 'LCU Marketplace listing Boost',
+          description: 'Promote your listing on LCU Marketplace for 7 days',
+        },
+        callback: async (paymentRes) => {
+          try {
+            const verifyResponse = await fetch(`${API_URL}/api/payments/verify`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                transactionId: paymentRes.transaction_id,
+                txRef
+              })
+            });
+            if (verifyResponse.ok) {
+              showToast('Listing boosted successfully! 🚀', 'success');
+              loadDashboard();
+            } else {
+              showToast('Verification failed', 'error');
+            }
+          } catch (err) {
+            showToast('Verification request failed', 'error');
+          }
+        }
+      });
+    } catch {
+      showToast('Error initializing boost payment', 'error');
+    }
+  };
+
+  const handlePayVerificationFee = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/payments/initialize`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          orderType: 'verification'
+        })
+      });
+      const resData = await response.json();
+      if (!response.ok) {
+        showToast(resData.message || 'Verification initialization failed', 'error');
+        return;
+      }
+      const { txRef, amount, email, name, phoneNumber, flwPublicKey } = resData;
+
+      window.FlutterwaveCheckout({
+        public_key: flwPublicKey,
+        tx_ref: txRef,
+        amount: amount,
+        currency: 'NGN',
+        payment_options: 'card, banktransfer, ussd',
+        customer: { email, phone_number: phoneNumber, name },
+        customizations: {
+          title: 'LCU Student Verification',
+          description: 'One-time verification fee for verified student badge',
+        },
+        callback: async (paymentRes) => {
+          try {
+            const verifyResponse = await fetch(`${API_URL}/api/payments/verify`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                transactionId: paymentRes.transaction_id,
+                txRef
+              })
+            });
+            if (verifyResponse.ok) {
+              showToast('Verification fee paid and account verified! 🎓', 'success');
+              loadDashboard();
+            } else {
+              showToast('Verification failed', 'error');
+            }
+          } catch (err) {
+            showToast('Verification request failed', 'error');
+          }
+        }
+      });
+    } catch {
+      showToast('Error initializing verification payment', 'error');
+    }
+  };
+
   // ── Derived stats ─────────────────────────────────────────────
   const activeCount  = myProducts.filter(p => p.status === 'Available').length;
   const soldCount    = myProducts.filter(p => p.status === 'Sold').length;
@@ -192,9 +340,14 @@ export default function Dashboard() {
               </div>
             </form>
           ) : (
-            <button onClick={() => setShowVerifyForm(true)} className="btn-primary" style={{ padding:'9px 20px', fontSize:'0.85rem' }}>
-              🎓 Get Verified
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end' }}>
+              <button onClick={() => setShowVerifyForm(true)} className="btn-secondary" style={{ padding:'6px 14px', fontSize:'0.8rem' }}>
+                📎 Submit ID Form
+              </button>
+              <button onClick={handlePayVerificationFee} className="btn-primary" style={{ padding:'9px 20px', fontSize:'0.85rem' }}>
+                🎓 Get Instant Verified (₦1,000)
+              </button>
+            </div>
           )}
           {!user?.isVerifiedStudent && (
             <p style={{ fontSize:'0.73rem', color:'var(--text-muted)', textAlign:'right', maxWidth:'220px' }}>
@@ -268,6 +421,15 @@ export default function Dashboard() {
             ))}
           </div>
 
+          {/* ── Wallet Balance ─────────────────────────────────── */}
+          <div className="db-sidebar-section">
+            <p className="db-sidebar-section-title">Escrow Wallet Balance</p>
+            <div style={{ padding: '12px', background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.3)', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--gold)' }}>₦{(profileData?.walletBalance || 0).toLocaleString()}</span>
+              <span style={{ fontSize: '0.72rem', fontWeight: '700', padding: '2px 6px', background: 'rgba(16,185,129,0.15)', color: 'var(--success)', borderRadius: '4px' }}>Active</span>
+            </div>
+          </div>
+
           {/* ── Quick Actions ─────────────────────────────────── */}
           <div className="db-sidebar-section">
             <p className="db-sidebar-section-title">Quick Actions</p>
@@ -310,6 +472,7 @@ export default function Dashboard() {
           <div className="db-tabs">
             {[
               { id: 'listings', label: `📦 My Listings (${myProducts.length})` },
+              { id: 'orders', label: `💳 Transactions (${(orders.bought?.length || 0) + (orders.sold?.length || 0)})` },
               { id: 'wishlist', label: `❤️ Wishlist (${wishCount})` },
             ].map(tab => (
               <button
@@ -335,9 +498,21 @@ export default function Dashboard() {
                     <div className="db-product-info">
                       <h4 className="db-product-title">{p.name}</h4>
                       <span className="db-product-price">₦{p.price.toLocaleString()}</span>
-                      <div className="db-product-meta">
+                      <div className="db-product-meta" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
                         <span>📍 {p.hostelLocation}</span>
                         <span className={`db-status-badge ${p.status === 'Sold' ? 'sold' : 'available'}`}>{p.status}</span>
+                        {p.isBoosted ? (
+                          <span style={{ fontSize: '0.7rem', fontWeight: '700', padding: '2px 8px', borderRadius: '4px', background: 'rgba(212,175,55,0.15)', color: 'var(--gold)', border: '1px solid rgba(212,175,55,0.3)' }}>🚀 Boosted</span>
+                        ) : (
+                          p.status !== 'Sold' && (
+                            <button
+                              onClick={() => handleBoostListing(p._id)}
+                              style={{ border: 'none', background: 'none', color: 'var(--gold)', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+                            >
+                              🚀 Boost Listing (₦500)
+                            </button>
+                          )
+                        )}
                       </div>
                     </div>
                     <div className="db-actions">
@@ -377,6 +552,78 @@ export default function Dashboard() {
                 <Link to="/post" className="btn-primary">+ Post a Listing</Link>
               </div>
             )
+          )}
+
+          {/* ── ORDERS TAB ────────────────────────────────────── */}
+          {activeTab === 'orders' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div>
+                <h3 style={{ fontSize: '1.05rem', color: 'var(--gold)', marginBottom: '12px', fontWeight: '700' }}>🛒 Items Purchased (Escrow)</h3>
+                {orders.bought?.length > 0 ? (
+                  <div className="db-card-list">
+                    {orders.bought.map(o => (
+                      <div key={o._id} className="db-product-card" style={{ borderLeft: '3px solid var(--gold)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div className="db-product-info">
+                          <h4 className="db-product-title">{o.product ? o.product.name : 'Deleted Product'}</h4>
+                          <span className="db-product-price">₦{o.amount.toLocaleString()}</span>
+                          <div className="db-product-meta" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                            <span>Seller: {o.seller?.name || 'Unknown'}</span>
+                            <span>Ref: {o.txRef}</span>
+                            <span style={{ fontWeight: '700', color: o.paymentStatus === 'Paid' ? 'var(--success)' : 'var(--warning)' }}>
+                              Payment: {o.paymentStatus}
+                            </span>
+                            <span style={{ fontWeight: '700', color: o.escrowStatus === 'Released' ? 'var(--success)' : 'var(--gold)' }}>
+                              Escrow: {o.escrowStatus}
+                            </span>
+                          </div>
+                        </div>
+                        {o.paymentStatus === 'Paid' && o.escrowStatus === 'Held' && (
+                          <div className="db-actions">
+                            <button
+                              onClick={() => handleConfirmDelivery(o._id)}
+                              className="btn-primary"
+                              style={{ padding: '8px 14px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+                            >
+                              🤝 Release Funds
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>You haven't bought any items yet.</p>
+                )}
+              </div>
+
+              <div>
+                <h3 style={{ fontSize: '1.05rem', color: 'var(--gold)', marginBottom: '12px', fontWeight: '700' }}>💰 Items Sold (Escrow Earnings)</h3>
+                {orders.sold?.length > 0 ? (
+                  <div className="db-card-list">
+                    {orders.sold.map(o => (
+                      <div key={o._id} className="db-product-card" style={{ borderLeft: '3px solid var(--success)' }}>
+                        <div className="db-product-info">
+                          <h4 className="db-product-title">{o.product ? o.product.name : 'Deleted Product'}</h4>
+                          <span className="db-product-price">₦{o.amount.toLocaleString()}</span>
+                          <div className="db-product-meta" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                            <span>Buyer: {o.buyer?.name || 'Unknown'}</span>
+                            <span>Ref: {o.txRef}</span>
+                            <span style={{ fontWeight: '700', color: o.paymentStatus === 'Paid' ? 'var(--success)' : 'var(--warning)' }}>
+                              Payment: {o.paymentStatus}
+                            </span>
+                            <span style={{ fontWeight: '700', color: o.escrowStatus === 'Released' ? 'var(--success)' : 'var(--gold)' }}>
+                              Escrow: {o.escrowStatus}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>No items sold through escrow yet.</p>
+                )}
+              </div>
+            </div>
           )}
 
           {/* ── WISHLIST TAB ──────────────────────────────────── */}

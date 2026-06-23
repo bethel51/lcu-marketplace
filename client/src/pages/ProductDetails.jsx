@@ -179,6 +179,84 @@ export default function ProductDetails() {
     }
   };
 
+  const handleBuyNow = async () => {
+    if (!token) {
+      navigate('/auth', { state: { from: `/product/${id}` } });
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${API_URL}/api/payments/initialize`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          orderType: 'escrow',
+          productId: product._id
+        })
+      });
+      
+      const resData = await response.json();
+      if (!response.ok) {
+        showToast(resData.message || 'Initialization failed', 'error');
+        return;
+      }
+      
+      const { txRef, amount, email, name, phoneNumber, flwPublicKey } = resData;
+      
+      window.FlutterwaveCheckout({
+        public_key: flwPublicKey,
+        tx_ref: txRef,
+        amount: amount,
+        currency: 'NGN',
+        payment_options: 'card, banktransfer, ussd',
+        customer: {
+          email: email,
+          phone_number: phoneNumber,
+          name: name,
+        },
+        customizations: {
+          title: 'LCU Marketplace Secure Escrow',
+          description: `Payment for ${product.name}`,
+          logo: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&q=80&w=150',
+        },
+        callback: async (paymentRes) => {
+          try {
+            const verifyResponse = await fetch(`${API_URL}/api/payments/verify`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                transactionId: paymentRes.transaction_id,
+                txRef: txRef
+              })
+            });
+            const verifyData = await verifyResponse.json();
+            if (verifyResponse.ok) {
+              showToast('Payment successful! Funds are in secure escrow.', 'success');
+              fetchProduct();
+              navigate('/profile');
+            } else {
+              showToast(verifyData.message || 'Verification failed', 'error');
+            }
+          } catch (err) {
+            showToast('Verification request failed', 'error');
+          }
+        },
+        onclose: () => {
+          showToast('Payment window closed.', 'warning');
+        }
+      });
+      
+    } catch (err) {
+      showToast('Error preparing payment checkout', 'error');
+    }
+  };
+
   if (loading) {
     return (
       <div style={styles.center} className="container">
@@ -262,7 +340,16 @@ export default function ProductDetails() {
 
             {user?._id !== product.seller._id ? (
               <div style={styles.actionsGroup}>
-                <button onClick={handleStartChat} className="btn-primary" style={styles.chatBtn}>
+                {product.status === 'Sold' ? (
+                  <div style={styles.soldBadgeBig}>
+                    🚫 Sold Out (Already Purchased)
+                  </div>
+                ) : (
+                  <button onClick={handleBuyNow} className="btn-primary" style={{ ...styles.chatBtn, background: 'var(--gold)', borderColor: 'var(--gold)' }}>
+                    💳 Secure Buy Now (Escrow)
+                  </button>
+                )}
+                <button onClick={handleStartChat} className="btn-secondary" style={styles.chatBtn}>
                   💬 Chat with Seller
                 </button>
                 <div style={styles.subActions}>
@@ -573,6 +660,16 @@ const styles = {
     fontSize: '0.85rem',
     textAlign: 'center',
     fontWeight: '500',
+  },
+  soldBadgeBig: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    color: 'var(--error)',
+    border: '1px solid var(--error)',
+    borderRadius: '6px',
+    padding: '12px',
+    fontSize: '0.9rem',
+    textAlign: 'center',
+    fontWeight: '600',
   },
   sellerCard: {
     padding: '30px',
