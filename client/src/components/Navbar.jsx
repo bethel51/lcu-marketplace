@@ -228,40 +228,48 @@ export default function Navbar() {
 
             {user ? (
               <>
-                <Link
-                  to="/marketplace"
-                  style={{ ...styles.link, color: isActive('/marketplace') ? 'var(--gold)' : 'var(--text-gray)' }}
-                >
-                  Marketplace
-                </Link>
-                <Link
-                  to="/chat"
-                  style={{ ...styles.link, color: isActive('/chat') ? 'var(--gold)' : 'var(--text-gray)' }}
-                  className="chat-link-btn"
-                >
-                  Messages
-                </Link>
+                {!user.isAdmin && (
+                  <>
+                    <Link
+                      to="/marketplace"
+                      style={{ ...styles.link, color: isActive('/marketplace') ? 'var(--gold)' : 'var(--text-gray)' }}
+                    >
+                      Marketplace
+                    </Link>
+                    <Link
+                      to="/chat"
+                      style={{ ...styles.link, color: isActive('/chat') ? 'var(--gold)' : 'var(--text-gray)' }}
+                      className="chat-link-btn"
+                    >
+                      Messages
+                    </Link>
+                  </>
+                )}
                 {user.isAdmin && (
                   <Link
                     to="/admin"
                     style={{ ...styles.link, color: 'var(--gold)', fontWeight: 'bold' }}
                   >
-                    Admin Panel
+                    🛡️ Admin Panel
                   </Link>
                 )}
-                <Link
-                  to="/profile"
-                  style={{ ...styles.link, color: isActive('/profile') ? 'var(--gold)' : 'var(--text-gray)' }}
-                >
-                  Dashboard
-                  {user.wishlist && user.wishlist.length > 0 && (
-                    <span style={styles.wishlistBadgeNav}>{user.wishlist.length}</span>
-                  )}
-                </Link>
+                {!user.isAdmin && (
+                  <Link
+                    to="/profile"
+                    style={{ ...styles.link, color: isActive('/profile') ? 'var(--gold)' : 'var(--text-gray)' }}
+                  >
+                    Dashboard
+                    {user.wishlist && user.wishlist.length > 0 && (
+                      <span style={styles.wishlistBadgeNav}>{user.wishlist.length}</span>
+                    )}
+                  </Link>
+                )}
 
-                <Link to="/post" className="btn-primary" style={styles.postBtn}>
-                  + Post Item
-                </Link>
+                {!user.isAdmin && (
+                  <Link to="/post" className="btn-primary" style={styles.postBtn}>
+                    + Post Item
+                  </Link>
+                )}
 
                 <div style={{ ...styles.userContainer, position: 'relative' }} className="nav-user-container" ref={dropdownRef}>
                   <div 
@@ -279,26 +287,37 @@ export default function Navbar() {
                   {dropdownOpen && (
                     <div className="nav-profile-dropdown">
                       <div style={{ padding: '10px 16px', fontSize: '0.85rem', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)', fontWeight: 'bold' }}>
-                        Hi, {user.name.split(' ')[0]}
+                        Hi, {user.name.split(' ')[0]} {user.isAdmin && '(Admin)'}
                       </div>
-                      <button 
-                        onClick={() => { setDropdownOpen(false); navigate('/profile'); }}
-                        className="nav-profile-dropdown-item"
-                      >
-                        👤 My Dashboard
-                      </button>
-                      <button 
-                        onClick={() => { setDropdownOpen(false); setModalOpen(true); }}
-                        className="nav-profile-dropdown-item"
-                      >
-                        ✏️ Edit Profile
-                      </button>
-                      <button 
-                        onClick={() => { setDropdownOpen(false); navigate('/post'); }}
-                        className="nav-profile-dropdown-item"
-                      >
-                        📦 Post Item
-                      </button>
+                      {user.isAdmin ? (
+                        <button 
+                          onClick={() => { setDropdownOpen(false); navigate('/admin'); }}
+                          className="nav-profile-dropdown-item"
+                        >
+                          🛡️ Admin Panel
+                        </button>
+                      ) : (
+                        <>
+                          <button 
+                            onClick={() => { setDropdownOpen(false); navigate('/profile'); }}
+                            className="nav-profile-dropdown-item"
+                          >
+                            👤 My Dashboard
+                          </button>
+                          <button 
+                            onClick={() => { setDropdownOpen(false); setModalOpen(true); }}
+                            className="nav-profile-dropdown-item"
+                          >
+                            ✏️ Edit Profile
+                          </button>
+                          <button 
+                            onClick={() => { setDropdownOpen(false); navigate('/post'); }}
+                            className="nav-profile-dropdown-item"
+                          >
+                            📦 Post Item
+                          </button>
+                        </>
+                      )}
                       <div className="nav-profile-dropdown-divider" />
                       <button onClick={handleLogout} className="nav-profile-dropdown-item" style={{ color: 'var(--error)' }}>
                         🚪 Logout

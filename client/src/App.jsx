@@ -34,10 +34,12 @@ function PageLoader() {
   );
 }
 
-// Guarded Route — must be logged in
+// Guarded Route — must be logged in (students only, admins redirected to admin portal)
 function PrivateRoute({ children }) {
   const { user } = useAuth();
-  return user ? children : <Navigate to="/auth" replace />;
+  if (!user) return <Navigate to="/auth" replace />;
+  if (user.isAdmin) return <Navigate to="/admin" replace />;
+  return children;
 }
 
 // Guarded Route — admins only
