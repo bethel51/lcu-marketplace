@@ -28,36 +28,58 @@ const generateToken = (id) => {
   });
 };
 
-// One-time Admin setup helper
-router.post('/setup-admin', async (req, res) => {
+// Admin Access via secure PIN Code
+router.post('/verify-admin-pin', async (req, res) => {
   try {
-    const adminEmail = 'beatsnitro101@gmail.com';
-    let user = await User.findOne({ email: adminEmail });
+    const { pin } = req.body;
     
-    if (user) {
-      user.password = 'password';
-      user.isAdmin = true;
-      user.isEmailVerified = true;
-      user.isVerifiedStudent = true;
-      await user.save();
-      return res.json({ message: 'Admin account password reset & credentials updated successfully.' });
+    // We will use 192837 as the secure Admin PIN.
+    const correctPin = process.env.ADMIN_PIN || '192837';
+    
+    if (pin !== correctPin) {
+      return res.status(401).json({ message: 'Invalid Admin Access PIN code.' });
     }
 
-    user = await User.create({
-      name: 'System Administrator',
-      email: adminEmail,
-      password: 'password',
-      hostel: 'Administration',
-      faculty: 'Administration',
-      department: 'Central IT',
-      matricNumber: 'LCU/UG/00/00000',
-      phoneNumber: '08000000000',
-      isVerifiedStudent: true,
-      isEmailVerified: true,
-      isAdmin: true
-    });
+    const adminEmail = 'beatsnitro101@gmail.com';
+    let user = await User.findOne({ email: adminEmail });
 
-    res.status(201).json({ message: 'Admin account initialized successfully!' });
+    if (!user) {
+      user = await User.create({
+        name: 'System Administrator',
+        email: adminEmail,
+        password: Math.random().toString(36).substring(2, 10), // secure random placeholder password
+        hostel: 'Administration',
+        faculty: 'Administration',
+        department: 'Central IT',
+        matricNumber: 'LCU/UG/00/00000',
+        phoneNumber: '08000000000',
+        isVerifiedStudent: true,
+        isEmailVerified: true,
+        isAdmin: true
+      });
+    } else {
+      // Ensure the existing user is promoted to Admin
+      if (!user.isAdmin || !user.isEmailVerified) {
+        user.isAdmin = true;
+        user.isEmailVerified = true;
+        user.isVerifiedStudent = true;
+        await user.save();
+      }
+    }
+
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      hostel: user.hostel,
+      faculty: user.faculty,
+      department: user.department,
+      matricNumber: user.matricNumber,
+      phoneNumber: user.phoneNumber,
+      isVerifiedStudent: user.isVerifiedStudent,
+      isAdmin: user.isAdmin,
+      token: generateToken(user._id)
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

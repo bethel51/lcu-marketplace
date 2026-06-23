@@ -2,59 +2,56 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { API_URL } from '../config';
 
 export default function AdminLogin() {
-  const { login, user } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast();
   
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [pin, setPin] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // If already an admin, redirect straight to /admin
+  // If already logged in as admin, redirect to dashboard
   useEffect(() => {
     if (user && user.isAdmin) {
       navigate('/admin', { replace: true });
     }
   }, [user, navigate]);
 
-  const handleLogin = async (e) => {
+  const handlePinSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-    try {
-      const loggedUser = await login(email, password);
-      if (loggedUser && loggedUser.isAdmin) {
-        showToast('Welcome back, Administrator!', 'success');
-        navigate('/admin', { replace: true });
-      } else {
-        setError('Access denied: You are not authorized as an administrator.');
-        showToast('Access denied: Admins only.', 'error');
-      }
-    } catch (err) {
-      setError(err.message || 'Invalid credentials or connection issue.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const handleSetupAdmin = async () => {
-    setLoading(true);
-    setError('');
+    if (pin.length < 4) {
+      setError('PIN must be at least 4 digits.');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const res = await fetch(`${API_URL}/api/auth/setup-admin`, {
+      const res = await fetch(`${API_URL}/api/auth/verify-admin-pin`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin })
       });
       const data = await res.json();
+      
       if (res.ok) {
-        showToast(data.message || 'Admin credentials created/reset successfully!', 'success');
-        setEmail('beatsnitro101@gmail.com');
-        setPassword('password');
+        // Log user in using localstorage credentials token exchange
+        localStorage.setItem('lcu_user', JSON.stringify(data));
+        localStorage.setItem('lcu_token', data.token);
+        
+        // Reload state inside AuthContext implicitly or trigger a page refresh
+        showToast('System authorized. Access granted! 🛡️', 'success');
+        
+        // Let react-router state pick up the login and update the view
+        window.location.href = '/admin';
       } else {
-        setError(data.message || 'Failed to setup admin account.');
+        setError(data.message || 'Verification failed. Incorrect PIN.');
+        showToast('Invalid PIN access code.', 'error');
       }
     } catch (err) {
       setError('Connection failed. Verify your server connection.');
@@ -67,9 +64,9 @@ export default function AdminLogin() {
     <div style={styles.container} className="container">
       <div style={styles.card} className="glass-panel">
         <header style={styles.header}>
-          <div style={styles.badge}>🛡️ SYSTEM PORTAL</div>
-          <h2 style={styles.title}>Admin Portal Sign In</h2>
-          <p style={styles.subtitle}>Enter credentials to access the management panel</p>
+          <div style={styles.badge}>🛡️ SYSTEM SECURITY</div>
+          <h2 style={styles.title}>Admin Access PIN</h2>
+          <p style={styles.subtitle}>Enter the 6-digit administration authorization PIN code</p>
         </header>
 
         {error && (
@@ -78,27 +75,18 @@ export default function AdminLogin() {
           </div>
         )}
 
-        <form onSubmit={handleLogin} style={styles.form}>
+        <form onSubmit={handlePinSubmit} style={styles.form}>
           <div style={styles.inputGroup}>
-            <label style={styles.label}>Admin Email</label>
-            <input
-              type="email"
-              placeholder="e.g. admin@lcu.edu.ng"
-              className="glass-input"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>Password</label>
+            <label style={styles.label}>Administration PIN Code</label>
             <input
               type="password"
-              placeholder="••••••••"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              placeholder="Enter Access PIN"
               className="glass-input"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              style={{ letterSpacing: '0.4em', textAlign: 'center', fontSize: '1.4rem' }}
+              value={pin}
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
               required
             />
           </div>
@@ -109,20 +97,9 @@ export default function AdminLogin() {
             disabled={loading}
             style={styles.submitBtn}
           >
-            {loading ? 'Authenticating System...' : 'Access Admin Dashboard →'}
+            {loading ? 'Verifying system PIN...' : 'Verify Access PIN →'}
           </button>
         </form>
-
-        <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <button
-            onClick={handleSetupAdmin}
-            disabled={loading}
-            className="btn-secondary"
-            style={{ width: '100%', borderStyle: 'dashed', borderColor: 'var(--gold)' }}
-          >
-            ⚙️ One-Click Setup/Reset Admin Credentials
-          </button>
-        </div>
 
         <div style={styles.footerLink}>
           <Link to="/" style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
@@ -144,20 +121,20 @@ const styles = {
   },
   card: {
     width: '100%',
-    maxWidth: '440px',
+    maxWidth: '400px',
     padding: '36px',
     border: '1px solid var(--border-strong)',
+    textAlign: 'center',
   },
   header: {
-    textAlign: 'center',
     marginBottom: '28px',
   },
   badge: {
     display: 'inline-block',
     padding: '4px 10px',
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
-    color: '#ef4444',
-    border: '1px solid rgba(239, 68, 68, 0.3)',
+    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+    color: 'var(--gold)',
+    border: '1px solid rgba(59, 130, 246, 0.3)',
     borderRadius: '4px',
     fontSize: '0.7rem',
     fontWeight: '700',
@@ -173,6 +150,7 @@ const styles = {
     fontSize: '0.85rem',
     color: 'var(--text-gray)',
     marginTop: '6px',
+    lineHeight: '1.4',
   },
   errorAlert: {
     backgroundColor: 'rgba(239, 68, 68, 0.12)',
@@ -185,16 +163,17 @@ const styles = {
     display: 'flex',
     gap: '8px',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   form: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '20px',
+    gap: '24px',
   },
   inputGroup: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '6px',
+    gap: '8px',
   },
   label: {
     fontSize: '0.82rem',
@@ -202,11 +181,9 @@ const styles = {
     color: 'var(--text-secondary)',
   },
   submitBtn: {
-    marginTop: '8px',
     width: '100%',
   },
   footerLink: {
-    textAlign: 'center',
-    marginTop: '24px',
+    marginTop: '28px',
   }
 };
