@@ -228,7 +228,7 @@ export default function Navbar() {
 
             {user ? (
               <>
-                {!user.isAdmin && (
+                {!user.isAdmin ? (
                   <>
                     <Link
                       to="/marketplace"
@@ -243,31 +243,25 @@ export default function Navbar() {
                     >
                       Messages
                     </Link>
+                    <Link
+                      to="/profile"
+                      style={{ ...styles.link, color: isActive('/profile') ? 'var(--gold)' : 'var(--text-gray)' }}
+                    >
+                      Dashboard
+                      {user.wishlist && user.wishlist.length > 0 && (
+                        <span style={styles.wishlistBadgeNav}>{user.wishlist.length}</span>
+                      )}
+                    </Link>
+                    <Link to="/post" className="btn-primary" style={styles.postBtn}>
+                      + Post Item
+                    </Link>
                   </>
-                )}
-                {user.isAdmin && (
+                ) : (
                   <Link
                     to="/admin"
                     style={{ ...styles.link, color: 'var(--gold)', fontWeight: 'bold' }}
                   >
-                    🛡️ Admin Panel
-                  </Link>
-                )}
-                {!user.isAdmin && (
-                  <Link
-                    to="/profile"
-                    style={{ ...styles.link, color: isActive('/profile') ? 'var(--gold)' : 'var(--text-gray)' }}
-                  >
-                    Dashboard
-                    {user.wishlist && user.wishlist.length > 0 && (
-                      <span style={styles.wishlistBadgeNav}>{user.wishlist.length}</span>
-                    )}
-                  </Link>
-                )}
-
-                {!user.isAdmin && (
-                  <Link to="/post" className="btn-primary" style={styles.postBtn}>
-                    + Post Item
+                    Admin Control Panel
                   </Link>
                 )}
 
@@ -287,16 +281,9 @@ export default function Navbar() {
                   {dropdownOpen && (
                     <div className="nav-profile-dropdown">
                       <div style={{ padding: '10px 16px', fontSize: '0.85rem', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)', fontWeight: 'bold' }}>
-                        Hi, {user.name.split(' ')[0]} {user.isAdmin && '(Admin)'}
+                        Hi, {user.name.split(' ')[0]}
                       </div>
-                      {user.isAdmin ? (
-                        <button 
-                          onClick={() => { setDropdownOpen(false); navigate('/admin'); }}
-                          className="nav-profile-dropdown-item"
-                        >
-                          🛡️ Admin Panel
-                        </button>
-                      ) : (
+                      {!user.isAdmin ? (
                         <>
                           <button 
                             onClick={() => { setDropdownOpen(false); navigate('/profile'); }}
@@ -317,6 +304,13 @@ export default function Navbar() {
                             📦 Post Item
                           </button>
                         </>
+                      ) : (
+                        <button 
+                          onClick={() => { setDropdownOpen(false); navigate('/admin'); }}
+                          className="nav-profile-dropdown-item"
+                        >
+                          🛡️ Admin Panel
+                        </button>
                       )}
                       <div className="nav-profile-dropdown-divider" />
                       <button onClick={handleLogout} className="nav-profile-dropdown-item" style={{ color: 'var(--error)' }}>
