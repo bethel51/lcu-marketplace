@@ -405,20 +405,22 @@ export default function Dashboard() {
           </div>
 
           {/* ── Info rows ────────────────────────────────────── */}
-          <div className="db-sidebar-section">
-            <p className="db-sidebar-section-title">Profile Information</p>
-            {[
-              { icon:'🪪', label:'Matric No.', value: profileData?.matricNumber || '—' },
-              { icon:'🏛️', label:'Faculty',    value: profileData?.faculty || '—' },
-              { icon:'📚', label:'Department', value: profileData?.department || '—' },
-              { icon:'🏠', label:'Hostel',     value: profileData?.hostel || '—' },
-              { icon:'📞', label:'Phone',      value: profileData?.phoneNumber || '—' },
-            ].map(row => (
-              <div key={row.label} className="db-info-row">
-                <span className="db-info-label">{row.icon} {row.label}</span>
-                <span className="db-info-value" style={{ maxWidth:'140px', textAlign:'right', fontSize:'0.82rem', wordBreak:'break-word' }}>{row.value}</span>
-              </div>
-            ))}
+          <div className="db-sidebar-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+            <p className="db-sidebar-section-title" style={{ textAlign: 'center', width: '100%' }}>Profile Information</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', alignItems: 'center' }}>
+              {[
+                { icon:'🪪', label:'Matric No.', value: profileData?.matricNumber || '—' },
+                { icon:'🏛️', label:'Faculty',    value: profileData?.faculty || '—' },
+                { icon:'📚', label:'Department', value: profileData?.department || '—' },
+                { icon:'🏠', label:'Hostel',     value: profileData?.hostel || '—' },
+                { icon:'📞', label:'Phone',      value: profileData?.phoneNumber || '—' },
+              ].map(row => (
+                <div key={row.label} className="db-info-row" style={{ alignItems: 'center', textAlign: 'center' }}>
+                  <span className="db-info-label">{row.icon} {row.label}</span>
+                  <span className="db-info-value" style={{ fontSize:'0.82rem', wordBreak:'break-word' }}>{row.value}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* ── Wallet Balance ─────────────────────────────────── */}

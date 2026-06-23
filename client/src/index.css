@@ -443,6 +443,8 @@ button, input, select, textarea { font-family: inherit; outline: none; }
 .db-info-row {
   display: flex; flex-direction: column; gap: 3px;
   margin-bottom: 12px;
+  align-items: center;
+  text-align: center;
 }
 .db-info-row:last-child { margin-bottom: 0; }
 .db-info-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
@@ -625,6 +627,17 @@ button, input, select, textarea { font-family: inherit; outline: none; }
    COMPLETE MOBILE SWEEP — ≤768px
    ================================================================ */
 @media (max-width: 768px) {
+
+  /* Prevent scroll lagging/hanging on mobile by hiding heavy filter: blur() backgrounds */
+  .hero-orb {
+    display: none !important;
+  }
+
+  /* Disable heavy backdrop-filters on mobile to boost scroll FPS */
+  .glass-panel, .landing-stats, .landing-cta-card, .landing-feature-card, .landing-step {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
 
   /* ── Container ───────────────────────────────────────────── */
   .container { padding: 0 16px; }
