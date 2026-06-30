@@ -108,16 +108,14 @@ body.light-theme {
 /* ── Reset ────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html, body {
-  overflow-x: hidden;
-  max-width: 100%;
-  width: 100%;
-}
 html {
   scroll-behavior: smooth;
 }
 
 body {
+  overflow-x: hidden;
+  max-width: 100%;
+  width: 100%;
   background-color: var(--bg-dark);
   color: var(--text-primary);
   font-family: var(--font-body);
