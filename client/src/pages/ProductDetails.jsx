@@ -302,8 +302,12 @@ export default function ProductDetails() {
     );
   }
 
-  const averageRating = product.seller.ratings?.length > 0
-    ? (product.seller.ratings.reduce((acc, curr) => acc + curr.rating, 0) / product.seller.ratings.length).toFixed(1)
+  const sellerObj = (product?.seller && typeof product.seller === 'object') ? product.seller : {};
+  const sellerId  = sellerObj._id || product?.seller;
+  const isOwnListing = user && (user._id === sellerId || user.id === sellerId);
+
+  const averageRating = sellerObj.ratings?.length > 0
+    ? (sellerObj.ratings.reduce((acc, curr) => acc + curr.rating, 0) / sellerObj.ratings.length).toFixed(1)
     : null;
 
   return (
@@ -366,7 +370,7 @@ export default function ProductDetails() {
               </div>
             </div>
 
-            {user?._id !== product.seller._id ? (
+            {!isOwnListing ? (
               <div style={styles.actionsGroup}>
                 {product.status === 'Sold' ? (
                   <div style={styles.soldBadgeBig}>

@@ -687,9 +687,39 @@ export default function Dashboard() {
                       <div className="dash-listing-info">
                         <h4 className="dash-listing-name">{p.name}</h4>
                         <span className="dash-listing-price">₦{p.price?.toLocaleString()}</span>
-                        <div className="dash-listing-meta"><span>📍 {p.hostelLocation}</span></div>
+                        <div className="dash-listing-meta">
+                          <span>📍 {p.hostelLocation}</span>
+                          <span className={`dash-status-badge ${p.status === 'Sold' ? 'sold' : 'available'}`}>
+                            {p.status || 'Available'}
+                          </span>
+                        </div>
                       </div>
-                      <Link to={`/product/${p._id}`} className="btn-primary" style={{ padding:'8px 16px', fontSize:'0.82rem', flexShrink:0 }}>View →</Link>
+                      <div className="dash-listing-actions" style={{ display: 'flex', gap: '8px' }}>
+                        <Link to={`/product/${p._id}`} className="btn-primary" style={{ padding:'8px 14px', fontSize:'0.78rem', flexShrink:0 }}>
+                          💳 Buy / View
+                        </Link>
+                        <button
+                          onClick={async () => {
+                            try {
+                              const res = await fetch(`${API_URL}/api/products/${p._id}/wishlist`, {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${token}` }
+                              });
+                              if (res.ok) {
+                                showToast('Removed from Wishlist', 'info');
+                                loadDashboard();
+                              }
+                            } catch {
+                              showToast('Error removing item', 'error');
+                            }
+                          }}
+                          className="btn-danger"
+                          style={{ padding:'8px 12px', fontSize:'0.78rem' }}
+                          title="Remove from Wishlist"
+                        >
+                          🗑️
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
