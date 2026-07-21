@@ -414,8 +414,8 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* ─── Modern Floating Mobile Bottom Navigation Bar (Hidden on Landing Page) ─── */}
-      {location.pathname !== '/' && (
+      {/* ─── Modern Floating Mobile Bottom Navigation Bar (ONLY on User Dashboard) ─── */}
+      {location.pathname === '/profile' && (
         <div className="mobile-bottom-nav">
           <Link to="/" className={`mobile-nav-item ${isActive('/') ? 'active' : ''}`}>
             <span className="mobile-nav-icon">🏠</span>
