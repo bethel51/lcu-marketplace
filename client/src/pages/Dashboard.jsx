@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
@@ -34,6 +34,7 @@ export default function Dashboard() {
   const [loading,     setLoading]       = useState(true);
   const [activeTab,   setActiveTab]     = useState('overview');
   const [orders,      setOrders]        = useState({ bought: [], sold: [] });
+  const [listingSearch, setListingSearch] = useState('');
 
   // ── Profile-settings state ──────────────────────────────────
   const [editHostel,      setEditHostel]      = useState('Off-Campus');
@@ -84,6 +85,13 @@ export default function Dashboard() {
   };
 
   useEffect(() => { if (token) loadDashboard(); }, [token]);
+
+  // ── Copy profile share link ──────────────────────────────────
+  const handleCopyProfileLink = () => {
+    const url = `${window.location.origin}/marketplace?search=${encodeURIComponent(user?.name || '')}`;
+    navigator.clipboard.writeText(url);
+    showToast('Store link copied to clipboard! 🔗', 'success');
+  };
 
   // ── Save profile settings ────────────────────────────────────
   const handleSaveSettings = async () => {
@@ -212,7 +220,7 @@ export default function Dashboard() {
             } else {
               showToast('Verification failed', 'error');
             }
-          } catch (err) {
+          } catch {
             showToast('Verification request failed', 'error');
           }
         }
@@ -271,7 +279,7 @@ export default function Dashboard() {
             } else {
               showToast('Verification failed', 'error');
             }
-          } catch (err) {
+          } catch {
             showToast('Verification request failed', 'error');
           }
         }
@@ -289,6 +297,16 @@ export default function Dashboard() {
   const avgRating    = ratings.length > 0
     ? (ratings.reduce((a,c) => a + c.rating, 0) / ratings.length).toFixed(1)
     : '—';
+
+  const filteredMyProducts = useMemo(() => {
+    if (!listingSearch.trim()) return myProducts;
+    const q = listingSearch.toLowerCase();
+    return myProducts.filter(p => 
+      p.name?.toLowerCase().includes(q) ||
+      p.category?.toLowerCase().includes(q) ||
+      p.hostelLocation?.toLowerCase().includes(q)
+    );
+  }, [myProducts, listingSearch]);
 
   // ── Loading ───────────────────────────────────────────────────
   if (loading) return (
@@ -351,6 +369,7 @@ export default function Dashboard() {
           {/* Quick Actions */}
           <div className="dash-sidebar-actions">
             <Link to="/post" className="dash-action-btn primary">＋ Post New Listing</Link>
+            <button onClick={handleCopyProfileLink} className="dash-action-btn">🔗 Copy Store Link</button>
             <Link to="/chat" className="dash-action-btn">💬 Messages</Link>
             <Link to="/marketplace" className="dash-action-btn">🛍️ Browse Marketplace</Link>
           </div>
@@ -363,7 +382,7 @@ export default function Dashboard() {
           <div className="dash-banner">
             <div>
               <h1 className="dash-banner-title">Hey, {user?.name?.split(' ')[0]}! 👋</h1>
-              <p className="dash-banner-sub">Welcome to your Lead City dashboard</p>
+              <p className="dash-banner-sub">Welcome to your Lead City student dashboard</p>
               <div className="dash-banner-chips">
                 <span className="dash-banner-chip">📧 {user?.email}</span>
                 {profileData?.faculty && <span className="dash-banner-chip">🏛️ {profileData.faculty}</span>}
@@ -489,9 +508,25 @@ export default function Dashboard() {
                 <h2 className="dash-section-title">📦 My Listings <span className="dash-section-count">{myProducts.length}</span></h2>
                 <Link to="/post" className="btn-primary" style={{ padding:'8px 18px', fontSize:'0.82rem' }}>+ New Listing</Link>
               </div>
-              {myProducts.length > 0 ? (
+
+              {/* Listings Search */}
+              <div className="mkt-search-wrap" style={{ marginBottom: '16px' }}>
+                <span className="mkt-search-icon">🔍</span>
+                <input
+                  type="text"
+                  placeholder="Filter your listings by title, category, or location..."
+                  value={listingSearch}
+                  onChange={e => setListingSearch(e.target.value)}
+                  className="glass-input mkt-search-input"
+                />
+                {listingSearch && (
+                  <button onClick={() => setListingSearch('')} className="mkt-search-clear">✕</button>
+                )}
+              </div>
+
+              {filteredMyProducts.length > 0 ? (
                 <div className="dash-listing-grid">
-                  {myProducts.map(p => (
+                  {filteredMyProducts.map(p => (
                     <div key={p._id} className="dash-listing-card">
                       {p.image
                         ? <img src={p.image} alt={p.name} className="dash-listing-img" />
@@ -533,7 +568,7 @@ export default function Dashboard() {
               ) : (
                 <div className="dash-empty">
                   <div className="dash-empty-icon">📭</div>
-                  <p className="dash-empty-title">No listings yet</p>
+                  <p className="dash-empty-title">No matching listings</p>
                   <p className="dash-empty-sub">Start selling by posting your first product on the marketplace.</p>
                   <Link to="/post" className="btn-primary">+ Post a Listing</Link>
                 </div>

@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-export default function ProductCard({ product }) {
+const ProductCard = React.memo(function ProductCard({ product }) {
   const { _id, name, price, image, category, hostelLocation, seller, status } = product;
   const { user } = useAuth();
   const isSameHostel = user?.hostel && hostelLocation && user.hostel.toLowerCase().trim() === hostelLocation.toLowerCase().trim();
@@ -30,7 +30,7 @@ export default function ProductCard({ product }) {
       {/* Image */}
       <div className="premium-card-img-container">
         {image ? (
-          <img src={image} alt={name} className="premium-card-img" />
+          <img src={image} alt={name} className="premium-card-img" decoding="async" loading="lazy" />
         ) : (
           <div style={styles.placeholderImg}>
             <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -61,7 +61,9 @@ export default function ProductCard({ product }) {
       </div>
     </div>
   );
-}
+});
+
+export default ProductCard;
 
 /* ── Premium LCU Verified Badge ─────────────────────────────── */
 export function VerifiedBadge({ size = 'sm' }) {
