@@ -1,22 +1,87 @@
-import React, { Suspense, lazy, useEffect } from 'react';
+import React, { Suspense, lazy, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import Navbar from './components/Navbar';
 import './App.css';
 
-// Lazy loading components for faster initial load
-const Landing = lazy(() => import('./pages/Landing'));
-const Marketplace = lazy(() => import('./pages/Marketplace'));
-const Auth = lazy(() => import('./pages/Auth'));
+// ── Lazy-load all pages (code-split per route) ─────────────────
+const Landing        = lazy(() => import('./pages/Landing'));
+const Marketplace    = lazy(() => import('./pages/Marketplace'));
+const Auth           = lazy(() => import('./pages/Auth'));
 const ProductDetails = lazy(() => import('./pages/ProductDetails'));
-const PostProduct = lazy(() => import('./pages/PostProduct'));
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Chat = lazy(() => import('./pages/Chat'));
+const PostProduct    = lazy(() => import('./pages/PostProduct'));
+const Dashboard      = lazy(() => import('./pages/Dashboard'));
+const Chat           = lazy(() => import('./pages/Chat'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
-const AdminLogin = lazy(() => import('./pages/AdminLogin'));
+const AdminLogin     = lazy(() => import('./pages/AdminLogin'));
 
-// Scroll to top helper
+// ── Dismiss the pre-React HTML shell once React boots ──────────
+function dismissShell() {
+  const shell    = document.getElementById('app-shell');
+  const progress = document.getElementById('app-progress');
+  if (progress) {
+    progress.style.width = '100%';
+    setTimeout(() => { if (progress) progress.style.opacity = '0'; }, 300);
+    setTimeout(() => { if (progress) progress.remove(); }, 700);
+  }
+  if (shell) {
+    shell.classList.add('hidden');
+    setTimeout(() => { if (shell) shell.remove(); }, 400);
+  }
+}
+
+// ── Top progress bar for route transitions ─────────────────────
+function TopProgressBar() {
+  const location = useLocation();
+  const barRef   = useRef(null);
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    const bar = barRef.current;
+    if (!bar) return;
+
+    // Start: shoot to 75%
+    bar.style.transition = 'none';
+    bar.style.width      = '0%';
+    bar.style.opacity    = '1';
+    // Force reflow
+    bar.getBoundingClientRect();
+    bar.style.transition = 'width 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+    bar.style.width      = '75%';
+
+    // Finish: go to 100% then fade out
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      bar.style.transition = 'width 0.2s ease, opacity 0.3s ease 0.2s';
+      bar.style.width      = '100%';
+      setTimeout(() => { bar.style.opacity = '0'; }, 400);
+    }, 400);
+
+    return () => clearTimeout(timerRef.current);
+  }, [location.pathname]);
+
+  return (
+    <div
+      ref={barRef}
+      style={{
+        position:     'fixed',
+        top:          0,
+        left:         0,
+        zIndex:       9999,
+        height:       '3px',
+        width:        '0%',
+        opacity:      0,
+        background:   'linear-gradient(90deg, #1d4ed8, #3b82f6, #60a5fa)',
+        borderRadius: '0 3px 3px 0',
+        boxShadow:    '0 0 12px rgba(59,130,246,0.8)',
+        pointerEvents:'none',
+      }}
+    />
+  );
+}
+
+// ── Scroll to top on every route change ───────────────────────
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -25,16 +90,21 @@ function ScrollToTop() {
   return null;
 }
 
-// Fallback spinner for page loads
+// ── Premium in-app page loader (Suspense fallback) ────────────
 function PageLoader() {
   return (
-    <div style={{ height: '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '16px' }}>
-      <div style={{ width: '40px', height: '40px', border: '3px solid var(--border-color)', borderTop: '3px solid var(--gold)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+    <div className="page-loader">
+      <div className="page-loader-spinner" />
+      <div className="page-loader-skeletons">
+        <div className="page-loader-skel" style={{ width: '60%' }} />
+        <div className="page-loader-skel" style={{ width: '80%' }} />
+        <div className="page-loader-skel" style={{ width: '50%' }} />
+      </div>
     </div>
   );
 }
 
-// Guarded Route — must be logged in & cannot be an admin (students only)
+// ── Route guards ───────────────────────────────────────────────
 function PrivateRoute({ children }) {
   const { user } = useAuth();
   if (!user) return <Navigate to="/auth" replace />;
@@ -42,50 +112,42 @@ function PrivateRoute({ children }) {
   return children;
 }
 
-// Guarded Route — admins only
 function AdminRoute({ children }) {
   const { user } = useAuth();
   return user && user.isAdmin ? children : <Navigate to="/admin-login" replace />;
 }
 
+// ── Main App Shell ─────────────────────────────────────────────
 function AppContent() {
+  // Dismiss the pre-React HTML shell on first mount
+  useEffect(() => {
+    dismissShell();
+  }, []);
+
   return (
     <Router>
+      <TopProgressBar />
       <ScrollToTop />
       <div style={styles.app}>
         <Navbar />
         <div style={styles.main}>
           <Suspense fallback={<PageLoader />}>
             <Routes>
-              {/* Public routes */}
+              {/* Public */}
               <Route path="/"            element={<Landing />} />
-              <Route path="/marketplace" element={
-                <PrivateRoute><Marketplace /></PrivateRoute>
-              } />
               <Route path="/auth"        element={<Auth />} />
-              <Route path="/product/:id" element={
-                <PrivateRoute><ProductDetails /></PrivateRoute>
-              } />
-
-              {/* Private student features */}
-              <Route path="/post" element={
-                <PrivateRoute><PostProduct /></PrivateRoute>
-              } />
-              <Route path="/edit/:id" element={
-                <PrivateRoute><PostProduct /></PrivateRoute>
-              } />
-              <Route path="/profile" element={
-                <PrivateRoute><Dashboard /></PrivateRoute>
-              } />
-              <Route path="/chat" element={
-                <PrivateRoute><Chat /></PrivateRoute>
-              } />
-
-              {/* Admin control portal */}
               <Route path="/admin-login" element={<AdminLogin />} />
-              <Route path="/admin" element={
-                <AdminRoute><AdminDashboard /></AdminRoute>
-              } />
+
+              {/* Protected student routes */}
+              <Route path="/marketplace" element={<PrivateRoute><Marketplace /></PrivateRoute>} />
+              <Route path="/product/:id" element={<PrivateRoute><ProductDetails /></PrivateRoute>} />
+              <Route path="/post"        element={<PrivateRoute><PostProduct /></PrivateRoute>} />
+              <Route path="/edit/:id"    element={<PrivateRoute><PostProduct /></PrivateRoute>} />
+              <Route path="/profile"     element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+              <Route path="/chat"        element={<PrivateRoute><Chat /></PrivateRoute>} />
+
+              {/* Admin */}
+              <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
 
               {/* Fallback */}
               <Route path="*" element={<Navigate to="/" replace />} />
