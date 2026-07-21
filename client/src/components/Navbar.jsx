@@ -198,7 +198,16 @@ export default function Navbar() {
 
           {/* ─── Brand ───────────────────────────────────────── */}
           <Link to="/" style={styles.brand} onClick={() => setMenuOpen(false)}>
-            <img src="/logo.png" alt="LCU Logo" style={styles.logoImage} />
+            <img 
+              src="/logo.png" 
+              alt="LCU Logo" 
+              width="40"
+              height="40"
+              decoding="async"
+              loading="eager"
+              className="nav-logo-img"
+              style={styles.logoImage} 
+            />
             <div style={styles.brandText}>
               <span style={styles.brandTitle}>Lead City</span>
               <span style={styles.brandSub}>MARKETPLACE</span>
