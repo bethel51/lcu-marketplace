@@ -246,13 +246,6 @@ export default function Navbar() {
                       Marketplace
                     </Link>
                     <Link
-                      to="/chat"
-                      style={{ ...styles.link, color: isActive('/chat') ? 'var(--gold)' : 'var(--text-gray)' }}
-                      className="chat-link-btn"
-                    >
-                      Messages
-                    </Link>
-                    <Link
                       to="/profile"
                       style={{ ...styles.link, color: isActive('/profile') ? 'var(--gold)' : 'var(--text-gray)' }}
                     >

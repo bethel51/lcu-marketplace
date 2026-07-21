@@ -151,41 +151,54 @@ export default function ProductDetails() {
     }
   };
 
-  const handleStartChat = () => {
+  // Pickup Modal & Contact State
+  const [showPickupModal, setShowPickupModal] = useState(false);
+  const [pickupDate, setPickupDate] = useState(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
+  });
+  const [pickupTime, setPickupTime] = useState('04:00 PM - 06:00 PM');
+  const [meetingPoint, setMeetingPoint] = useState('LCU Senate Building Car Park');
+  const [buyerNote, setBuyerNote] = useState('');
+
+  const LCU_MEETING_POINTS = [
+    'LCU Senate Building Car Park',
+    'LCU Student Center / Cafeteria',
+    'Bronze Hostel Security Gate',
+    'Silver Hostel Security Gate',
+    'Gold Hostel Security Gate',
+    'Platinum Hostel Lounge',
+    'Jasper Hall Security Post',
+    'Emerald Hall Common Area',
+    'Pearl Hall Main Entrance',
+    'Sapphire Hall Gate',
+    'Off-Campus Location'
+  ];
+
+  const PICKUP_TIME_SLOTS = [
+    '09:00 AM - 11:00 AM',
+    '11:00 AM - 01:00 PM',
+    '01:00 PM - 03:00 PM',
+    '03:00 PM - 05:00 PM',
+    '05:00 PM - 07:00 PM',
+    '07:00 PM - 09:00 PM'
+  ];
+
+  const handleOpenPickupModal = () => {
     if (!token) {
       navigate('/auth', { state: { from: `/product/${id}` } });
       return;
     }
-    // Redirect to chat center, passing query parameters to initialize conversation
-    navigate(`/chat?contactId=${product.seller._id}&productId=${product._id}`);
+    setShowPickupModal(true);
   };
 
-  const handleDeleteListing = async () => {
-    if (!window.confirm('Are you sure you want to delete this listing?')) return;
+  const handleBuyNowWithPickup = async (e) => {
+    e.preventDefault();
     if (!token) return;
 
     try {
-      const response = await fetch(`${API_URL}/api/products/${product._id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
-      if (response.ok) {
-        showToast('Listing deleted successfully!', 'success');
-        navigate('/profile');
-      }
-    } catch (err) {
-      showToast('Failed to delete listing', 'error');
-    }
-  };
-
-  const handleBuyNow = async () => {
-    if (!token) {
-      navigate('/auth', { state: { from: `/product/${id}` } });
-      return;
-    }
-    
-    try {
+      setShowPickupModal(false);
       const response = await fetch(`${API_URL}/api/payments/initialize`, {
         method: 'POST',
         headers: {
@@ -194,7 +207,11 @@ export default function ProductDetails() {
         },
         body: JSON.stringify({
           orderType: 'escrow',
-          productId: product._id
+          productId: product._id,
+          pickupDate,
+          pickupTime,
+          meetingPoint,
+          buyerNote
         })
       });
       
@@ -219,8 +236,8 @@ export default function ProductDetails() {
         },
         customizations: {
           title: 'LCU Marketplace Secure Escrow',
-          description: `Payment for ${product.name}`,
-          logo: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&q=80&w=150',
+          description: `Escrow Payment & Pickup for ${product.name}`,
+          logo: '/logo.png',
         },
         callback: async (paymentRes) => {
           try {
@@ -237,13 +254,13 @@ export default function ProductDetails() {
             });
             const verifyData = await verifyResponse.json();
             if (verifyResponse.ok) {
-              showToast('Payment successful! Funds are in secure escrow.', 'success');
+              showToast('Escrow Payment & Campus Pickup Scheduled! 🤝', 'success');
               fetchProduct();
               navigate('/profile');
             } else {
               showToast(verifyData.message || 'Verification failed', 'error');
             }
-          } catch (err) {
+          } catch {
             showToast('Verification request failed', 'error');
           }
         },
@@ -252,9 +269,20 @@ export default function ProductDetails() {
         }
       });
       
-    } catch (err) {
+    } catch {
       showToast('Error preparing payment checkout', 'error');
     }
+  };
+
+  const handleWhatsAppContact = () => {
+    if (!product.seller?.phoneNumber) {
+      showToast('Seller phone number is not available', 'error');
+      return;
+    }
+    let rawPhone = product.seller.phoneNumber.trim().replace(/\D/g, '');
+    if (rawPhone.startsWith('0')) rawPhone = '234' + rawPhone.slice(1);
+    const text = encodeURIComponent(`Hi ${product.seller.name}, I'm interested in buying your "${product.name}" listed for ₦${product.price?.toLocaleString()} on LCU Marketplace.`);
+    window.open(`https://wa.me/${rawPhone}?text=${text}`, '_blank');
   };
 
   if (loading) {
@@ -345,13 +373,15 @@ export default function ProductDetails() {
                     🚫 Sold Out (Already Purchased)
                   </div>
                 ) : (
-                  <button onClick={handleBuyNow} className="btn-primary" style={{ ...styles.chatBtn, background: 'var(--gold)', borderColor: 'var(--gold)' }}>
-                    💳 Secure Buy Now (Escrow)
+                  <button onClick={handleOpenPickupModal} className="btn-primary" style={{ ...styles.chatBtn, background: 'var(--gold)', borderColor: 'var(--gold)' }}>
+                    💳 Secure Buy Now &amp; Schedule Pickup
                   </button>
                 )}
-                <button onClick={handleStartChat} className="btn-secondary" style={styles.chatBtn}>
-                  💬 Chat with Seller
-                </button>
+                {product.seller?.phoneNumber && (
+                  <button onClick={handleWhatsAppContact} className="btn-secondary" style={{ ...styles.chatBtn, background: 'rgba(16, 185, 129, 0.12)', color: 'var(--success)', borderColor: 'rgba(16, 185, 129, 0.3)' }}>
+                    🟢 Contact Seller via WhatsApp
+                  </button>
+                )}
                 <div style={styles.subActions}>
                   <button onClick={handleWishlist} className="btn-secondary" style={styles.actionBtn}>
                     {isWishlisted ? '❤️ In Wishlist' : '🤍 Add to Wishlist'}
@@ -485,6 +515,80 @@ export default function ProductDetails() {
           </div>
         </div>
 
+      {/* Campus Pickup Scheduler Modal */}
+      {showPickupModal && (
+        <div className="profile-modal-overlay" onClick={() => setShowPickupModal(false)}>
+          <div className="profile-modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '520px' }}>
+            <div className="profile-modal-header">
+              <h3 className="profile-modal-title">🤝 Schedule Campus Pickup</h3>
+              <button className="profile-modal-close" onClick={() => setShowPickupModal(false)}>✕</button>
+            </div>
+
+            <form onSubmit={handleBuyNowWithPickup} className="profile-modal-body" style={{ gap: '16px' }}>
+              <div style={{ background: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(59, 130, 246, 0.25)', borderRadius: '10px', padding: '14px 16px', fontSize: '0.85rem' }}>
+                <p style={{ fontWeight: '700', color: 'var(--gold)', marginBottom: '4px' }}>🛡️ Escrow Buyer Protection</p>
+                <p style={{ color: 'var(--text-secondary)' }}>
+                  Your <strong>₦{product.price?.toLocaleString()}</strong> payment will be held safely in escrow. Funds are only released to <strong>{product.seller?.name}</strong> after you inspect and accept the item at your meeting point.
+                </p>
+              </div>
+
+              <div className="dash-settings-field">
+                <label className="dash-settings-label">📍 Hostel / Campus Meeting Point</label>
+                <select value={meetingPoint} onChange={e => setMeetingPoint(e.target.value)} className="glass-input" required>
+                  {LCU_MEETING_POINTS.map(mp => (
+                    <option key={mp} value={mp} style={{ background: 'var(--bg-input)', color: 'var(--text-primary)' }}>
+                      {mp}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                <div className="dash-settings-field">
+                  <label className="dash-settings-label">📅 Pickup Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={pickupDate}
+                    onChange={e => setPickupDate(e.target.value)}
+                    className="glass-input"
+                  />
+                </div>
+                <div className="dash-settings-field">
+                  <label className="dash-settings-label">⏰ Preferred Time Slot</label>
+                  <select value={pickupTime} onChange={e => setPickupTime(e.target.value)} className="glass-input" required>
+                    {PICKUP_TIME_SLOTS.map(ts => (
+                      <option key={ts} value={ts} style={{ background: 'var(--bg-input)', color: 'var(--text-primary)' }}>
+                        {ts}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="dash-settings-field">
+                <label className="dash-settings-label">📝 Buyer Note / Instructions (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="e.g., I'll be wearing a blue hoodie at the gate..."
+                  value={buyerNote}
+                  onChange={e => setBuyerNote(e.target.value)}
+                  className="glass-input"
+                />
+              </div>
+
+              <div className="profile-modal-footer" style={{ marginTop: '10px' }}>
+                <button type="button" onClick={() => setShowPickupModal(false)} className="btn-secondary" style={{ padding: '10px 18px', fontSize: '0.85rem' }}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn-primary" style={{ padding: '10px 22px', fontSize: '0.85rem' }}>
+                  💳 Proceed to Escrow (₦{product.price?.toLocaleString()})
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       </div>
     </div>
   );

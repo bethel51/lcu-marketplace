@@ -9,7 +9,6 @@ import fs from 'fs';
 // Route imports
 import authRoutes from './routes/authRoutes.js';
 import productRoutes from './routes/productRoutes.js';
-import messageRoutes from './routes/messageRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 
 dotenv.config();
@@ -52,7 +51,6 @@ app.use((req, res, next) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
-app.use('/api/messages', messageRoutes);
 app.use('/api/payments', paymentRoutes);
 
 // Serve frontend static files in production

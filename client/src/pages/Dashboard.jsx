@@ -370,7 +370,6 @@ export default function Dashboard() {
           <div className="dash-sidebar-actions">
             <Link to="/post" className="dash-action-btn primary">＋ Post New Listing</Link>
             <button onClick={handleCopyProfileLink} className="dash-action-btn">🔗 Copy Store Link</button>
-            <Link to="/chat" className="dash-action-btn">💬 Messages</Link>
             <Link to="/marketplace" className="dash-action-btn">🛍️ Browse Marketplace</Link>
           </div>
         </aside>
@@ -589,7 +588,7 @@ export default function Dashboard() {
                         <h4 className="dash-order-name">{o.product ? o.product.name : 'Deleted Product'}</h4>
                         <span className="dash-order-amount">₦{o.amount.toLocaleString()}</span>
                         <div className="dash-order-meta">
-                          <span>Seller: {o.seller?.name || 'Unknown'}</span>
+                          <span>Seller: <strong>{o.seller?.name || 'Unknown'}</strong></span>
                           <span>Ref: {o.txRef}</span>
                           <span className="dash-order-status" style={{ color: o.paymentStatus === 'Paid' ? 'var(--success)' : 'var(--warning)' }}>
                             Payment: {o.paymentStatus}
@@ -598,6 +597,18 @@ export default function Dashboard() {
                             Escrow: {o.escrowStatus}
                           </span>
                         </div>
+
+                        {/* Scheduled Campus Pickup Details */}
+                        {o.meetingPoint && (
+                          <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed var(--border-color)', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                            <div>📍 <strong>Meeting Point:</strong> <span style={{ color: 'var(--gold)', fontWeight: '700' }}>{o.meetingPoint}</span></div>
+                            <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
+                              <span>📅 <strong>Date:</strong> {o.pickupDate || 'Flexible'}</span>
+                              <span>⏰ <strong>Time:</strong> {o.pickupTime || 'Flexible'}</span>
+                            </div>
+                            {o.buyerNote && <div>📝 <strong>Note:</strong> <em>"{o.buyerNote}"</em></div>}
+                          </div>
+                        )}
                       </div>
                       {o.paymentStatus === 'Paid' && o.escrowStatus === 'Held' && (
                         <button onClick={() => handleConfirmDelivery(o._id)} className="btn-primary" style={{ padding:'8px 16px', fontSize:'0.8rem', whiteSpace:'nowrap', flexShrink:0 }}>
@@ -621,7 +632,7 @@ export default function Dashboard() {
                         <h4 className="dash-order-name">{o.product ? o.product.name : 'Deleted Product'}</h4>
                         <span className="dash-order-amount">₦{o.amount.toLocaleString()}</span>
                         <div className="dash-order-meta">
-                          <span>Buyer: {o.buyer?.name || 'Unknown'}</span>
+                          <span>Buyer: <strong>{o.buyer?.name || 'Unknown'}</strong></span>
                           <span>Ref: {o.txRef}</span>
                           <span className="dash-order-status" style={{ color: o.paymentStatus === 'Paid' ? 'var(--success)' : 'var(--warning)' }}>
                             Payment: {o.paymentStatus}
@@ -630,6 +641,18 @@ export default function Dashboard() {
                             Escrow: {o.escrowStatus}
                           </span>
                         </div>
+
+                        {/* Scheduled Campus Pickup Details */}
+                        {o.meetingPoint && (
+                          <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed var(--border-color)', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                            <div>📍 <strong>Meeting Point:</strong> <span style={{ color: 'var(--gold)', fontWeight: '700' }}>{o.meetingPoint}</span></div>
+                            <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
+                              <span>📅 <strong>Date:</strong> {o.pickupDate || 'Flexible'}</span>
+                              <span>⏰ <strong>Time:</strong> {o.pickupTime || 'Flexible'}</span>
+                            </div>
+                            {o.buyerNote && <div>📝 <strong>Buyer Note:</strong> <em>"{o.buyerNote}"</em></div>}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))

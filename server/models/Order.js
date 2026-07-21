@@ -41,6 +41,22 @@ const orderSchema = new mongoose.Schema({
   flwTransactionId: {
     type: String,
     default: ''
+  },
+  pickupDate: {
+    type: String,
+    default: ''
+  },
+  pickupTime: {
+    type: String,
+    default: ''
+  },
+  meetingPoint: {
+    type: String,
+    default: ''
+  },
+  buyerNote: {
+    type: String,
+    default: ''
   }
 }, {
   timestamps: true

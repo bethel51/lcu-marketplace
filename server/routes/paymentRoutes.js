@@ -15,7 +15,7 @@ const FLW_SECRET_KEY = process.env.FLW_SECRET_KEY || 'FLWSECK_TEST-sandbox-key';
  * @access  Private
  */
 router.post('/initialize', protect, async (req, res) => {
-  const { orderType, productId } = req.body;
+  const { orderType, productId, pickupDate, pickupTime, meetingPoint, buyerNote } = req.body;
   const buyerId = req.user._id;
 
   try {
@@ -64,7 +64,11 @@ router.post('/initialize', protect, async (req, res) => {
       orderType,
       txRef,
       paymentStatus: 'Pending',
-      escrowStatus: orderType === 'escrow' ? 'None' : 'None'
+      escrowStatus: orderType === 'escrow' ? 'None' : 'None',
+      pickupDate: pickupDate || '',
+      pickupTime: pickupTime || '',
+      meetingPoint: meetingPoint || '',
+      buyerNote: buyerNote || ''
     };
 
     if (orderType === 'escrow') {
