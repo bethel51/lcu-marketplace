@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { API_URL } from '../config';
+import { compressImage } from '../utils/imageCompressor';
 
 export default function PostProduct() {
   const { token, user } = useAuth();
@@ -87,22 +88,31 @@ export default function PostProduct() {
   }, [id, isEditMode, token, user]);
 
   // File uploader change handler
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError('File size too large. Maximum size is 5MB.');
+    if (file.size > 10 * 1024 * 1024) {
+      setError('File size too large. Maximum size is 10MB.');
       return;
     }
 
-    setImageFile(file);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImage(reader.result);
-      setError('');
-    };
-    reader.readAsDataURL(file);
+    try {
+      setLoading(true);
+      const compressed = await compressImage(file);
+      setImageFile(compressed);
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImage(reader.result); // preview string only
+        setError('');
+        setLoading(false);
+      };
+      reader.readAsDataURL(compressed);
+    } catch {
+      setImageFile(file);
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -130,9 +140,10 @@ export default function PostProduct() {
       formData.append('hostelLocation', hostelLocation);
       formData.append('faculty', faculty);
       
+      // ONLY send the binary image file if uploaded (or existing URL string if unchanged edit)
       if (imageFile) {
         formData.append('image', imageFile);
-      } else if (image) {
+      } else if (image && !image.startsWith('data:')) {
         formData.append('image', image);
       }
 
