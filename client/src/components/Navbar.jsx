@@ -255,9 +255,18 @@ export default function Navbar() {
               <div className="notif-panel">
                 <div className="notif-panel-header">
                   <span className="notif-panel-title">🔔 Notifications</span>
-                  {notifications.length > 0 && (
-                    <button className="notif-clear-btn" onClick={clearNotifications}>Clear all</button>
-                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    {notifications.length > 0 && (
+                      <button className="notif-clear-btn" onClick={clearNotifications}>Clear all</button>
+                    )}
+                    <button
+                      onClick={() => setNotifOpen(false)}
+                      style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.1rem', cursor: 'pointer' }}
+                      aria-label="Close"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </div>
                 <div className="notif-list">
                   {notifications.length === 0 ? (

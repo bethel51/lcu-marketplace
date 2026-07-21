@@ -309,12 +309,34 @@ button, input, select, textarea { font-family: inherit; outline: none; }
 .notif-item-time { font-size: 0.7rem; color: var(--text-muted); white-space: nowrap; margin-top: 2px; }
 .notif-empty { padding: 32px 16px; text-align: center; color: var(--text-muted); font-size: 0.85rem; }
 
+@keyframes slideFromLeft {
+  from { transform: translateX(-100%); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+
 @media (max-width: 768px) {
   .toast-container { top: auto; bottom: 90px; right: 12px; left: 12px; }
   .toast-item { min-width: 0; width: 100%; }
-  .notif-panel { width: calc(100vw - 32px); right: -60px; }
+  
+  /* Slide from left drawer on mobile */
+  .notif-panel {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: auto !important;
+    bottom: 0 !important;
+    width: 310px !important;
+    max-width: 85vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    border-radius: 0 20px 20px 0 !important;
+    border-left: none !important;
+    box-shadow: 10px 0 40px rgba(0, 0, 0, 0.7) !important;
+    animation: slideFromLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    z-index: 10000 !important;
+    background: rgba(9, 15, 29, 0.98) !important;
+  }
 }
-
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
