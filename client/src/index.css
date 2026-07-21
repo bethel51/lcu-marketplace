@@ -1255,141 +1255,232 @@ button, input, select, textarea { font-family: inherit; outline: none; }
 }
 
 /* ================================================================
-   COMPLETE MOBILE SWEEP — ≤768px
+   COMPLETE MODERN MOBILE SWEEP — ≤768px
    ================================================================ */
 @media (max-width: 768px) {
 
-  /* Prevent scroll lagging/hanging on mobile by hiding heavy filter: blur() backgrounds */
+  /* Prevent scroll lagging/hanging on mobile by optimizing heavy filter: blur() backgrounds */
   .hero-orb {
     display: none !important;
   }
 
-  /* Disable heavy backdrop-filters on mobile to boost scroll FPS */
-  .glass-panel, .landing-stats, .landing-cta-card, .landing-feature-card, .landing-step {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
+  /* ── Mobile Container ────────────────────────────────────── */
+  .container { padding: 0 16px; }
+  body { font-size: 15px; -webkit-tap-highlight-color: transparent; }
+
+  /* Touch active feedback for interactive buttons */
+  button:active, .btn-primary:active, .btn-secondary:active, .premium-card:active {
+    transform: scale(0.98) translateZ(0) !important;
+    transition: transform 0.1s ease !important;
   }
 
-  /* ── Container ───────────────────────────────────────────── */
-  .container { padding: 0 16px; }
+  /* ── Navbar & Mobile Drawer ─────────────────────────────── */
+  .hamburger {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color) !important;
+  }
 
-  /* ── Body / global ───────────────────────────────────────── */
-  body { font-size: 15px; }
+  .nav-container {
+    height: 66px !important;
+    padding: 0 16px !important;
+  }
 
-  /* ── Navbar ──────────────────────────────────────────────── */
-  .hamburger { display: block !important; }
-  .nav-container { flex-direction: row !important; height: 64px !important; padding: 0 16px !important; }
   .nav-links {
-    display: flex !important; flex-direction: column !important;
-    position: fixed; top: 0; right: 0; height: 100vh; width: 76vw !important;
-    max-width: 300px;
-    background: var(--bg-drawer) !important;
-    backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-    border-left: 1px solid var(--border-color) !important;
-    padding: 90px 24px 32px !important; gap: 20px !important;
-    z-index: 100; box-shadow: var(--glass-shadow);
+    display: flex !important;
+    flex-direction: column !important;
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    width: 82vw !important;
+    max-width: 320px;
+    background: rgba(9, 15, 29, 0.96) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    border-left: 1px solid var(--glass-border) !important;
+    padding: 96px 20px 32px !important;
+    gap: 16px !important;
+    z-index: 100;
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
     transform: translateX(100%);
-    transition: transform 0.38s cubic-bezier(0.4,0,0.2,1);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     visibility: hidden;
   }
-  .nav-links.open { transform: translateX(0); visibility: visible; }
-  .nav-user-container { border-left: none !important; padding-left: 0 !important; width: 100%; justify-content: center; }
 
-  /* ── Buttons global ──────────────────────────────────────── */
-  .btn-primary, .btn-secondary { padding: 11px 18px; font-size: 0.9rem; }
+  .nav-links.open {
+    transform: translateX(0);
+    visibility: visible;
+  }
 
-  /* ── Auth page ───────────────────────────────────────────── */
-  .auth-card { padding: 28px 20px !important; margin: 16px !important; }
+  .nav-links a {
+    padding: 14px 18px;
+    border-radius: 12px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
 
-  /* ── Home hero ───────────────────────────────────────────── */
-  .hero-card { padding: 24px 20px !important; }
-  .hero-title { font-size: 1.6rem !important; }
+  /* ── Hero Search & Category Pills ────────────────────────── */
+  .hero-card {
+    padding: 24px 18px !important;
+    border-radius: 20px !important;
+  }
 
-  /* ── Home category tabs ──────────────────────────────────── */
-  .category-scroll { gap: 8px !important; }
-  .category-scroll button { padding: 7px 12px 10px !important; font-size: 0.82rem !important; }
+  .hero-title {
+    font-size: 1.7rem !important;
+    line-height: 1.25 !important;
+  }
 
-  /* ── Product grid ────────────────────────────────────────── */
+  .category-scroll {
+    gap: 8px !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px !important;
+  }
+
+  .category-scroll button {
+    scroll-snap-align: start;
+    padding: 8px 14px !important;
+    font-size: 0.82rem !important;
+    border-radius: 999px !important;
+    flex-shrink: 0;
+  }
+
+  /* ── Modern 2-Column Product Grid ────────────────────────── */
   .grid-cols-auto {
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 12px !important;
   }
-  .premium-card-img-container { height: 150px !important; }
-  .premium-card-info { padding: 12px !important; gap: 8px !important; }
-  .premium-card-price { font-size: 1rem !important; }
-  .premium-card-title { font-size: 0.85rem !important; }
-  .premium-card-btn { padding: 6px 10px !important; font-size: 0.72rem !important; }
-  .premium-card-location { font-size: 0.7rem !important; max-width: 90px !important; }
 
-  /* ── Dashboard header ────────────────────────────────────── */
-  .db-header { flex-direction: column !important; align-items: flex-start !important; padding: 20px 18px !important; gap: 16px !important; }
-  .db-header-left { gap: 14px !important; }
-  .db-avatar { width: 60px !important; height: 60px !important; font-size: 1.6rem !important; }
-  .db-welcome-title { font-size: 1.3rem !important; }
-  .db-welcome-meta { flex-direction: column !important; gap: 6px !important; align-items: flex-start !important; }
-  .db-meta-chip { font-size: 0.72rem !important; }
-  .db-verify-box { align-items: flex-start !important; width: 100% !important; }
+  .premium-card {
+    border-radius: 14px !important;
+  }
 
-  /* ── Dashboard metrics ───────────────────────────────────── */
-  .db-metrics { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; margin-top: 14px !important; }
-  .db-metric-card { padding: 14px 16px !important; gap: 12px !important; }
-  .db-metric-icon { width: 40px !important; height: 40px !important; font-size: 1.2rem !important; border-radius: 8px !important; }
-  .db-metric-value { font-size: 1.4rem !important; }
-  .db-metric-label { font-size: 0.72rem !important; }
+  .premium-card-img-container {
+    height: 165px !important;
+  }
 
-  /* ── Dashboard grid ──────────────────────────────────────── */
-  .profile-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
+  .premium-card-info {
+    padding: 12px !important;
+    gap: 8px !important;
+  }
 
-  /* ── Dashboard sidebar ───────────────────────────────────── */
-  .db-sidebar-section { padding: 16px 18px !important; }
+  .premium-card-price {
+    font-size: 1.05rem !important;
+  }
 
-  /* ── Dashboard tabs ──────────────────────────────────────── */
-  .db-tabs { gap: 2px !important; overflow-x: auto !important; padding-bottom: 4px !important; }
-  .db-tab-btn { padding: 10px 12px !important; font-size: 0.8rem !important; white-space: nowrap !important; }
+  .premium-card-title {
+    font-size: 0.88rem !important;
+  }
 
-  /* ── Dashboard product cards ─────────────────────────────── */
-  .db-product-card { flex-wrap: wrap !important; padding: 14px !important; gap: 12px !important; }
-  .db-product-image, .db-product-placeholder { width: 100% !important; height: 170px !important; border-radius: 8px !important; }
-  .db-product-info { width: 100% !important; }
-  .db-product-title { font-size: 0.95rem !important; white-space: normal !important; }
-  .db-actions { width: 100% !important; flex-wrap: wrap !important; gap: 8px !important; }
-  .db-actions > * { flex: 1 1 calc(50% - 4px) !important; text-align: center !important; justify-content: center !important; min-width: 0 !important; }
+  .premium-card-footer {
+    margin-top: 2px !important;
+  }
 
-  /* ── Settings grid ───────────────────────────────────────── */
-  .db-settings-grid { grid-template-columns: 1fr !important; gap: 14px !important; }
+  .premium-card-location {
+    font-size: 0.72rem !important;
+    max-width: 85px !important;
+  }
 
-  /* ── Details page ────────────────────────────────────────── */
-  .details-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
-  .image-details-box { height: 260px !important; border-radius: 10px !important; }
+  .premium-card-btn {
+    padding: 6px 12px !important;
+    font-size: 0.75rem !important;
+    border-radius: 6px !important;
+  }
 
-  /* ── Chat page ───────────────────────────────────────────── */
-  .chat-grid { grid-template-columns: 1fr !important; height: auto !important; min-height: auto !important; }
-  .chat-sidebar { max-height: 220px !important; border-right: none !important; border-bottom: 1px solid var(--border-color) !important; }
+  /* ── Mobile Product Details ──────────────────────────────── */
+  .details-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
 
-  /* ── Post product form ───────────────────────────────────── */
-  .post-grid { grid-template-columns: 1fr !important; }
+  .image-details-box {
+    height: 300px !important;
+    border-radius: 16px !important;
+  }
 
-  /* ── Auth form card ──────────────────────────────────────── */
-  [class*="auth"] { padding: 24px 18px !important; }
+  /* ── Mobile Dashboard ────────────────────────────────────── */
+  .dash-shell {
+    padding: 16px 14px 100px !important;
+    gap: 16px !important;
+  }
 
-  /* ── Footer ──────────────────────────────────────────────── */
-  footer { font-size: 0.75rem !important; padding: 18px 16px !important; }
+  .dash-banner {
+    padding: 20px 18px !important;
+    border-radius: 16px !important;
+  }
 
-  /* ── Quick action buttons in sidebar ─────────────────────── */
-  .db-quick-btn { padding: 12px 14px !important; font-size: 0.85rem !important; }
+  .dash-banner-title {
+    font-size: 1.35rem !important;
+  }
 
-  /* ── Empty states ────────────────────────────────────────── */
-  .db-empty-state { padding: 32px 16px !important; }
+  .dash-metrics {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  .dash-metric {
+    padding: 14px 16px !important;
+    border-radius: 12px !important;
+  }
+
+  .dash-metric-value {
+    font-size: 1.4rem !important;
+  }
+
+  .dash-profile-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+
+  .dash-listing-card {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    padding: 14px !important;
+  }
+
+  .dash-listing-img, .dash-listing-placeholder {
+    width: 100% !important;
+    height: 160px !important;
+    border-radius: 10px !important;
+  }
+
+  .dash-listing-actions {
+    width: 100% !important;
+    justify-content: space-between !important;
+    margin-top: 6px !important;
+  }
+
+  .dash-order-card {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    padding: 16px !important;
+  }
+
+  .dash-settings-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
 
-/* ── Very small phones (≤380px) ──────────────────────────── */
+/* ── Very Small Smartphones (≤380px) ────────────────────────── */
 @media (max-width: 380px) {
-  .grid-cols-auto { grid-template-columns: 1fr !important; }
-  .db-metrics     { grid-template-columns: 1fr 1fr !important; }
-  .premium-card-img-container { height: 140px !important; }
-  .db-welcome-title { font-size: 1.15rem !important; }
-  .db-tab-btn { font-size: 0.74rem !important; padding: 9px 10px !important; }
-  .db-actions > * { flex: 1 1 100% !important; }
+  .grid-cols-auto {
+    grid-template-columns: 1fr !important;
+  }
+  .dash-profile-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .premium-card-img-container {
+    height: 180px !important;
+  }
 }
 
 /* ================================================================
