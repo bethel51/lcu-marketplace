@@ -107,7 +107,6 @@ export default function Landing() {
         <div className="landing-hero-bg" aria-hidden="true">
           <div className="hero-orb hero-orb-1" />
           <div className="hero-orb hero-orb-2" />
-          <div className="hero-orb hero-orb-3" />
         </div>
         <div className="container landing-hero-inner">
           <div className="landing-hero-badge">
@@ -173,8 +172,8 @@ export default function Landing() {
           <p className="landing-section-eyebrow">What can you find?</p>
           <h2 className="landing-section-title">Everything a Student Needs</h2>
           <div className="landing-cats-grid">
-            {categories.map(c => (
-              <Link to="/marketplace" key={c.name} className="landing-cat-card">
+            {categories.map((c, i) => (
+              <Link to="/marketplace" key={c.name} className="landing-cat-card" style={{ '--i': i }}>
                 <span className="landing-cat-icon">{c.icon}</span>
                 <span className="landing-cat-name">{c.name}</span>
                 <span className="landing-cat-desc">{c.desc}</span>
@@ -193,8 +192,8 @@ export default function Landing() {
           <p className="landing-section-eyebrow">Why LCU Marketplace?</p>
           <h2 className="landing-section-title">Built for LCU Students, by LCU Students</h2>
           <div className="landing-features-grid">
-            {features.map(f => (
-              <div key={f.title} className="landing-feature-card glass-panel">
+            {features.map((f, i) => (
+              <div key={f.title} className="landing-feature-card glass-panel" style={{ '--i': i }}>
                 <div className="landing-feature-icon" style={{ background: `${f.color}18`, border: `1px solid ${f.color}35`, color: f.color }}>
                   {f.icon}
                 </div>
@@ -217,7 +216,7 @@ export default function Landing() {
           <div className="landing-steps">
             {steps.map((s, i) => (
               <React.Fragment key={s.num}>
-                <div className="landing-step glass-panel">
+                <div className="landing-step glass-panel" style={{ '--i': i }}>
                   <div className="landing-step-num">{s.num}</div>
                   <h3 className="landing-step-title">{s.title}</h3>
                   <p className="landing-step-desc">{s.desc}</p>

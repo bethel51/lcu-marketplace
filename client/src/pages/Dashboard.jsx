@@ -32,7 +32,7 @@ export default function Dashboard() {
   const [profileData, setProfileData]   = useState(null);
   const [myProducts,  setMyProducts]    = useState([]);
   const [loading,     setLoading]       = useState(true);
-  const [activeTab,   setActiveTab]     = useState('listings');
+  const [activeTab,   setActiveTab]     = useState('overview');
   const [orders,      setOrders]        = useState({ bought: [], sold: [] });
 
   // ── Profile-settings state ──────────────────────────────────
@@ -300,370 +300,451 @@ export default function Dashboard() {
 
   const currentDepts = DEPTS_BY_FACULTY[editFaculty] || [];
 
+  const navTabs = [
+    { id: 'overview', icon: '📊', label: 'Overview' },
+    { id: 'listings', icon: '📦', label: 'My Listings', badge: myProducts.length },
+    { id: 'orders',   icon: '💳', label: 'Transactions', badge: (orders.bought?.length || 0) + (orders.sold?.length || 0) },
+    { id: 'wishlist', icon: '❤️', label: 'Wishlist', badge: wishCount },
+    { id: 'settings', icon: '⚙️', label: 'Settings' },
+  ];
+
   return (
-    <div className="container animate-fade-in" style={{ paddingTop:'28px', paddingBottom:'60px' }}>
+    <>
+      <div className="dash-shell animate-fade-in">
 
-      {/* ── Welcome Header ─────────────────────────────────── */}
-      <header className="db-header">
-        <div className="db-header-left">
-          <div className="db-avatar-container">
-            <div className="db-avatar">{user?.name?.charAt(0).toUpperCase()}</div>
-          </div>
-          <div>
-            <h1 className="db-welcome-title">Hey, {user?.name?.split(' ')[0]}! 👋</h1>
-            <p className="db-welcome-sub">Lead City University Student Hub</p>
-            <div className="db-welcome-meta">
-              <span className="db-meta-chip">📧 {user?.email}</span>
-              {profileData?.faculty && <span className="db-meta-chip">🏛️ {profileData.faculty}</span>}
-              {profileData?.matricNumber && <span className="db-meta-chip">🪪 {profileData.matricNumber}</span>}
+        {/* ═══════════════════ SIDEBAR ═══════════════════ */}
+        <aside className="dash-sidebar">
+          {/* Profile Mini Card */}
+          <div className="dash-sidebar-profile">
+            <div className="dash-avatar-ring">
+              <div className="dash-avatar">{user?.name?.charAt(0).toUpperCase()}</div>
             </div>
-          </div>
-        </div>
-
-        <div className="db-verify-box">
-          {user?.isVerifiedStudent ? (
-            <VerifiedBadge size="lg" />
-          ) : showVerifyForm ? (
-            <form onSubmit={handleVerifySubmit} style={{ display:'flex', flexDirection:'column', gap:'8px', alignItems:'flex-end' }}>
-              <input
-                type="text" required placeholder="Your matric number"
-                value={matricInput} onChange={e => setMatricInput(e.target.value)}
-                className="glass-input" style={{ width:'220px', padding:'8px 12px', fontSize:'0.85rem' }}
-              />
-              <div style={{ display:'flex', gap:'8px', alignItems:'center' }}>
-                <label htmlFor="id-upload" style={{ padding:'7px 12px', border:'1px dashed var(--border-color)', borderRadius:'7px', fontSize:'0.8rem', cursor:'pointer', color:'var(--text-secondary)', background:'var(--bg-input)', whiteSpace:'nowrap' }}>
-                  {idCardLabel || '📎 Upload ID Card'}
-                </label>
-                <input id="id-upload" type="file" accept="image/*" style={{ display:'none' }} onChange={e => { setIdCardFile(e.target.files[0]); setIdCardLabel(e.target.files[0]?.name || ''); }} />
-                <button type="submit" className="btn-primary" style={{ padding:'7px 14px', fontSize:'0.82rem' }}>Submit</button>
-                <button type="button" onClick={() => setShowVerifyForm(false)} className="btn-secondary" style={{ padding:'7px 12px', fontSize:'0.82rem' }}>✕</button>
-              </div>
-            </form>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end' }}>
-              <button onClick={() => setShowVerifyForm(true)} className="btn-secondary" style={{ padding:'6px 14px', fontSize:'0.8rem' }}>
-                📎 Submit ID Form
-              </button>
-              <button onClick={handlePayVerificationFee} className="btn-primary" style={{ padding:'9px 20px', fontSize:'0.85rem' }}>
-                🎓 Get Instant Verified (₦1,000)
-              </button>
-            </div>
-          )}
-          {!user?.isVerifiedStudent && (
-            <p style={{ fontSize:'0.73rem', color:'var(--text-muted)', textAlign:'right', maxWidth:'220px' }}>
-              Upload your student ID to get a verified badge
-            </p>
-          )}
-        </div>
-      </header>
-
-      {/* ── Metrics ────────────────────────────────────────── */}
-      <section className="db-metrics">
-        <div className="db-metric-card">
-          <div className="db-metric-icon">📦</div>
-          <div><div className="db-metric-value">{activeCount}</div><div className="db-metric-label">Active Listings</div></div>
-        </div>
-        <div className="db-metric-card">
-          <div className="db-metric-icon">🤝</div>
-          <div><div className="db-metric-value">{soldCount}</div><div className="db-metric-label">Items Sold</div></div>
-        </div>
-        <div className="db-metric-card">
-          <div className="db-metric-icon">❤️</div>
-          <div><div className="db-metric-value">{wishCount}</div><div className="db-metric-label">Wishlist Items</div></div>
-        </div>
-        <div className="db-metric-card">
-          <div className="db-metric-icon">⭐</div>
-          <div><div className="db-metric-value">{avgRating}</div><div className="db-metric-label">Seller Rating</div></div>
-        </div>
-      </section>
-
-      {/* ── Main layout ─────────────────────────────────────── */}
-      <div className="profile-grid" style={{ marginTop:'24px', alignItems:'start' }}>
-
-        {/* ═══════════════════ LEFT SIDEBAR ═══════════════════ */}
-        <aside className="db-sidebar-card">
-
-          {/* ── Profile header ──────────────────────────────── */}
-          <div className="db-sidebar-section" style={{ textAlign:'center', paddingBottom:'24px' }}>
-            <div style={{ width:'76px', height:'76px', borderRadius:'50%', background:'linear-gradient(135deg, var(--secondary-blue) 0%, var(--gold) 100%)', border:'3px solid var(--border-strong)', color:'#fff', fontSize:'2rem', fontWeight:'800', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 14px', boxShadow:'0 6px 20px rgba(59,130,246,0.3)' }}>
-              {user?.name?.charAt(0).toUpperCase()}
-            </div>
-            <h3 style={{ fontSize:'1.1rem', fontWeight:'800', color:'var(--text-primary)', marginBottom:'3px' }}>{profileData?.name || user?.name}</h3>
-            <p style={{ fontSize:'0.78rem', color:'var(--text-muted)', marginBottom:'10px', wordBreak:'break-all' }}>{user?.email}</p>
-            {/* Status badges */}
-            <div style={{ display:'flex', gap:'6px', justifyContent:'center', flexWrap:'wrap' }}>
+            <h3 className="dash-sidebar-name">{profileData?.name || user?.name}</h3>
+            <p className="dash-sidebar-email">{user?.email}</p>
+            <div className="dash-sidebar-badges">
               {user?.isEmailVerified
-                ? <span style={{ fontSize:'0.7rem', fontWeight:'700', padding:'3px 10px', borderRadius:'999px', background:'rgba(16,185,129,0.12)', color:'var(--success)', border:'1px solid rgba(16,185,129,0.3)' }}>✉️ Email Verified</span>
-                : <span style={{ fontSize:'0.7rem', fontWeight:'700', padding:'3px 10px', borderRadius:'999px', background:'rgba(239,68,68,0.1)', color:'var(--error)', border:'1px solid rgba(239,68,68,0.25)' }}>✉️ Unverified</span>
+                ? <span className="dash-status-pill verified">✉️ Verified</span>
+                : <span className="dash-status-pill unverified">✉️ Unverified</span>
               }
               {user?.isVerifiedStudent
-                ? <span style={{ fontSize:'0.7rem', fontWeight:'700', padding:'3px 10px', borderRadius:'999px', background:'rgba(59,130,246,0.12)', color:'var(--gold)', border:'1px solid rgba(59,130,246,0.25)' }}>🎓 LCU Verified</span>
-                : <span style={{ fontSize:'0.7rem', fontWeight:'700', padding:'3px 10px', borderRadius:'999px', background:'rgba(245,158,11,0.1)', color:'var(--warning)', border:'1px solid rgba(245,158,11,0.25)' }}>⏳ Unverified</span>
+                ? <span className="dash-status-pill verified">🎓 LCU Verified</span>
+                : <span className="dash-status-pill unverified">⏳ Pending</span>
               }
-              {user?.isAdmin && <span style={{ fontSize:'0.7rem', fontWeight:'700', padding:'3px 10px', borderRadius:'999px', background:'rgba(239,68,68,0.12)', color:'#f87171', border:'1px solid rgba(239,68,68,0.25)' }}>🔑 Admin</span>}
             </div>
           </div>
 
-          {/* ── Info rows ────────────────────────────────────── */}
-          <div className="db-sidebar-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-            <p className="db-sidebar-section-title" style={{ textAlign: 'center', width: '100%' }}>Profile Information</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', alignItems: 'center' }}>
-              {[
-                { icon:'🪪', label:'Matric No.', value: profileData?.matricNumber || '—' },
-                { icon:'🏛️', label:'Faculty',    value: profileData?.faculty || '—' },
-                { icon:'📚', label:'Department', value: profileData?.department || '—' },
-                { icon:'🏠', label:'Hostel',     value: profileData?.hostel || '—' },
-                { icon:'📞', label:'Phone',      value: profileData?.phoneNumber || '—' },
-              ].map(row => (
-                <div key={row.label} className="db-info-row" style={{ alignItems: 'center', textAlign: 'center' }}>
-                  <span className="db-info-label">{row.icon} {row.label}</span>
-                  <span className="db-info-value" style={{ fontSize:'0.82rem', wordBreak:'break-word' }}>{row.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* ── Wallet Balance ─────────────────────────────────── */}
-          <div className="db-sidebar-section">
-            <p className="db-sidebar-section-title">Escrow Wallet Balance</p>
-            <div style={{ padding: '12px', background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.3)', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--gold)' }}>₦{(profileData?.walletBalance || 0).toLocaleString()}</span>
-              <span style={{ fontSize: '0.72rem', fontWeight: '700', padding: '2px 6px', background: 'rgba(16,185,129,0.15)', color: 'var(--success)', borderRadius: '4px' }}>Active</span>
-            </div>
-          </div>
-
-          {/* ── Quick Actions ─────────────────────────────────── */}
-          <div className="db-sidebar-section">
-            <p className="db-sidebar-section-title">Quick Actions</p>
-            <div className="db-quick-actions">
-              <Link to="/post" className="db-quick-btn primary">
-                <span className="db-quick-btn-icon">＋</span> Post a New Listing
-              </Link>
-              <Link to="/chat" className="db-quick-btn">
-                <span className="db-quick-btn-icon">💬</span> Messages Inbox
-              </Link>
-              <Link to="/marketplace" className="db-quick-btn">
-                <span className="db-quick-btn-icon">🛍️</span> Browse Marketplace
-              </Link>
-            </div>
-          </div>
-
-          {/* ── Stats ────────────────────────────────────────── */}
-          <div className="db-sidebar-section" style={{ borderBottom:'none' }}>
-            <p className="db-sidebar-section-title">Account Stats</p>
-            <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
-              {[
-                { label:'Active Listings', value: myProducts.filter(p => p.status === 'Available').length, color:'var(--metric-1-color)' },
-                { label:'Items Sold',      value: myProducts.filter(p => p.status === 'Sold').length,      color:'var(--metric-2-color)' },
-                { label:'Wishlist Items',  value: wishCount, color:'var(--metric-3-color)' },
-                { label:'Seller Rating',   value: avgRating,  color:'var(--metric-4-color)' },
-              ].map(stat => (
-                <div key={stat.label} style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                  <span style={{ fontSize:'0.8rem', color:'var(--text-secondary)' }}>{stat.label}</span>
-                  <span style={{ fontSize:'0.88rem', fontWeight:'800', color: stat.color }}>{stat.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-        </aside>
-
-        {/* RIGHT MAIN CONTENT */}
-        <main>
-          {/* Tabs — settings removed (use Edit Profile in navbar) */}
-          <div className="db-tabs">
-            {[
-              { id: 'listings', label: `📦 My Listings (${myProducts.length})` },
-              { id: 'orders', label: `💳 Transactions (${(orders.bought?.length || 0) + (orders.sold?.length || 0)})` },
-              { id: 'wishlist', label: `❤️ Wishlist (${wishCount})` },
-            ].map(tab => (
+          {/* Navigation */}
+          <nav className="dash-nav">
+            {navTabs.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`db-tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+                className={`dash-nav-item${activeTab === tab.id ? ' active' : ''}`}
               >
-                {tab.label}
+                <span className="dash-nav-icon">{tab.icon}</span>
+                <span>{tab.label}</span>
+                {tab.badge > 0 && <span className="dash-nav-badge">{tab.badge}</span>}
               </button>
             ))}
+          </nav>
+
+          {/* Quick Actions */}
+          <div className="dash-sidebar-actions">
+            <Link to="/post" className="dash-action-btn primary">＋ Post New Listing</Link>
+            <Link to="/chat" className="dash-action-btn">💬 Messages</Link>
+            <Link to="/marketplace" className="dash-action-btn">🛍️ Browse Marketplace</Link>
+          </div>
+        </aside>
+
+        {/* ═══════════════════ MAIN CONTENT ═══════════════════ */}
+        <main className="dash-main">
+
+          {/* ── Welcome Banner ──────────────────────────────── */}
+          <div className="dash-banner">
+            <div>
+              <h1 className="dash-banner-title">Hey, {user?.name?.split(' ')[0]}! 👋</h1>
+              <p className="dash-banner-sub">Welcome to your Lead City dashboard</p>
+              <div className="dash-banner-chips">
+                <span className="dash-banner-chip">📧 {user?.email}</span>
+                {profileData?.faculty && <span className="dash-banner-chip">🏛️ {profileData.faculty}</span>}
+                {profileData?.matricNumber && <span className="dash-banner-chip">🪪 {profileData.matricNumber}</span>}
+              </div>
+            </div>
+            <div className="dash-wallet-card">
+              <span className="dash-wallet-label">Escrow Balance</span>
+              <span className="dash-wallet-amount">₦{(profileData?.walletBalance || 0).toLocaleString()}</span>
+            </div>
           </div>
 
-          {/* ── LISTINGS TAB ─────────────────────────────────── */}
-          {activeTab === 'listings' && (
-            myProducts.length > 0 ? (
-              <div className="db-card-list">
-                {myProducts.map(p => (
-                  <div key={p._id} className="db-product-card">
-                    {p.image
-                      ? <img src={p.image} alt={p.name} className="db-product-image" />
-                      : <div className="db-product-placeholder">🖼️</div>
-                    }
-                    <div className="db-product-info">
-                      <h4 className="db-product-title">{p.name}</h4>
-                      <span className="db-product-price">₦{p.price.toLocaleString()}</span>
-                      <div className="db-product-meta" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-                        <span>📍 {p.hostelLocation}</span>
-                        <span className={`db-status-badge ${p.status === 'Sold' ? 'sold' : 'available'}`}>{p.status}</span>
-                        {p.isBoosted ? (
-                          <span style={{ fontSize: '0.7rem', fontWeight: '700', padding: '2px 8px', borderRadius: '4px', background: 'rgba(212,175,55,0.15)', color: 'var(--gold)', border: '1px solid rgba(212,175,55,0.3)' }}>🚀 Boosted</span>
-                        ) : (
-                          p.status !== 'Sold' && (
-                            <button
-                              onClick={() => handleBoostListing(p._id)}
-                              style={{ border: 'none', background: 'none', color: 'var(--gold)', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
-                            >
-                              🚀 Boost Listing (₦500)
-                            </button>
-                          )
-                        )}
-                      </div>
-                    </div>
-                    <div className="db-actions">
-                      <button
-                        onClick={() => handleToggleSold(p._id, p.status)}
-                        className="btn-secondary"
-                        style={{ padding:'8px 14px', fontSize:'0.8rem', whiteSpace:'nowrap',
-                          color: p.status === 'Sold' ? 'var(--success)' : 'var(--text-secondary)',
-                          borderColor: p.status === 'Sold' ? 'rgba(16,185,129,0.4)' : 'var(--border-color)'
-                        }}
-                      >
-                        {p.status === 'Sold' ? '↩ Relist' : '✓ Mark Sold'}
-                      </button>
-                      <Link
-                        to={`/edit/${p._id}`}
-                        className="btn-secondary"
-                        style={{ padding:'8px 14px', fontSize:'0.8rem' }}
-                      >
-                        ✏️ Edit
-                      </Link>
-                      <button
-                        onClick={() => handleDelete(p._id)}
-                        className="btn-danger"
-                        style={{ padding:'8px 14px' }}
-                      >
-                        🗑
-                      </button>
-                    </div>
+          {/* ══════════ OVERVIEW TAB ══════════ */}
+          {activeTab === 'overview' && (
+            <>
+              {/* Metrics */}
+              <div className="dash-metrics">
+                {[
+                  { icon: '📦', value: activeCount, label: 'Active Listings' },
+                  { icon: '🤝', value: soldCount,   label: 'Items Sold' },
+                  { icon: '❤️', value: wishCount,   label: 'Wishlist Items' },
+                  { icon: '⭐', value: avgRating,   label: 'Seller Rating' },
+                ].map(m => (
+                  <div key={m.label} className="dash-metric">
+                    <div className="dash-metric-icon">{m.icon}</div>
+                    <div className="dash-metric-value">{m.value}</div>
+                    <div className="dash-metric-label">{m.label}</div>
                   </div>
                 ))}
               </div>
-            ) : (
-              <div className="db-empty-state">
-                <div className="db-empty-icon">📭</div>
-                <p className="db-empty-title">No listings yet</p>
-                <p style={{ fontSize:'0.85rem', marginBottom:'20px' }}>Start selling by posting your first product on the marketplace.</p>
-                <Link to="/post" className="btn-primary">+ Post a Listing</Link>
-              </div>
-            )
-          )}
 
-          {/* ── ORDERS TAB ────────────────────────────────────── */}
-          {activeTab === 'orders' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              <div>
-                <h3 style={{ fontSize: '1.05rem', color: 'var(--gold)', marginBottom: '12px', fontWeight: '700' }}>🛒 Items Purchased (Escrow)</h3>
-                {orders.bought?.length > 0 ? (
-                  <div className="db-card-list">
-                    {orders.bought.map(o => (
-                      <div key={o._id} className="db-product-card" style={{ borderLeft: '3px solid var(--gold)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div className="db-product-info">
-                          <h4 className="db-product-title">{o.product ? o.product.name : 'Deleted Product'}</h4>
-                          <span className="db-product-price">₦{o.amount.toLocaleString()}</span>
-                          <div className="db-product-meta" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                            <span>Seller: {o.seller?.name || 'Unknown'}</span>
-                            <span>Ref: {o.txRef}</span>
-                            <span style={{ fontWeight: '700', color: o.paymentStatus === 'Paid' ? 'var(--success)' : 'var(--warning)' }}>
-                              Payment: {o.paymentStatus}
-                            </span>
-                            <span style={{ fontWeight: '700', color: o.escrowStatus === 'Released' ? 'var(--success)' : 'var(--gold)' }}>
-                              Escrow: {o.escrowStatus}
-                            </span>
+              {/* Verification */}
+              {!user?.isVerifiedStudent ? (
+                <div className="dash-verify-card">
+                  <div className="dash-verify-title">🎓 Student Verification</div>
+                  {showVerifyForm ? (
+                    <form onSubmit={handleVerifySubmit} style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
+                      <input
+                        type="text" required placeholder="Your matric number"
+                        value={matricInput} onChange={e => setMatricInput(e.target.value)}
+                        className="glass-input" style={{ maxWidth:'300px' }}
+                      />
+                      <div style={{ display:'flex', gap:'8px', alignItems:'center', flexWrap:'wrap' }}>
+                        <label htmlFor="id-upload-dash" className="btn-secondary" style={{ padding:'8px 14px', fontSize:'0.82rem', cursor:'pointer' }}>
+                          {idCardLabel || '📎 Upload ID Card'}
+                        </label>
+                        <input id="id-upload-dash" type="file" accept="image/*" style={{ display:'none' }}
+                          onChange={e => { setIdCardFile(e.target.files[0]); setIdCardLabel(e.target.files[0]?.name || ''); }}
+                        />
+                        <button type="submit" className="btn-primary" style={{ padding:'8px 16px', fontSize:'0.82rem' }}>Submit</button>
+                        <button type="button" onClick={() => setShowVerifyForm(false)} className="btn-secondary" style={{ padding:'8px 14px', fontSize:'0.82rem' }}>Cancel</button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="dash-verify-actions">
+                      <button onClick={() => setShowVerifyForm(true)} className="btn-secondary" style={{ padding:'8px 16px', fontSize:'0.82rem' }}>📎 Submit ID Form</button>
+                      <button onClick={handlePayVerificationFee} className="btn-primary" style={{ padding:'10px 22px', fontSize:'0.85rem' }}>🎓 Get Instant Verified (₦1,000)</button>
+                    </div>
+                  )}
+                  <p className="dash-verify-hint">Upload your student ID to get a verified badge and build trust with buyers.</p>
+                </div>
+              ) : (
+                <div style={{ marginBottom:'24px' }}>
+                  <VerifiedBadge size="lg" />
+                </div>
+              )}
+
+              {/* Profile Info Grid */}
+              <div className="dash-section-header">
+                <h2 className="dash-section-title">👤 Profile Information</h2>
+              </div>
+              <div className="dash-profile-grid">
+                {[
+                  { icon:'🪪', label:'Matric No.', value: profileData?.matricNumber || '—' },
+                  { icon:'🏛️', label:'Faculty',    value: profileData?.faculty || '—' },
+                  { icon:'📚', label:'Department', value: profileData?.department || '—' },
+                  { icon:'🏠', label:'Hostel',     value: profileData?.hostel || '—' },
+                  { icon:'📞', label:'Phone',      value: profileData?.phoneNumber || '—' },
+                  { icon:'⭐', label:'Rating',     value: avgRating !== '—' ? `${avgRating} / 5.0 (${ratings.length} reviews)` : 'No reviews yet' },
+                ].map(row => (
+                  <div key={row.label} className="dash-profile-item">
+                    <span className="dash-profile-label">{row.icon} {row.label}</span>
+                    <span className="dash-profile-value">{row.value}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Recent Listings Preview */}
+              {myProducts.length > 0 && (
+                <>
+                  <div className="dash-section-header">
+                    <h2 className="dash-section-title">📦 Recent Listings</h2>
+                    <button onClick={() => setActiveTab('listings')} className="btn-secondary" style={{ padding:'6px 14px', fontSize:'0.78rem' }}>View All →</button>
+                  </div>
+                  <div className="dash-listing-grid">
+                    {myProducts.slice(0, 3).map(p => (
+                      <div key={p._id} className="dash-listing-card">
+                        {p.image
+                          ? <img src={p.image} alt={p.name} className="dash-listing-img" />
+                          : <div className="dash-listing-placeholder">🖼️</div>
+                        }
+                        <div className="dash-listing-info">
+                          <h4 className="dash-listing-name">{p.name}</h4>
+                          <span className="dash-listing-price">₦{p.price.toLocaleString()}</span>
+                          <div className="dash-listing-meta">
+                            <span>📍 {p.hostelLocation}</span>
+                            <span className={`dash-status-badge ${p.status === 'Sold' ? 'sold' : 'available'}`}>{p.status}</span>
                           </div>
                         </div>
-                        {o.paymentStatus === 'Paid' && o.escrowStatus === 'Held' && (
-                          <div className="db-actions">
-                            <button
-                              onClick={() => handleConfirmDelivery(o._id)}
-                              className="btn-primary"
-                              style={{ padding: '8px 14px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
-                            >
-                              🤝 Release Funds
-                            </button>
-                          </div>
-                        )}
+                        <Link to={`/product/${p._id}`} className="btn-secondary" style={{ padding:'8px 14px', fontSize:'0.78rem', flexShrink:0 }}>View →</Link>
                       </div>
                     ))}
                   </div>
+                </>
+              )}
+            </>
+          )}
+
+          {/* ══════════ LISTINGS TAB ══════════ */}
+          {activeTab === 'listings' && (
+            <>
+              <div className="dash-section-header">
+                <h2 className="dash-section-title">📦 My Listings <span className="dash-section-count">{myProducts.length}</span></h2>
+                <Link to="/post" className="btn-primary" style={{ padding:'8px 18px', fontSize:'0.82rem' }}>+ New Listing</Link>
+              </div>
+              {myProducts.length > 0 ? (
+                <div className="dash-listing-grid">
+                  {myProducts.map(p => (
+                    <div key={p._id} className="dash-listing-card">
+                      {p.image
+                        ? <img src={p.image} alt={p.name} className="dash-listing-img" />
+                        : <div className="dash-listing-placeholder">🖼️</div>
+                      }
+                      <div className="dash-listing-info">
+                        <h4 className="dash-listing-name">{p.name}</h4>
+                        <span className="dash-listing-price">₦{p.price.toLocaleString()}</span>
+                        <div className="dash-listing-meta">
+                          <span>📍 {p.hostelLocation}</span>
+                          <span className={`dash-status-badge ${p.status === 'Sold' ? 'sold' : 'available'}`}>{p.status}</span>
+                          {p.isBoosted ? (
+                            <span className="dash-boosted-badge">🚀 Boosted</span>
+                          ) : (
+                            p.status !== 'Sold' && (
+                              <button onClick={() => handleBoostListing(p._id)} className="dash-boost-link">🚀 Boost (₦500)</button>
+                            )
+                          )}
+                        </div>
+                      </div>
+                      <div className="dash-listing-actions">
+                        <button
+                          onClick={() => handleToggleSold(p._id, p.status)}
+                          className="btn-secondary"
+                          style={{
+                            padding:'8px 14px', fontSize:'0.78rem', whiteSpace:'nowrap',
+                            color: p.status === 'Sold' ? 'var(--success)' : 'var(--text-secondary)',
+                            borderColor: p.status === 'Sold' ? 'rgba(16,185,129,0.4)' : 'var(--border-color)'
+                          }}
+                        >
+                          {p.status === 'Sold' ? '↩ Relist' : '✓ Mark Sold'}
+                        </button>
+                        <Link to={`/edit/${p._id}`} className="btn-secondary" style={{ padding:'8px 14px', fontSize:'0.78rem' }}>✏️ Edit</Link>
+                        <button onClick={() => handleDelete(p._id)} className="btn-danger" style={{ padding:'8px 14px' }}>🗑</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="dash-empty">
+                  <div className="dash-empty-icon">📭</div>
+                  <p className="dash-empty-title">No listings yet</p>
+                  <p className="dash-empty-sub">Start selling by posting your first product on the marketplace.</p>
+                  <Link to="/post" className="btn-primary">+ Post a Listing</Link>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ══════════ ORDERS TAB ══════════ */}
+          {activeTab === 'orders' && (
+            <div style={{ display:'flex', flexDirection:'column', gap:'28px' }}>
+              {/* Bought */}
+              <div className="dash-order-section">
+                <h3 className="dash-order-section-title">🛒 Items Purchased (Escrow)</h3>
+                {orders.bought?.length > 0 ? (
+                  orders.bought.map(o => (
+                    <div key={o._id} className="dash-order-card">
+                      <div className="dash-order-info">
+                        <h4 className="dash-order-name">{o.product ? o.product.name : 'Deleted Product'}</h4>
+                        <span className="dash-order-amount">₦{o.amount.toLocaleString()}</span>
+                        <div className="dash-order-meta">
+                          <span>Seller: {o.seller?.name || 'Unknown'}</span>
+                          <span>Ref: {o.txRef}</span>
+                          <span className="dash-order-status" style={{ color: o.paymentStatus === 'Paid' ? 'var(--success)' : 'var(--warning)' }}>
+                            Payment: {o.paymentStatus}
+                          </span>
+                          <span className="dash-order-status" style={{ color: o.escrowStatus === 'Released' ? 'var(--success)' : 'var(--gold)' }}>
+                            Escrow: {o.escrowStatus}
+                          </span>
+                        </div>
+                      </div>
+                      {o.paymentStatus === 'Paid' && o.escrowStatus === 'Held' && (
+                        <button onClick={() => handleConfirmDelivery(o._id)} className="btn-primary" style={{ padding:'8px 16px', fontSize:'0.8rem', whiteSpace:'nowrap', flexShrink:0 }}>
+                          🤝 Release Funds
+                        </button>
+                      )}
+                    </div>
+                  ))
                 ) : (
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>You haven't bought any items yet.</p>
+                  <p style={{ fontSize:'0.85rem', color:'var(--text-secondary)' }}>You haven't bought any items yet.</p>
                 )}
               </div>
 
-              <div>
-                <h3 style={{ fontSize: '1.05rem', color: 'var(--gold)', marginBottom: '12px', fontWeight: '700' }}>💰 Items Sold (Escrow Earnings)</h3>
+              {/* Sold */}
+              <div className="dash-order-section">
+                <h3 className="dash-order-section-title">💰 Items Sold (Escrow Earnings)</h3>
                 {orders.sold?.length > 0 ? (
-                  <div className="db-card-list">
-                    {orders.sold.map(o => (
-                      <div key={o._id} className="db-product-card" style={{ borderLeft: '3px solid var(--success)' }}>
-                        <div className="db-product-info">
-                          <h4 className="db-product-title">{o.product ? o.product.name : 'Deleted Product'}</h4>
-                          <span className="db-product-price">₦{o.amount.toLocaleString()}</span>
-                          <div className="db-product-meta" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                            <span>Buyer: {o.buyer?.name || 'Unknown'}</span>
-                            <span>Ref: {o.txRef}</span>
-                            <span style={{ fontWeight: '700', color: o.paymentStatus === 'Paid' ? 'var(--success)' : 'var(--warning)' }}>
-                              Payment: {o.paymentStatus}
-                            </span>
-                            <span style={{ fontWeight: '700', color: o.escrowStatus === 'Released' ? 'var(--success)' : 'var(--gold)' }}>
-                              Escrow: {o.escrowStatus}
-                            </span>
-                          </div>
+                  orders.sold.map(o => (
+                    <div key={o._id} className="dash-order-card sold-order">
+                      <div className="dash-order-info">
+                        <h4 className="dash-order-name">{o.product ? o.product.name : 'Deleted Product'}</h4>
+                        <span className="dash-order-amount">₦{o.amount.toLocaleString()}</span>
+                        <div className="dash-order-meta">
+                          <span>Buyer: {o.buyer?.name || 'Unknown'}</span>
+                          <span>Ref: {o.txRef}</span>
+                          <span className="dash-order-status" style={{ color: o.paymentStatus === 'Paid' ? 'var(--success)' : 'var(--warning)' }}>
+                            Payment: {o.paymentStatus}
+                          </span>
+                          <span className="dash-order-status" style={{ color: o.escrowStatus === 'Released' ? 'var(--success)' : 'var(--gold)' }}>
+                            Escrow: {o.escrowStatus}
+                          </span>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))
                 ) : (
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>No items sold through escrow yet.</p>
+                  <p style={{ fontSize:'0.85rem', color:'var(--text-secondary)' }}>No items sold through escrow yet.</p>
                 )}
               </div>
             </div>
           )}
 
-          {/* ── WISHLIST TAB ──────────────────────────────────── */}
+          {/* ══════════ WISHLIST TAB ══════════ */}
           {activeTab === 'wishlist' && (
-            profileData?.wishlist?.length > 0 ? (
-              <div className="db-card-list">
-                {profileData.wishlist.map(p => (
-                  <div key={p._id} className="db-product-card">
-                    {p.image
-                      ? <img src={p.image} alt={p.name} className="db-product-image" />
-                      : <div className="db-product-placeholder">🖼️</div>
-                    }
-                    <div className="db-product-info">
-                      <h4 className="db-product-title">{p.name}</h4>
-                      <span className="db-product-price">₦{p.price?.toLocaleString()}</span>
-                      <div className="db-product-meta"><span>📍 {p.hostelLocation}</span></div>
-                    </div>
-                    <div className="db-actions">
-                      <Link to={`/product/${p._id}`} className="btn-primary" style={{ padding:'8px 16px', fontSize:'0.82rem' }}>
-                        View →
-                      </Link>
-                    </div>
-                  </div>
-                ))}
+            <>
+              <div className="dash-section-header">
+                <h2 className="dash-section-title">❤️ Wishlist <span className="dash-section-count">{wishCount}</span></h2>
               </div>
-            ) : (
-              <div className="db-empty-state">
-                <div className="db-empty-icon">💔</div>
-                <p className="db-empty-title">Your wishlist is empty</p>
-                <p style={{ fontSize:'0.85rem', marginBottom:'20px' }}>Browse the marketplace and save items you love.</p>
-                <Link to="/" className="btn-secondary">🛍️ Browse Marketplace</Link>
-              </div>
-            )
+              {profileData?.wishlist?.length > 0 ? (
+                <div className="dash-listing-grid">
+                  {profileData.wishlist.map(p => (
+                    <div key={p._id} className="dash-listing-card">
+                      {p.image
+                        ? <img src={p.image} alt={p.name} className="dash-listing-img" />
+                        : <div className="dash-listing-placeholder">🖼️</div>
+                      }
+                      <div className="dash-listing-info">
+                        <h4 className="dash-listing-name">{p.name}</h4>
+                        <span className="dash-listing-price">₦{p.price?.toLocaleString()}</span>
+                        <div className="dash-listing-meta"><span>📍 {p.hostelLocation}</span></div>
+                      </div>
+                      <Link to={`/product/${p._id}`} className="btn-primary" style={{ padding:'8px 16px', fontSize:'0.82rem', flexShrink:0 }}>View →</Link>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="dash-empty">
+                  <div className="dash-empty-icon">💔</div>
+                  <p className="dash-empty-title">Your wishlist is empty</p>
+                  <p className="dash-empty-sub">Browse the marketplace and save items you love.</p>
+                  <Link to="/marketplace" className="btn-secondary">🛍️ Browse Marketplace</Link>
+                </div>
+              )}
+            </>
           )}
 
-          {/* Settings tab removed — use "Edit Profile" from the Navbar dropdown */}
+          {/* ══════════ SETTINGS TAB ══════════ */}
+          {activeTab === 'settings' && (
+            <>
+              <div className="dash-section-header">
+                <h2 className="dash-section-title">⚙️ Account Settings</h2>
+              </div>
+
+              <div className="dash-settings-section">
+                <p className="dash-settings-title">Profile Information</p>
+                <div className="dash-settings-grid">
+                  <div className="dash-settings-field">
+                    <label className="dash-settings-label">Hostel / Location</label>
+                    <select value={editHostel} onChange={e => setEditHostel(e.target.value)} className="glass-input">
+                      {HOSTELS.map(h => <option key={h} value={h} style={{ background:'var(--bg-input)', color:'var(--text-primary)' }}>{h}</option>)}
+                    </select>
+                  </div>
+                  <div className="dash-settings-field">
+                    <label className="dash-settings-label">Faculty</label>
+                    <select value={editFaculty} onChange={e => { setEditFaculty(e.target.value); setEditDept(''); }} className="glass-input">
+                      {FACULTIES.map(f => <option key={f} value={f} style={{ background:'var(--bg-input)', color:'var(--text-primary)' }}>{f}</option>)}
+                    </select>
+                  </div>
+                  <div className="dash-settings-field">
+                    <label className="dash-settings-label">Department</label>
+                    <select value={editDept} onChange={e => setEditDept(e.target.value)} className="glass-input">
+                      <option value="" style={{ background:'var(--bg-input)', color:'var(--text-primary)' }}>— Select —</option>
+                      {currentDepts.map(d => <option key={d} value={d} style={{ background:'var(--bg-input)', color:'var(--text-primary)' }}>{d}</option>)}
+                    </select>
+                  </div>
+                  <div className="dash-settings-field">
+                    <label className="dash-settings-label">Phone Number</label>
+                    <input
+                      type="tel" maxLength="11" placeholder="e.g. 08012345678"
+                      value={editPhone} onChange={e => setEditPhone(e.target.value.replace(/\D/g, ''))}
+                      className="glass-input"
+                    />
+                  </div>
+                </div>
+                <div style={{ marginTop:'20px', display:'flex', justifyContent:'flex-end' }}>
+                  <button onClick={handleSaveSettings} disabled={editSaving} className="btn-primary" style={{ padding:'10px 24px', fontSize:'0.88rem' }}>
+                    {editSaving ? 'Saving…' : '💾 Save Changes'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Verification settings */}
+              {!user?.isVerifiedStudent && (
+                <div className="dash-settings-section">
+                  <p className="dash-settings-title">Student Verification</p>
+                  <p style={{ fontSize:'0.85rem', color:'var(--text-secondary)', marginBottom:'16px' }}>
+                    Get verified to build trust with buyers and unlock premium features.
+                  </p>
+                  {showVerifyForm ? (
+                    <form onSubmit={handleVerifySubmit} style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
+                      <input
+                        type="text" required placeholder="Your matric number"
+                        value={matricInput} onChange={e => setMatricInput(e.target.value)}
+                        className="glass-input" style={{ maxWidth:'300px' }}
+                      />
+                      <div style={{ display:'flex', gap:'8px', alignItems:'center', flexWrap:'wrap' }}>
+                        <label htmlFor="id-upload-settings" className="btn-secondary" style={{ padding:'8px 14px', fontSize:'0.82rem', cursor:'pointer' }}>
+                          {idCardLabel || '📎 Upload ID Card'}
+                        </label>
+                        <input id="id-upload-settings" type="file" accept="image/*" style={{ display:'none' }}
+                          onChange={e => { setIdCardFile(e.target.files[0]); setIdCardLabel(e.target.files[0]?.name || ''); }}
+                        />
+                        <button type="submit" className="btn-primary" style={{ padding:'8px 16px', fontSize:'0.82rem' }}>Submit</button>
+                        <button type="button" onClick={() => setShowVerifyForm(false)} className="btn-secondary" style={{ padding:'8px 14px', fontSize:'0.82rem' }}>Cancel</button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="dash-verify-actions">
+                      <button onClick={() => setShowVerifyForm(true)} className="btn-secondary" style={{ padding:'8px 16px', fontSize:'0.82rem' }}>📎 Submit ID Form</button>
+                      <button onClick={handlePayVerificationFee} className="btn-primary" style={{ padding:'10px 22px', fontSize:'0.85rem' }}>🎓 Get Instant Verified (₦1,000)</button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {user?.isVerifiedStudent && (
+                <div className="dash-settings-section">
+                  <p className="dash-settings-title">Verification Status</p>
+                  <VerifiedBadge size="lg" />
+                  <p style={{ fontSize:'0.82rem', color:'var(--text-secondary)', marginTop:'10px' }}>Your account is verified as an LCU student.</p>
+                </div>
+              )}
+            </>
+          )}
         </main>
       </div>
-    </div>
+
+      {/* ═══════════════════ MOBILE BOTTOM NAV ═══════════════════ */}
+      <div className="dash-mobile-toggle">
+        <div className="dash-mobile-nav">
+          {navTabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`dash-mobile-nav-item${activeTab === tab.id ? ' active' : ''}`}
+            >
+              <span className="dash-mobile-icon">{tab.icon}</span>
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </>
   );
 }
