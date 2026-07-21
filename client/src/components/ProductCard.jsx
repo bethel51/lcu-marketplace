@@ -27,18 +27,27 @@ const ProductCard = React.memo(function ProductCard({ product }) {
         {status === 'Sold' && <span style={styles.soldBadge}>SOLD</span>}
       </div>
 
-      {/* Image */}
+      {/* Image Container with Gradient Overlay */}
       <div className="premium-card-img-container">
         {image ? (
-          <img src={image} alt={name} className="premium-card-img" decoding="async" loading="lazy" />
+          <>
+            <img
+              src={image}
+              alt={name}
+              className="premium-card-img"
+              decoding="async"
+              loading="lazy"
+            />
+            <div className="premium-card-img-overlay" />
+          </>
         ) : (
           <div style={styles.placeholderImg}>
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <rect x="3" y="3" width="18" height="18" rx="2" />
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="3" />
               <circle cx="8.5" cy="8.5" r="1.5" />
               <polyline points="21 15 16 10 5 21" />
             </svg>
-            <span style={{ fontSize: '0.75rem', marginTop: '6px' }}>No Image</span>
+            <span style={{ fontSize: '0.78rem', marginTop: '6px', fontWeight: '600' }}>No Image</span>
           </div>
         )}
       </div>
@@ -50,12 +59,12 @@ const ProductCard = React.memo(function ProductCard({ product }) {
           {seller?.isVerifiedStudent && <VerifiedBadge />}
         </div>
 
-        <h3 className="premium-card-title">{name}</h3>
+        <h3 className="premium-card-title" title={name}>{name}</h3>
 
         <div className="premium-card-footer">
           <span className="premium-card-location">📍 {hostelLocation}</span>
-          <Link to={`/product/${_id}`} className="btn-secondary premium-card-btn">
-            View →
+          <Link to={`/product/${_id}`} className="btn-primary premium-card-btn">
+            View Details →
           </Link>
         </div>
       </div>
