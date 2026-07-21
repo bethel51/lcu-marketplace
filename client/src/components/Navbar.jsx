@@ -338,6 +338,37 @@ export default function Navbar() {
           </div>
         </div>
       </nav>
+
+      {/* ─── Modern Floating Mobile Bottom Navigation Bar ─────── */}
+      <div className="mobile-bottom-nav">
+        <Link to="/" className={`mobile-nav-item ${isActive('/') ? 'active' : ''}`}>
+          <span className="mobile-nav-icon">🏠</span>
+          <span className="mobile-nav-label">Home</span>
+        </Link>
+        <Link to="/marketplace" className={`mobile-nav-item ${isActive('/marketplace') ? 'active' : ''}`}>
+          <span className="mobile-nav-icon">🛍️</span>
+          <span className="mobile-nav-label">Market</span>
+        </Link>
+        <Link to="/post" className="mobile-nav-item mobile-nav-post-btn">
+          <span className="mobile-nav-icon" style={{ fontSize: '1.2rem' }}>➕</span>
+        </Link>
+        {user ? (
+          <Link to="/profile" className={`mobile-nav-item ${isActive('/profile') ? 'active' : ''}`}>
+            <span className="mobile-nav-icon">👤</span>
+            <span className="mobile-nav-label">Profile</span>
+          </Link>
+        ) : (
+          <Link to="/auth" className={`mobile-nav-item ${isActive('/auth') ? 'active' : ''}`}>
+            <span className="mobile-nav-icon">🔑</span>
+            <span className="mobile-nav-label">Login</span>
+          </Link>
+        )}
+        <button onClick={toggleTheme} className="mobile-nav-item mobile-nav-theme">
+          <span className="mobile-nav-icon">{theme === 'light' ? '🌙' : '☀️'}</span>
+          <span className="mobile-nav-label">Theme</span>
+        </button>
+      </div>
+
       <EditProfileModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
     </>
   );
