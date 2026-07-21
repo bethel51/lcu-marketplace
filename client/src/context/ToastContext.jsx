@@ -1,131 +1,92 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 
 const ToastContext = createContext(null);
 
+// Global notification log (persisted in memory per session)
+const notificationLog = [];
+
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  const showToast = (message, type = 'success') => {
+  const showToast = useCallback((message, type = 'success') => {
     const id = Date.now() + Math.random().toString(36).substr(2, 9);
-    setToasts((prev) => [...prev, { id, message, type }]);
+    const entry = { id, message, type, time: new Date() };
 
-    // Auto-remove toast after 3 seconds
+    setToasts((prev) => [...prev.slice(-4), entry]); // max 5 toasts
+    setNotifications((prev) => [entry, ...prev].slice(0, 30)); // keep last 30
+    setUnreadCount((c) => c + 1);
+
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 3000);
-  };
+    }, 4000);
+  }, []);
 
-  const removeToast = (id) => {
+  const removeToast = useCallback((id) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
-  };
+  }, []);
+
+  const markAllRead = useCallback(() => setUnreadCount(0), []);
+  const clearNotifications = useCallback(() => { setNotifications([]); setUnreadCount(0); }, []);
 
   return (
-    <ToastContext.Provider value={{ showToast }}>
+    <ToastContext.Provider value={{ showToast, notifications, unreadCount, markAllRead, clearNotifications }}>
       {children}
-      {/* Toast Notification Container */}
-      <div style={styles.toastContainer}>
+
+      {/* ── Premium Toast Container ─────────────────────────── */}
+      <div className="toast-container">
         {toasts.map((t) => (
-          <div
-            key={t.id}
-            style={{
-              ...styles.toast,
-              ...styles[t.type]
-            }}
-            className="glass-panel animate-fade-in"
-          >
-            <div style={styles.toastContent}>
-              <span style={styles.emoji}>
-                {t.type === 'success' && '✓'}
-                {t.type === 'error' && '✕'}
-                {t.type === 'warning' && '⚠️'}
-                {t.type === 'info' && 'ℹ️'}
-              </span>
-              <span>{t.message}</span>
-            </div>
-            <button onClick={() => removeToast(t.id)} style={styles.closeBtn}>
-              ✕
-            </button>
-          </div>
+          <Toast key={t.id} toast={t} onRemove={removeToast} />
         ))}
       </div>
     </ToastContext.Provider>
   );
 };
 
+function Toast({ toast, onRemove }) {
+  const icons = {
+    success: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+    ),
+    error: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+      </svg>
+    ),
+    warning: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+        <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+      </svg>
+    ),
+    info: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+        <circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" />
+      </svg>
+    ),
+  };
+
+  return (
+    <div className={`toast-item toast-${toast.type}`}>
+      <div className="toast-icon">{icons[toast.type] || icons.info}</div>
+      <div className="toast-body">
+        <span className="toast-message">{toast.message}</span>
+      </div>
+      <button className="toast-close" onClick={() => onRemove(toast.id)} aria-label="Close">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+      <div className={`toast-progress toast-progress-${toast.type}`} />
+    </div>
+  );
+}
+
 export const useToast = () => {
   const context = useContext(ToastContext);
-  if (!context) {
-    throw new Error('useToast must be used within a ToastProvider');
-  }
+  if (!context) throw new Error('useToast must be used within a ToastProvider');
   return context;
-};
-
-const styles = {
-  toastContainer: {
-    position: 'fixed',
-    top: '20px',
-    right: '20px',
-    zIndex: 9999,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px',
-    pointerEvents: 'none',
-  },
-  toast: {
-    pointerEvents: 'auto',
-    padding: '14px 20px',
-    borderRadius: '8px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minWidth: '280px',
-    maxWidth: '400px',
-    boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.5)',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-    transition: 'all 0.3s ease',
-  },
-  toastContent: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    color: '#fff',
-    fontSize: '0.9rem',
-    fontWeight: '500',
-  },
-  emoji: {
-    fontSize: '1rem',
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '20px',
-    height: '20px',
-    borderRadius: '50%',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  closeBtn: {
-    background: 'none',
-    border: 'none',
-    color: 'rgba(255, 255, 255, 0.5)',
-    cursor: 'pointer',
-    fontSize: '0.8rem',
-    padding: '4px',
-    marginLeft: '12px',
-    transition: 'color 0.2s ease',
-  },
-  success: {
-    borderLeft: '4px solid #10b981',
-    background: 'rgba(16, 185, 129, 0.12)',
-  },
-  error: {
-    borderLeft: '4px solid #ef4444',
-    background: 'rgba(239, 68, 68, 0.12)',
-  },
-  warning: {
-    borderLeft: '4px solid #f59e0b',
-    background: 'rgba(245, 158, 11, 0.12)',
-  },
-  info: {
-    borderLeft: '4px solid #3b82f6',
-    background: 'rgba(59, 130, 246, 0.12)',
-  }
 };

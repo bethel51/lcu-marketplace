@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 const HOSTELS = [
   'Bronze Hostel','Silver Hostel','Gold Hostel','Platinum Hostel',
@@ -131,13 +132,16 @@ function EditProfileModal({ isOpen, onClose }) {
 
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const { notifications, unreadCount, markAllRead, clearNotifications } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
 
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
   const [modalOpen, setModalOpen] = React.useState(false);
+  const [notifOpen, setNotifOpen] = React.useState(false);
   const dropdownRef = React.useRef(null);
+  const notifRef = React.useRef(null);
   const [theme, setTheme] = React.useState(() => {
     return localStorage.getItem('theme') || 'dark';
   });
@@ -168,6 +172,22 @@ export default function Navbar() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  // Close notification panel on outside click
+  React.useEffect(() => {
+    function handleOutside(e) {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setNotifOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, []);
+
+  const handleNotifOpen = () => {
+    setNotifOpen(prev => !prev);
+    if (!notifOpen) markAllRead();
+  };
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
@@ -213,6 +233,52 @@ export default function Navbar() {
               <span style={styles.brandSub}>MARKETPLACE</span>
             </div>
           </Link>
+
+          {/* ─── Notification Bell ────────────────────────────── */}
+          <div ref={notifRef} style={{ position: 'relative' }}>
+            <button
+              className="notif-bell-btn"
+              onClick={handleNotifOpen}
+              aria-label="Notifications"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
+              {unreadCount > 0 && (
+                <span className="notif-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
+              )}
+            </button>
+
+            {/* Notification Panel */}
+            {notifOpen && (
+              <div className="notif-panel">
+                <div className="notif-panel-header">
+                  <span className="notif-panel-title">🔔 Notifications</span>
+                  {notifications.length > 0 && (
+                    <button className="notif-clear-btn" onClick={clearNotifications}>Clear all</button>
+                  )}
+                </div>
+                <div className="notif-list">
+                  {notifications.length === 0 ? (
+                    <div className="notif-empty">🎉 You're all caught up!</div>
+                  ) : (
+                    notifications.map((n) => (
+                      <div key={n.id} className="notif-item">
+                        <span className={`notif-dot notif-dot-${n.type}`} />
+                        <div style={{ flex: 1 }}>
+                          <div className="notif-item-msg">{n.message}</div>
+                          <div className="notif-item-time">
+                            {n.time ? new Date(n.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* ─── Hamburger ───────────────────────────────────── */}
           <button

@@ -36,15 +36,22 @@ const upload = multer({
 // Get all products (with search & filters)
 router.get('/', async (req, res) => {
   try {
-    const { search, category, hostel, faculty, status, minPrice, maxPrice } = req.query;
+    const { search, category, hostel, faculty, status, minPrice, maxPrice, seller } = req.query;
     
     let query = {};
-    
-    // Default to only available items unless specified
-    if (status) {
-      query.status = status;
+
+    // If fetching by seller (for dashboard), skip the default status filter
+    if (seller) {
+      query.seller = seller;
+      // Optionally also filter by status if specified
+      if (status && status !== 'All') query.status = status;
     } else {
-      query.status = 'Available';
+      // Default to only available items unless specified
+      if (status && status !== 'All') {
+        query.status = status;
+      } else if (!status) {
+        query.status = 'Available';
+      }
     }
     
     if (search) {

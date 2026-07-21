@@ -62,10 +62,15 @@ export default function Dashboard() {
         setEditPhone(profile.phoneNumber || '');
       }
       if (user?._id) {
-        const res = await fetch(`${API_URL}/api/products?status=All`);
+        // Fetch THIS user's products using seller filter + auth token
+        const res = await fetch(`${API_URL}/api/products?seller=${user._id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
         if (res.ok) {
-          const all = await res.json();
-          setMyProducts(all.filter(p => p.seller?._id === user._id || p.seller === user._id));
+          const data = await res.json();
+          // data may be array or { products: [] } shape
+          const all = Array.isArray(data) ? data : (data.products || []);
+          setMyProducts(all);
         }
 
         // Fetch user orders/transactions
