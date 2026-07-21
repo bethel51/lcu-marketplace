@@ -61,14 +61,16 @@ export default function Dashboard() {
         setEditDept(profile.department || '');
         setEditPhone(profile.phoneNumber || '');
       }
-      if (user?._id) {
+
+      const activeUserId = profile?._id || profile?.id || user?._id || user?.id;
+
+      if (activeUserId) {
         // Fetch THIS user's products using seller filter + auth token
-        const res = await fetch(`${API_URL}/api/products?seller=${user._id}`, {
+        const res = await fetch(`${API_URL}/api/products?seller=${activeUserId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
           const data = await res.json();
-          // data may be array or { products: [] } shape
           const all = Array.isArray(data) ? data : (data.products || []);
           setMyProducts(all);
         }
