@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
+import { useToast } from '../context/ToastContext';
 import { API_URL } from '../config';
 
 export default function Profile() {
@@ -92,6 +93,8 @@ export default function Profile() {
     }
   };
 
+  const { showToast } = useToast();
+
   const handleDeleteListing = async (productId) => {
     if (!window.confirm('Are you sure you want to delete this listing?')) return;
     if (!token) return;
@@ -103,10 +106,14 @@ export default function Profile() {
       });
       
       if (response.ok) {
+        showToast('Listing deleted successfully! 🗑️', 'success');
         loadProfileAndProducts();
+      } else {
+        const data = await response.json();
+        showToast(data.message || 'Failed to delete listing', 'error');
       }
     } catch (err) {
-      console.error(err);
+      showToast('Error deleting listing', 'error');
     }
   };
 

@@ -214,7 +214,16 @@ router.delete('/:id', protect, async (req, res) => {
       return res.status(401).json({ message: 'User not authorized' });
     }
     
-    await product.deleteOne();
+    // Clean up product from user wishlists first
+    await User.updateMany(
+      { wishlist: product._id },
+      { $pull: { wishlist: product._id } }
+    );
+
+    // Remove associated orders
+    await Order.deleteMany({ product: product._id });
+    
+    await Product.findByIdAndDelete(req.params.id);
     res.json({ message: 'Listing removed successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
