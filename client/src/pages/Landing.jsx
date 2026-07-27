@@ -25,26 +25,14 @@ export default function Landing() {
       .catch(() => {});
   }, []);
 
-  // Intersection Observer for scroll animations
+  // Animations trigger immediately or bypass observer if hidden
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            const targetId = entry.target.id;
-            setVisibleSection(prev => {
-              if (prev[targetId]) return prev; // avoid redundant state updates
-              return { ...prev, [targetId]: true };
-            });
-            // Stop observing once visible to save performance
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.05, rootMargin: '0px 0px -50px 0px' }
-    );
-    document.querySelectorAll('.observe-section').forEach(el => observer.observe(el));
-    return () => observer.disconnect();
+    setVisibleSection({
+      'cats-section': true,
+      'features-section': true,
+      'how-section': true,
+      'cta-section': true
+    });
   }, []);
 
   const features = [
