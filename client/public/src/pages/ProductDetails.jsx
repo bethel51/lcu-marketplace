@@ -122,6 +122,25 @@ export default function ProductDetails() {
     }
   };
 
+  const handleDeleteListing = async () => {
+    if (!window.confirm('Are you sure you want to permanently delete this listing?')) return;
+    try {
+      const response = await fetch(`${API_URL}/api/products/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (response.ok) {
+        showToast('Listing deleted successfully! 🗑️', 'success');
+        navigate('/profile');
+      } else {
+        showToast(data.message || 'Failed to delete listing', 'error');
+      }
+    } catch (err) {
+      showToast('Error deleting listing', 'error');
+    }
+  };
+
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
     if (!token) {
@@ -129,7 +148,7 @@ export default function ProductDetails() {
       return;
     }
     try {
-      const response = await fetch(`${API_URL}/api/auth/rate/${product.seller._id}`, {
+      const response = await fetch(`${API_URL}/api/auth/rate/${sellerId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -237,13 +256,13 @@ export default function ProductDetails() {
   };
 
   const handleWhatsAppContact = () => {
-    if (!product.seller?.phoneNumber) {
+    if (!sellerObj.phoneNumber) {
       showToast('Seller phone number is not available', 'error');
       return;
     }
-    let rawPhone = product.seller.phoneNumber.trim().replace(/\D/g, '');
+    let rawPhone = sellerObj.phoneNumber.trim().replace(/\D/g, '');
     if (rawPhone.startsWith('0')) rawPhone = '234' + rawPhone.slice(1);
-    const text = encodeURIComponent(`Hi ${product.seller.name}, I'm interested in buying your "${product.name}" listed for ₦${product.price?.toLocaleString()} on LCU Marketplace.`);
+    const text = encodeURIComponent(`Hi ${sellerObj.name || 'Seller'}, I'm interested in buying your "${product.name}" listed for ₦${product.price?.toLocaleString()} on LCU Marketplace.`);
     window.open(`https://wa.me/${rawPhone}?text=${text}`, '_blank');
   };
 
@@ -393,17 +412,17 @@ export default function ProductDetails() {
             <h3 style={styles.sectionTitle}>Seller Information</h3>
             <div style={styles.sellerHeader}>
               <div style={styles.sellerAvatar}>
-                {product.seller.name.charAt(0).toUpperCase()}
+                {(sellerObj.name || 'S').charAt(0).toUpperCase()}
               </div>
               <div>
                 <div style={styles.sellerNameRow}>
-                  <span style={styles.sellerName}>{product.seller.name}</span>
-                  {product.seller.isVerifiedStudent && (
+                  <span style={styles.sellerName}>{sellerObj.name || 'Unknown Seller'}</span>
+                  {sellerObj.isVerifiedStudent && (
                     <VerifiedBadge size="sm" />
                   )}
                 </div>
                 <div style={styles.sellerMeta}>
-                  {product.seller.hostel} | {product.seller.faculty}
+                  {sellerObj.hostel || 'No Hostel'} | {sellerObj.faculty || 'No Faculty'}
                 </div>
               </div>
             </div>
@@ -414,13 +433,13 @@ export default function ProductDetails() {
               <div style={styles.ratingStars}>
                 {'★'.repeat(Math.round(averageRating || 0)) + '☆'.repeat(5 - Math.round(averageRating || 0))}
               </div>
-              <span style={styles.ratingCount}>({product.seller.ratings?.length || 0} reviews)</span>
+              <span style={styles.ratingCount}>({sellerObj.ratings?.length || 0} reviews)</span>
             </div>
 
             {/* Reviews list */}
-            {product.seller.ratings?.length > 0 && (
+            {sellerObj.ratings?.length > 0 && (
               <div style={styles.reviewsList}>
-                {product.seller.ratings.slice(0, 3).map((r, index) => (
+                {sellerObj.ratings.slice(0, 3).map((r, index) => (
                   <div key={index} style={styles.reviewItem}>
                     <div style={styles.reviewHeader}>
                       <span style={styles.reviewerName}>{r.reviewer?.name || 'Student'}</span>
@@ -433,7 +452,7 @@ export default function ProductDetails() {
             )}
 
             {/* Write a review (Only if authenticated and NOT the seller) */}
-            {token && user?._id !== product.seller._id && (
+            {token && user?._id !== sellerId && (
               <form onSubmit={handleReviewSubmit} style={styles.reviewForm}>
                 <h4 style={styles.reviewFormTitle}>Rate this Seller</h4>
                 <div style={styles.ratingSelectContainer}>
@@ -494,7 +513,7 @@ export default function ProductDetails() {
               <div style={{ background: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(59, 130, 246, 0.25)', borderRadius: '10px', padding: '14px 16px', fontSize: '0.85rem' }}>
                 <p style={{ fontWeight: '700', color: 'var(--gold)', marginBottom: '4px' }}>🛡️ Escrow Buyer Protection</p>
                 <p style={{ color: 'var(--text-secondary)' }}>
-                  Your <strong>₦{product.price?.toLocaleString()}</strong> payment will be held safely in escrow. Funds are only released to <strong>{product.seller?.name}</strong> after you inspect and accept the item at your meeting point.
+                  Your <strong>₦{product.price?.toLocaleString()}</strong> payment will be held safely in escrow. Funds are only released to <strong>{sellerObj.name || 'the seller'}</strong> after you inspect and accept the item at your meeting point.
                 </p>
               </div>
 

@@ -12,6 +12,7 @@ const Auth           = lazy(() => import('./pages/Auth'));
 const ProductDetails = lazy(() => import('./pages/ProductDetails'));
 const PostProduct    = lazy(() => import('./pages/PostProduct'));
 const Dashboard      = lazy(() => import('./pages/Dashboard'));
+const Withdraw       = lazy(() => import('./pages/Withdraw'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const AdminLogin     = lazy(() => import('./pages/AdminLogin'));
 
@@ -143,6 +144,7 @@ function AppContent() {
               <Route path="/post"        element={<PrivateRoute><PostProduct /></PrivateRoute>} />
               <Route path="/edit/:id"    element={<PrivateRoute><PostProduct /></PrivateRoute>} />
               <Route path="/profile"     element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+              <Route path="/withdraw"    element={<PrivateRoute><Withdraw /></PrivateRoute>} />
 
               {/* Admin */}
               <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />

@@ -414,8 +414,8 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* ─── Modern Floating Mobile Bottom Navigation Bar (Visible on all student routes on mobile) ─── */}
-      {!location.pathname.startsWith('/admin') && !location.pathname.startsWith('/admin-login') && (
+      {/* ─── Modern Floating Mobile Bottom Navigation Bar (Visible only on User Dashboard / Withdrawal routes on mobile) ─── */}
+      {(location.pathname === '/profile' || location.pathname === '/withdraw') && (
         <div className="mobile-bottom-nav">
           <Link to="/" className={`mobile-nav-item ${isActive('/') ? 'active' : ''}`}>
             <span className="mobile-nav-icon">🏠</span>

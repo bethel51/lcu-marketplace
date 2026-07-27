@@ -50,16 +50,7 @@ export default function Dashboard() {
   const [idCardFile,      setIdCardFile]      = useState(null);
   const [idCardLabel,     setIdCardLabel]     = useState('');
 
-  // ── Payout Settings & Sweep state ───────────────────────────
-  const [banksList, setBanksList] = useState([]);
-  const [payoutBank, setPayoutBank] = useState('');
-  const [payoutAccount, setPayoutAccount] = useState('');
-  const [payoutName, setPayoutName] = useState('');
-  const [resolvingAccount, setResolvingAccount] = useState(false);
-  const [savingPayout, setSavingPayout] = useState(false);
-  const [sweepingWallet, setSweepingWallet] = useState(false);
-
-  // ── Checkout Modal state ────────────────────────────────────
+  // Checkout Modal state ────────────────────────────────────
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [checkoutOrderId, setCheckoutOrderId] = useState('');
   const [checkoutAmount, setCheckoutAmount] = useState(0);
@@ -76,9 +67,6 @@ export default function Dashboard() {
         setEditFaculty(profile.faculty || FACULTIES[0]);
         setEditDept(profile.department || '');
         setEditPhone(profile.phoneNumber || '');
-        setPayoutBank(profile.payoutBankCode || '');
-        setPayoutAccount(profile.payoutAccountNumber || '');
-        setPayoutName(profile.payoutAccountName || '');
       }
 
       const activeUserId = profile?._id || profile?.id || user?._id || user?.id;
@@ -251,118 +239,6 @@ export default function Dashboard() {
     }
   };
 
-  // Load banks list
-  useEffect(() => {
-    if (!token) return;
-    fetch(`${API_URL}/api/payments/banks`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-      .then(r => r.json())
-      .then(data => {
-        if (Array.isArray(data)) setBanksList(data);
-      })
-      .catch(err => console.error('Error fetching bank lists:', err));
-  }, [token]);
-
-  // Resolve bank account name dynamically
-  useEffect(() => {
-    if (payoutAccount.length === 10 && payoutBank) {
-      const resolveAccount = async () => {
-        setResolvingAccount(true);
-        try {
-          const res = await fetch(`${API_URL}/api/payments/verify-account`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ accountNumber: payoutAccount, bankCode: payoutBank })
-          });
-          const data = await res.json();
-          if (res.ok && data.status === 'success') {
-            setPayoutName(data.accountName);
-          } else {
-            setPayoutName('');
-          }
-        } catch {
-          setPayoutName('');
-        } finally {
-          setResolvingAccount(false);
-        }
-      };
-      resolveAccount();
-    } else {
-      setPayoutName('');
-    }
-  }, [payoutAccount, payoutBank, token]);
-
-  const handleSavePayoutDetails = async () => {
-    if (!payoutBank || !payoutAccount || !payoutName) {
-      showToast('Please verify your bank details first', 'error');
-      return;
-    }
-    setSavingPayout(true);
-    try {
-      const selectedBankName = banksList.find(b => b.code === payoutBank)?.name || payoutBank;
-      const res = await fetch(`${API_URL}/api/payments/save-bank-details`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          bankCode: payoutBank,
-          bankName: selectedBankName,
-          accountNumber: payoutAccount,
-          accountName: payoutName
-        })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        showToast('Payout bank details saved successfully! 🏦', 'success');
-        loadDashboard();
-      } else {
-        showToast(data.message || 'Failed to save payout settings', 'error');
-      }
-    } catch {
-      showToast('Error saving bank settings', 'error');
-    } finally {
-      setSavingPayout(false);
-    }
-  };
-
-  const handleSweepWallet = async () => {
-    if (!profileData?.payoutAccountNumber) {
-      showToast('Please set up and save your payout bank details first.', 'error');
-      return;
-    }
-    if ((profileData?.walletBalance || 0) <= 0) {
-      showToast('You have no funds available to sweep.', 'error');
-      return;
-    }
-    setSweepingWallet(true);
-    try {
-      const res = await fetch(`${API_URL}/api/payments/sweep-wallet`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const data = await res.json();
-      if (res.ok) {
-        showToast(data.message || 'Sweep payout completed! 💸', 'success');
-        loadDashboard();
-      } else {
-        showToast(data.message || 'Sweep failed', 'error');
-      }
-    } catch {
-      showToast('Error executing wallet sweep', 'error');
-    } finally {
-      setSweepingWallet(false);
-    }
-  };
-
   // ── Derived stats ─────────────────────────────────────────────
   const activeCount  = myProducts.filter(p => p.status === 'Available').length;
   const soldCount    = myProducts.filter(p => p.status === 'Sold').length;
@@ -450,6 +326,20 @@ export default function Dashboard() {
 
         {/* ═══════════════════ MAIN CONTENT ═══════════════════ */}
         <main className="dash-main">
+          {/* Mobile sub-tabs at the top of Dashboard (only on mobile) */}
+          <div className="dash-mobile-top-tabs">
+            {navTabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`dash-mobile-top-tab-item${activeTab === tab.id ? ' active' : ''}`}
+              >
+                <span>{tab.icon}</span>
+                <span>{tab.label}</span>
+                {tab.badge > 0 && <span className="dash-mobile-top-tab-badge">{tab.badge}</span>}
+              </button>
+            ))}
+          </div>
 
           {/* ── Welcome Banner ──────────────────────────────── */}
           <div className="dash-banner">
@@ -463,33 +353,39 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="dash-wallet-card" style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start' }}>
-              <span className="dash-wallet-label">Escrow Balance</span>
+              <span className="dash-wallet-label">Escrow Wallet Balance</span>
               <span className="dash-wallet-amount">₦{(profileData?.walletBalance || 0).toLocaleString()}</span>
-              {(profileData?.walletBalance || 0) > 0 && (
-                <button
-                  onClick={handleSweepWallet}
-                  disabled={sweepingWallet}
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.25)',
-                    border: '1px solid rgba(255, 255, 255, 0.4)',
-                    color: '#fff',
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                    fontSize: '0.75rem',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    marginTop: '4px',
-                    width: '100%',
-                    backdropFilter: 'blur(4px)',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseOver={e => e.target.style.background = 'rgba(255, 255, 255, 0.35)'}
-                  onMouseOut={e => e.target.style.background = 'rgba(255, 255, 255, 0.25)'}
-                >
-                  {sweepingWallet ? 'Sweeping...' : '💸 Mobile Sweep Payout'}
-                </button>
-              )}
+              <button
+                onClick={() => navigate('/withdraw')}
+                className="btn-primary"
+                style={{
+                  background: 'linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%)',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: '10px',
+                  fontSize: '0.8rem',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  marginTop: '8px',
+                  width: '100%',
+                  boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                  transition: 'all 0.2s'
+                }}
+              >
+                💸 Withdraw Funds
+              </button>
             </div>
+          </div>
+
+          {/* Quick Actions for Mobile */}
+          <div className="dash-mobile-quick-actions">
+            <button onClick={handleCopyProfileLink} className="btn-secondary" style={{ flex: 1, padding: '12px', fontSize: '0.82rem', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', border: '1px solid var(--border-color)' }}>
+              🔗 Copy Store Link
+            </button>
+            <Link to="/post" className="btn-primary" style={{ flex: 1, padding: '12px', fontSize: '0.82rem', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', textDecoration: 'none', fontWeight: 'bold' }}>
+              ＋ Post Item
+            </Link>
           </div>
 
           {/* ══════════ OVERVIEW TAB ══════════ */}
@@ -566,6 +462,55 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
+
+              {/* Recent Purchases Widget */}
+              <div className="dash-section-header" style={{ marginTop: '28px' }}>
+                <h2 className="dash-section-title">🛒 Recent Purchases</h2>
+                <button onClick={() => setActiveTab('orders')} className="btn-secondary" style={{ padding:'6px 14px', fontSize:'0.78rem' }}>View All →</button>
+              </div>
+              {orders.bought && orders.bought.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px' }}>
+                  {orders.bought.slice(0, 3).map(o => (
+                    <div key={o._id} className="dash-order-card" style={{ padding: '16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+                      <div className="dash-order-info" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: '12px' }}>
+                        <div>
+                          <h4 className="dash-order-name" style={{ fontSize: '0.95rem', fontWeight: '700', color: '#fff', marginBottom: '4px' }}>
+                            {o.product ? o.product.name : 'Deleted Product'}
+                          </h4>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                            <span>Amount: <strong style={{ color: 'var(--gold)' }}>₦{o.amount.toLocaleString()}</strong></span>
+                            <span>Seller: <strong>{o.seller?.name || 'Unknown'}</strong></span>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span className="dash-status-pill" style={{ 
+                            background: o.paymentStatus === 'Paid' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                            color: o.paymentStatus === 'Paid' ? 'var(--success)' : 'var(--warning)',
+                            fontSize: '0.75rem',
+                            padding: '4px 10px',
+                            borderRadius: '12px'
+                          }}>
+                            {o.paymentStatus}
+                          </span>
+                          {o.paymentStatus === 'Paid' && o.escrowStatus === 'Held' && (
+                            <button 
+                              onClick={() => handleConfirmDelivery(o._id)} 
+                              className="btn-primary" 
+                              style={{ padding: '6px 12px', fontSize: '0.75rem', whiteSpace: 'nowrap' }}
+                            >
+                              🤝 Confirm & Release
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ padding: '20px', textAlign: 'center', background: 'rgba(255, 255, 255, 0.02)', border: '1px dashed var(--border-color)', borderRadius: '12px', marginBottom: '28px' }}>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>You haven't purchased any items recently.</p>
+                </div>
+              )}
 
               {/* Recent Listings Preview */}
               {myProducts.length > 0 && (
@@ -870,63 +815,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Payout Settings */}
-              <div className="dash-settings-section" style={{ marginTop: '28px' }}>
-                <p className="dash-settings-title">🏦 Payout Settings (Bank / Mobile Money)</p>
-                <p style={{ fontSize:'0.85rem', color:'var(--text-secondary)', marginBottom:'16px' }}>
-                  Provide your Nigerian bank or mobile money account details to receive your automated escrow sweep payouts.
-                </p>
-                <div className="dash-settings-grid">
-                  <div className="dash-settings-field">
-                    <label className="dash-settings-label">Select Bank / Mobile Money Provider</label>
-                    <select
-                      value={payoutBank}
-                      onChange={e => { setPayoutBank(e.target.value); setPayoutName(''); }}
-                      className="glass-input"
-                    >
-                      <option value="">-- Choose Provider --</option>
-                      {banksList.map(b => (
-                        <option key={b.code} value={b.code} style={{ background:'var(--bg-input)', color:'var(--text-primary)' }}>
-                          {b.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="dash-settings-field">
-                    <label className="dash-settings-label">Account Number</label>
-                    <input
-                      type="text"
-                      maxLength="10"
-                      placeholder="e.g. 0123456789"
-                      value={payoutAccount}
-                      onChange={e => { setPayoutAccount(e.target.value.replace(/\D/g, '')); setPayoutName(''); }}
-                      className="glass-input"
-                    />
-                  </div>
-                  <div className="dash-settings-field" style={{ gridColumn: 'span 2' }}>
-                    <label className="dash-settings-label">Verified Payout Name</label>
-                    <input
-                      type="text"
-                      readOnly
-                      disabled
-                      placeholder={resolvingAccount ? '🔍 Resolving account details...' : 'Name resolves automatically'}
-                      value={payoutName}
-                      className="glass-input"
-                      style={{ background: 'rgba(255,255,255,0.02)', cursor: 'not-allowed', color: '#60a5fa', fontWeight: 'bold' }}
-                    />
-                  </div>
-                </div>
-                <div style={{ marginTop:'20px', display:'flex', justifyContent:'flex-end' }}>
-                  <button
-                    onClick={handleSavePayoutDetails}
-                    disabled={savingPayout || resolvingAccount || !payoutName}
-                    className="btn-primary"
-                    style={{ padding:'10px 24px', fontSize:'0.88rem' }}
-                  >
-                    {savingPayout ? 'Saving…' : '💾 Save Payout Bank'}
-                  </button>
-                </div>
-              </div>
+
 
               {/* Verification settings */}
               {!user?.isVerifiedStudent && (
