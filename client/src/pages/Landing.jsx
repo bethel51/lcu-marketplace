@@ -95,6 +95,7 @@ export default function Landing() {
         <div className="landing-hero-bg" aria-hidden="true">
           <div className="hero-orb hero-orb-1" />
           <div className="hero-orb hero-orb-2" />
+          <div className="hero-orb hero-orb-3" />
         </div>
         <div className="container landing-hero-inner">
           <div className="landing-hero-badge">

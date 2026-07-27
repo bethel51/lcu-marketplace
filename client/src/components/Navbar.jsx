@@ -221,8 +221,9 @@ export default function Navbar() {
             <img 
               src="/logo.png" 
               alt="LCU Logo" 
-              width="40"
-              height="40"
+              width="38"
+              height="38"
+              fetchpriority="high"
               decoding="async"
               loading="eager"
               className="nav-logo-img"
@@ -474,11 +475,15 @@ const styles = {
     flexShrink: 0,
   },
   logoImage: {
-    width: '40px',
-    height: '40px',
+    width: '38px',
+    height: '38px',
     objectFit: 'contain',
     borderRadius: '50%',
-    border: '2px solid var(--secondary-blue)',
+    border: '2px solid rgba(59,130,246,0.5)',
+    boxShadow: '0 0 12px rgba(59,130,246,0.25)',
+    transition: 'box-shadow 0.3s ease, border-color 0.3s ease',
+    willChange: 'transform',
+    contain: 'layout paint',
   },
   brandText: {
     display: 'flex',
@@ -487,16 +492,17 @@ const styles = {
   brandTitle: {
     fontFamily: 'var(--font-title)',
     fontWeight: '800',
-    fontSize: '1.3rem',
+    fontSize: '1.25rem',
     color: 'var(--text-white)',
     letterSpacing: '-0.02em',
+    lineHeight: '1.1',
   },
   brandSub: {
-    fontSize: '0.65rem',
-    letterSpacing: '0.2em',
+    fontSize: '0.62rem',
+    letterSpacing: '0.22em',
     color: 'var(--gold)',
     fontWeight: '700',
-    marginTop: '-4px',
+    marginTop: '-2px',
   },
   links: {
     display: 'flex',
