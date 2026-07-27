@@ -89,6 +89,16 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get product count (fast stats)
+router.get('/count', async (req, res) => {
+  try {
+    const count = await Product.countDocuments({ status: 'Available' });
+    res.json({ count });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Get single product
 router.get('/:id', async (req, res) => {
   try {

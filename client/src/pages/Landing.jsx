@@ -11,14 +11,14 @@ export default function Landing() {
 
   useEffect(() => {
     // Fetch total listing count for the stats section
-    fetch(`${API_URL}/api/products?status=Available`)
+    fetch(`${API_URL}/api/products/count`)
       .then(r => r.json())
       .then(data => {
-        if (Array.isArray(data)) {
+        if (data && typeof data.count === 'number') {
           setStats(prev => ({
             ...prev,
-            listings: data.length,
-            students: Math.max(data.length * 2, 50),
+            listings: data.count,
+            students: Math.max(data.count * 2, 50),
           }));
         }
       })

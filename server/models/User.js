@@ -47,6 +47,22 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  payoutBankCode: {
+    type: String,
+    default: ''
+  },
+  payoutBankName: {
+    type: String,
+    default: ''
+  },
+  payoutAccountNumber: {
+    type: String,
+    default: ''
+  },
+  payoutAccountName: {
+    type: String,
+    default: ''
+  },
   isEmailVerified: {
     type: Boolean,
     default: false

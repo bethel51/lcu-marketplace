@@ -414,8 +414,8 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* ─── Modern Floating Mobile Bottom Navigation Bar (ONLY on User Dashboard) ─── */}
-      {location.pathname === '/profile' && (
+      {/* ─── Modern Floating Mobile Bottom Navigation Bar (Visible on all student routes on mobile) ─── */}
+      {!location.pathname.startsWith('/admin') && !location.pathname.startsWith('/admin-login') && (
         <div className="mobile-bottom-nav">
           <Link to="/" className={`mobile-nav-item ${isActive('/') ? 'active' : ''}`}>
             <span className="mobile-nav-icon">🏠</span>
@@ -425,7 +425,7 @@ export default function Navbar() {
             <span className="mobile-nav-icon">🛍️</span>
             <span className="mobile-nav-label">Market</span>
           </Link>
-          <Link to="/post" className="mobile-nav-item mobile-nav-post-btn">
+          <Link to="/post" className={`mobile-nav-item mobile-nav-post-btn ${isActive('/post') ? 'active' : ''}`}>
             <span className="mobile-nav-icon" style={{ fontSize: '1.2rem' }}>➕</span>
           </Link>
           {user ? (

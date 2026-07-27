@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { API_URL } from '../config';
 import { VerifiedBadge } from '../components/ProductCard';
+import CheckoutModal from '../components/CheckoutModal';
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -185,6 +186,10 @@ export default function ProductDetails() {
     '07:00 PM - 09:00 PM'
   ];
 
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [checkoutOrderId, setCheckoutOrderId] = useState('');
+  const [checkoutAmount, setCheckoutAmount] = useState(0);
+
   const handleOpenPickupModal = () => {
     if (!token) {
       navigate('/auth', { state: { from: `/product/${id}` } });
@@ -221,53 +226,10 @@ export default function ProductDetails() {
         return;
       }
       
-      const { txRef, amount, email, name, phoneNumber, flwPublicKey } = resData;
-      
-      window.FlutterwaveCheckout({
-        public_key: flwPublicKey,
-        tx_ref: txRef,
-        amount: amount,
-        currency: 'NGN',
-        payment_options: 'card, banktransfer, ussd',
-        customer: {
-          email: email,
-          phone_number: phoneNumber,
-          name: name,
-        },
-        customizations: {
-          title: 'LCU Marketplace Secure Escrow',
-          description: `Escrow Payment & Pickup for ${product.name}`,
-          logo: '/logo.png',
-        },
-        callback: async (paymentRes) => {
-          try {
-            const verifyResponse = await fetch(`${API_URL}/api/payments/verify`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              },
-              body: JSON.stringify({
-                transactionId: paymentRes.transaction_id,
-                txRef: txRef
-              })
-            });
-            const verifyData = await verifyResponse.json();
-            if (verifyResponse.ok) {
-              showToast('Escrow Payment & Campus Pickup Scheduled! 🤝', 'success');
-              fetchProduct();
-              navigate('/profile');
-            } else {
-              showToast(verifyData.message || 'Verification failed', 'error');
-            }
-          } catch {
-            showToast('Verification request failed', 'error');
-          }
-        },
-        onclose: () => {
-          showToast('Payment window closed.', 'warning');
-        }
-      });
+      const { order, amount } = resData;
+      setCheckoutOrderId(order._id);
+      setCheckoutAmount(amount);
+      setShowCheckoutModal(true);
       
     } catch {
       showToast('Error preparing payment checkout', 'error');
@@ -593,6 +555,18 @@ export default function ProductDetails() {
           </div>
         </div>
       )}
+
+      <CheckoutModal
+        isOpen={showCheckoutModal}
+        onClose={() => setShowCheckoutModal(false)}
+        orderId={checkoutOrderId}
+        amount={checkoutAmount}
+        onSuccess={() => {
+          showToast('Escrow Payment & Campus Pickup Scheduled! 🤝', 'success');
+          fetchProduct();
+          navigate('/profile');
+        }}
+      />
       </div>
     </div>
   );

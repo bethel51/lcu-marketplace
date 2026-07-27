@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 import { API_URL } from '../config';
 import { VerifiedBadge } from '../components/ProductCard';
+import CheckoutModal from '../components/CheckoutModal';
 
 const HOSTELS = [
   'Bronze Hostel','Silver Hostel','Gold Hostel','Platinum Hostel',
@@ -49,6 +50,21 @@ export default function Dashboard() {
   const [idCardFile,      setIdCardFile]      = useState(null);
   const [idCardLabel,     setIdCardLabel]     = useState('');
 
+  // ── Payout Settings & Sweep state ───────────────────────────
+  const [banksList, setBanksList] = useState([]);
+  const [payoutBank, setPayoutBank] = useState('');
+  const [payoutAccount, setPayoutAccount] = useState('');
+  const [payoutName, setPayoutName] = useState('');
+  const [resolvingAccount, setResolvingAccount] = useState(false);
+  const [savingPayout, setSavingPayout] = useState(false);
+  const [sweepingWallet, setSweepingWallet] = useState(false);
+
+  // ── Checkout Modal state ────────────────────────────────────
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [checkoutOrderId, setCheckoutOrderId] = useState('');
+  const [checkoutAmount, setCheckoutAmount] = useState(0);
+  const [checkoutType, setCheckoutType] = useState('');
+
   // ─────────────────────────────────────────────────────────────
   const loadDashboard = async () => {
     setLoading(true);
@@ -60,6 +76,9 @@ export default function Dashboard() {
         setEditFaculty(profile.faculty || FACULTIES[0]);
         setEditDept(profile.department || '');
         setEditPhone(profile.phoneNumber || '');
+        setPayoutBank(profile.payoutBankCode || '');
+        setPayoutAccount(profile.payoutAccountNumber || '');
+        setPayoutName(profile.payoutAccountName || '');
       }
 
       const activeUserId = profile?._id || profile?.id || user?._id || user?.id;
@@ -195,43 +214,11 @@ export default function Dashboard() {
         showToast(resData.message || 'Boost initialization failed', 'error');
         return;
       }
-      const { txRef, amount, email, name, phoneNumber, flwPublicKey } = resData;
-
-      window.FlutterwaveCheckout({
-        public_key: flwPublicKey,
-        tx_ref: txRef,
-        amount: amount,
-        currency: 'NGN',
-        payment_options: 'card, banktransfer, ussd',
-        customer: { email, phone_number: phoneNumber, name },
-        customizations: {
-          title: 'LCU Marketplace listing Boost',
-          description: 'Promote your listing on LCU Marketplace for 7 days',
-        },
-        callback: async (paymentRes) => {
-          try {
-            const verifyResponse = await fetch(`${API_URL}/api/payments/verify`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              },
-              body: JSON.stringify({
-                transactionId: paymentRes.transaction_id,
-                txRef
-              })
-            });
-            if (verifyResponse.ok) {
-              showToast('Listing boosted successfully! 🚀', 'success');
-              loadDashboard();
-            } else {
-              showToast('Verification failed', 'error');
-            }
-          } catch {
-            showToast('Verification request failed', 'error');
-          }
-        }
-      });
+      const { order, amount } = resData;
+      setCheckoutOrderId(order._id);
+      setCheckoutAmount(amount);
+      setCheckoutType('boost');
+      setShowCheckoutModal(true);
     } catch {
       showToast('Error initializing boost payment', 'error');
     }
@@ -254,45 +241,125 @@ export default function Dashboard() {
         showToast(resData.message || 'Verification initialization failed', 'error');
         return;
       }
-      const { txRef, amount, email, name, phoneNumber, flwPublicKey } = resData;
-
-      window.FlutterwaveCheckout({
-        public_key: flwPublicKey,
-        tx_ref: txRef,
-        amount: amount,
-        currency: 'NGN',
-        payment_options: 'card, banktransfer, ussd',
-        customer: { email, phone_number: phoneNumber, name },
-        customizations: {
-          title: 'LCU Student Verification',
-          description: 'One-time verification fee for verified student badge',
-        },
-        callback: async (paymentRes) => {
-          try {
-            const verifyResponse = await fetch(`${API_URL}/api/payments/verify`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              },
-              body: JSON.stringify({
-                transactionId: paymentRes.transaction_id,
-                txRef
-              })
-            });
-            if (verifyResponse.ok) {
-              showToast('Verification fee paid and account verified! 🎓', 'success');
-              loadDashboard();
-            } else {
-              showToast('Verification failed', 'error');
-            }
-          } catch {
-            showToast('Verification request failed', 'error');
-          }
-        }
-      });
+      const { order, amount } = resData;
+      setCheckoutOrderId(order._id);
+      setCheckoutAmount(amount);
+      setCheckoutType('verification');
+      setShowCheckoutModal(true);
     } catch {
       showToast('Error initializing verification payment', 'error');
+    }
+  };
+
+  // Load banks list
+  useEffect(() => {
+    if (!token) return;
+    fetch(`${API_URL}/api/payments/banks`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) setBanksList(data);
+      })
+      .catch(err => console.error('Error fetching bank lists:', err));
+  }, [token]);
+
+  // Resolve bank account name dynamically
+  useEffect(() => {
+    if (payoutAccount.length === 10 && payoutBank) {
+      const resolveAccount = async () => {
+        setResolvingAccount(true);
+        try {
+          const res = await fetch(`${API_URL}/api/payments/verify-account`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ accountNumber: payoutAccount, bankCode: payoutBank })
+          });
+          const data = await res.json();
+          if (res.ok && data.status === 'success') {
+            setPayoutName(data.accountName);
+          } else {
+            setPayoutName('');
+          }
+        } catch {
+          setPayoutName('');
+        } finally {
+          setResolvingAccount(false);
+        }
+      };
+      resolveAccount();
+    } else {
+      setPayoutName('');
+    }
+  }, [payoutAccount, payoutBank, token]);
+
+  const handleSavePayoutDetails = async () => {
+    if (!payoutBank || !payoutAccount || !payoutName) {
+      showToast('Please verify your bank details first', 'error');
+      return;
+    }
+    setSavingPayout(true);
+    try {
+      const selectedBankName = banksList.find(b => b.code === payoutBank)?.name || payoutBank;
+      const res = await fetch(`${API_URL}/api/payments/save-bank-details`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          bankCode: payoutBank,
+          bankName: selectedBankName,
+          accountNumber: payoutAccount,
+          accountName: payoutName
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast('Payout bank details saved successfully! 🏦', 'success');
+        loadDashboard();
+      } else {
+        showToast(data.message || 'Failed to save payout settings', 'error');
+      }
+    } catch {
+      showToast('Error saving bank settings', 'error');
+    } finally {
+      setSavingPayout(false);
+    }
+  };
+
+  const handleSweepWallet = async () => {
+    if (!profileData?.payoutAccountNumber) {
+      showToast('Please set up and save your payout bank details first.', 'error');
+      return;
+    }
+    if ((profileData?.walletBalance || 0) <= 0) {
+      showToast('You have no funds available to sweep.', 'error');
+      return;
+    }
+    setSweepingWallet(true);
+    try {
+      const res = await fetch(`${API_URL}/api/payments/sweep-wallet`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(data.message || 'Sweep payout completed! 💸', 'success');
+        loadDashboard();
+      } else {
+        showToast(data.message || 'Sweep failed', 'error');
+      }
+    } catch {
+      showToast('Error executing wallet sweep', 'error');
+    } finally {
+      setSweepingWallet(false);
     }
   };
 
@@ -395,9 +462,33 @@ export default function Dashboard() {
                 {profileData?.matricNumber && <span className="dash-banner-chip">🪪 {profileData.matricNumber}</span>}
               </div>
             </div>
-            <div className="dash-wallet-card">
+            <div className="dash-wallet-card" style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start' }}>
               <span className="dash-wallet-label">Escrow Balance</span>
               <span className="dash-wallet-amount">₦{(profileData?.walletBalance || 0).toLocaleString()}</span>
+              {(profileData?.walletBalance || 0) > 0 && (
+                <button
+                  onClick={handleSweepWallet}
+                  disabled={sweepingWallet}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.25)',
+                    border: '1px solid rgba(255, 255, 255, 0.4)',
+                    color: '#fff',
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    fontSize: '0.75rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    marginTop: '4px',
+                    width: '100%',
+                    backdropFilter: 'blur(4px)',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseOver={e => e.target.style.background = 'rgba(255, 255, 255, 0.35)'}
+                  onMouseOut={e => e.target.style.background = 'rgba(255, 255, 255, 0.25)'}
+                >
+                  {sweepingWallet ? 'Sweeping...' : '💸 Mobile Sweep Payout'}
+                </button>
+              )}
             </div>
           </div>
 
@@ -779,6 +870,64 @@ export default function Dashboard() {
                 </div>
               </div>
 
+              {/* Payout Settings */}
+              <div className="dash-settings-section" style={{ marginTop: '28px' }}>
+                <p className="dash-settings-title">🏦 Payout Settings (Bank / Mobile Money)</p>
+                <p style={{ fontSize:'0.85rem', color:'var(--text-secondary)', marginBottom:'16px' }}>
+                  Provide your Nigerian bank or mobile money account details to receive your automated escrow sweep payouts.
+                </p>
+                <div className="dash-settings-grid">
+                  <div className="dash-settings-field">
+                    <label className="dash-settings-label">Select Bank / Mobile Money Provider</label>
+                    <select
+                      value={payoutBank}
+                      onChange={e => { setPayoutBank(e.target.value); setPayoutName(''); }}
+                      className="glass-input"
+                    >
+                      <option value="">-- Choose Provider --</option>
+                      {banksList.map(b => (
+                        <option key={b.code} value={b.code} style={{ background:'var(--bg-input)', color:'var(--text-primary)' }}>
+                          {b.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="dash-settings-field">
+                    <label className="dash-settings-label">Account Number</label>
+                    <input
+                      type="text"
+                      maxLength="10"
+                      placeholder="e.g. 0123456789"
+                      value={payoutAccount}
+                      onChange={e => { setPayoutAccount(e.target.value.replace(/\D/g, '')); setPayoutName(''); }}
+                      className="glass-input"
+                    />
+                  </div>
+                  <div className="dash-settings-field" style={{ gridColumn: 'span 2' }}>
+                    <label className="dash-settings-label">Verified Payout Name</label>
+                    <input
+                      type="text"
+                      readOnly
+                      disabled
+                      placeholder={resolvingAccount ? '🔍 Resolving account details...' : 'Name resolves automatically'}
+                      value={payoutName}
+                      className="glass-input"
+                      style={{ background: 'rgba(255,255,255,0.02)', cursor: 'not-allowed', color: '#60a5fa', fontWeight: 'bold' }}
+                    />
+                  </div>
+                </div>
+                <div style={{ marginTop:'20px', display:'flex', justifyContent:'flex-end' }}>
+                  <button
+                    onClick={handleSavePayoutDetails}
+                    disabled={savingPayout || resolvingAccount || !payoutName}
+                    className="btn-primary"
+                    style={{ padding:'10px 24px', fontSize:'0.88rem' }}
+                  >
+                    {savingPayout ? 'Saving…' : '💾 Save Payout Bank'}
+                  </button>
+                </div>
+              </div>
+
               {/* Verification settings */}
               {!user?.isVerifiedStudent && (
                 <div className="dash-settings-section">
@@ -840,6 +989,21 @@ export default function Dashboard() {
           ))}
         </div>
       </div>
+
+      <CheckoutModal
+        isOpen={showCheckoutModal}
+        onClose={() => setShowCheckoutModal(false)}
+        orderId={checkoutOrderId}
+        amount={checkoutAmount}
+        onSuccess={() => {
+          if (checkoutType === 'boost') {
+            showToast('Listing boosted successfully! 🚀', 'success');
+          } else {
+            showToast('Verification fee paid and account verified! 🎓', 'success');
+          }
+          loadDashboard();
+        }}
+      />
     </>
   );
 }
