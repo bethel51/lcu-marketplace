@@ -117,8 +117,24 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// Helper to handle multer upload errors
+const handleUpload = (req, res, next) => {
+  upload.single('image')(req, res, (err) => {
+    if (err) {
+      if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          return res.status(400).json({ message: 'File is too large. Max size allowed is 5MB.' });
+        }
+        return res.status(400).json({ message: err.message });
+      }
+      return res.status(400).json({ message: err.message });
+    }
+    next();
+  });
+};
+
 // Create product
-router.post('/', protect, upload.single('image'), async (req, res) => {
+router.post('/', protect, handleUpload, async (req, res) => {
   try {
     const { name, price, description, category, hostelLocation, faculty } = req.body;
     
@@ -148,7 +164,7 @@ router.post('/', protect, upload.single('image'), async (req, res) => {
 });
 
 // Edit product
-router.put('/:id', protect, upload.single('image'), async (req, res) => {
+router.put('/:id', protect, handleUpload, async (req, res) => {
   try {
     const { name, price, description, category, hostelLocation, faculty, status } = req.body;
     
