@@ -364,7 +364,7 @@ const styles = {
   title: {
     fontSize: 'clamp(1.4rem, 5vw, 1.9rem)',
     fontWeight: 800,
-    color: '#fff',
+    color: 'var(--text-primary)',
     marginBottom: '6px',
     lineHeight: 1.2,
   },

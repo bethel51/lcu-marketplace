@@ -301,7 +301,7 @@ const styles = {
   },
   title: {
     fontSize: '2rem',
-    color: '#fff',
+    color: 'var(--text-primary)',
     marginBottom: '8px'
   },
   subtitle: {
@@ -328,7 +328,7 @@ const styles = {
   },
   sectionTitle: {
     fontSize: '1.25rem',
-    color: '#fff',
+    color: 'var(--text-primary)',
     marginBottom: '8px',
     display: 'flex',
     alignItems: 'center',
