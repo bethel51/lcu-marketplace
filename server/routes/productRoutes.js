@@ -100,6 +100,23 @@ router.get('/count', async (req, res) => {
   }
 });
 
+// Admin: Get all reported products
+router.get('/admin/reported', protect, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ message: 'Admin access denied' });
+    }
+    
+    // Find products where reports array has elements
+    const products = await Product.find({ reports: { $exists: true, $not: { $size: 0 } } })
+      .populate('seller', 'name email isVerifiedStudent');
+      
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Get single product
 router.get('/:id', async (req, res) => {
   try {
@@ -294,22 +311,7 @@ router.post('/:id/wishlist', protect, async (req, res) => {
   }
 });
 
-// Admin: Get all reported products
-router.get('/admin/reported', protect, async (req, res) => {
-  try {
-    if (!req.user.isAdmin) {
-      return res.status(403).json({ message: 'Admin access denied' });
-    }
-    
-    // Find products where reports array has elements
-    const products = await Product.find({ reports: { $exists: true, $not: { $size: 0 } } })
-      .populate('seller', 'name email isVerifiedStudent');
-      
-    res.json(products);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+
 
 // Admin: Dismiss all reports for a product
 router.post('/:id/dismiss-reports', protect, async (req, res) => {
