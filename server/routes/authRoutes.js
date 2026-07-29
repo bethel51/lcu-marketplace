@@ -7,7 +7,7 @@ import Order from '../models/Order.js';
 import { protect } from '../middleware/auth.js';
 import multer from 'multer';
 import path from 'path';
-import { sendOTPEmail, sendWelcomeEmail, sendResetPasswordEmail } from '../utils/email.js';
+import { sendOTPEmail, sendWelcomeEmail, sendResetPasswordEmail, sendBroadcastEmail } from '../utils/email.js';
 
 const router = express.Router();
 
@@ -431,7 +431,7 @@ router.get('/admin/orders', protect, async (req, res) => {
   }
 });
 
-// Admin: Broadcast notification to all users
+// Admin: Broadcast email announcement to all users
 router.post('/admin/broadcast', protect, async (req, res) => {
   try {
     if (!req.user.isAdmin) {
@@ -441,14 +441,15 @@ router.post('/admin/broadcast', protect, async (req, res) => {
     if (!message?.trim()) {
       return res.status(400).json({ message: 'Message is required.' });
     }
-    const allUsers = await User.find({}).select('_id');
-    const notifications = allUsers.map(u => ({
-      recipient: u._id,
-      message: message.trim(),
-      type: type || 'info',
-    }));
-    await Notification.insertMany(notifications);
-    res.json({ message: `Notification sent to ${allUsers.length} users.` });
+    const allUsers = await User.find({}).select('name email');
+    const subject = `📢 LCU Marketplace: announcement [${type.toUpperCase()}]`;
+
+    // E-mail all users
+    for (const u of allUsers) {
+      await sendBroadcastEmail(u.email, u.name, subject, message.trim());
+    }
+
+    res.json({ message: `Announcement emailed to ${allUsers.length} users.` });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

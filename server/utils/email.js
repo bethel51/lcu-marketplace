@@ -171,3 +171,56 @@ export const sendResetPasswordEmail = async (email, name, otp) => {
     console.log(`[Fallback] Password Reset OTP for ${name} (${email}) is: ${otp}`);
   }
 };
+
+export const sendBroadcastEmail = async (email, name, subject, message) => {
+  const apiKey = process.env.BREVO_API_KEY;
+  const senderEmail = process.env.BREVO_SENDER_EMAIL || 'no-reply@lcumarketplace.com';
+
+  if (!apiKey) {
+    console.log('\n======================================================');
+    console.log(`[Fallback Email Broadcast to ${name} (${email})]`);
+    console.log(`Subject: ${subject}`);
+    console.log(`Message: ${message}`);
+    console.log('======================================================\n');
+    return;
+  }
+
+  try {
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': apiKey,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        sender: { name: "LCU Student Marketplace", email: senderEmail },
+        to: [{ email, name }],
+        subject: subject,
+        htmlContent: `
+          <html>
+            <body style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #090f1d; color: #ffffff; padding: 30px; margin: 0;">
+              <div style="max-width: 560px; margin: 0 auto; background: #131e33; padding: 40px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08); text-align: center; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);">
+                <h2 style="color: #60a5fa; margin-bottom: 24px; font-weight: 800; letter-spacing: -0.02em;">Important Announcement</h2>
+                <p style="font-size: 1.1rem; color: #f8fafc; line-height: 1.5; margin-bottom: 16px;">Hello <b>${name}</b>,</p>
+                <div style="color: #e2e8f0; line-height: 1.6; text-align: left; background: rgba(255, 255, 255, 0.02); padding: 20px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 28px;">
+                  ${message.replace(/\n/g, '<br/>')}
+                </div>
+                <p style="font-size: 0.85rem; color: #64748b; line-height: 1.5; border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 20px;">
+                  This is a system broadcast to all LCU Student Marketplace users.
+                </p>
+              </div>
+            </body>
+          </html>
+        `
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(`Brevo Response Error: ${err.message || JSON.stringify(err)}`);
+    }
+  } catch (error) {
+    console.error(`Failed to send broadcast email to ${email}:`, error.message);
+  }
+};
