@@ -15,11 +15,28 @@ export const AuthProvider = ({ children }) => {
 
   const [loading, setLoading] = useState(false);
 
+  const [initializing, setInitializing] = useState(true);
+
   useEffect(() => {
-    if (token) {
-      fetchProfile();
-    }
-  }, [token]);
+    const initAuth = async () => {
+      const savedToken = localStorage.getItem('lcu_token');
+      if (savedToken) {
+        try {
+          const profile = await fetchProfile(savedToken);
+          if (!profile) {
+            logout();
+          }
+        } catch (err) {
+          console.error('Auth initialization error:', err);
+          logout();
+        }
+      }
+      setTimeout(() => {
+        setInitializing(false);
+      }, 1000);
+    };
+    initAuth();
+  }, []);
 
   const login = async (email, password) => {
     setLoading(true);
@@ -39,6 +56,7 @@ export const AuthProvider = ({ children }) => {
       setToken(data.token);
       localStorage.setItem('lcu_user', JSON.stringify(data));
       localStorage.setItem('lcu_token', data.token);
+      localStorage.setItem('lcu_has_account', 'true');
       return data;
     } finally {
       setLoading(false);
@@ -59,6 +77,7 @@ export const AuthProvider = ({ children }) => {
         throw new Error(data.message || 'Registration failed');
       }
       
+      localStorage.setItem('lcu_has_account', 'true');
       return data;
     } finally {
       setLoading(false);
@@ -72,11 +91,12 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('lcu_token');
   };
 
-  const fetchProfile = async () => {
-    if (!token) return null;
+  const fetchProfile = async (passedToken) => {
+    const activeToken = passedToken || token;
+    if (!activeToken) return null;
     try {
       const response = await fetch(`${API_URL}/api/auth/profile`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${activeToken}` }
       });
       const data = await response.json();
       if (response.ok) {
@@ -130,6 +150,7 @@ export const AuthProvider = ({ children }) => {
       setToken(data.token);
       localStorage.setItem('lcu_user', JSON.stringify(data));
       localStorage.setItem('lcu_token', data.token);
+      localStorage.setItem('lcu_has_account', 'true');
       return data;
     } finally {
       setLoading(false);

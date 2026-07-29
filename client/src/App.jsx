@@ -118,52 +118,101 @@ function AdminRoute({ children }) {
   return user && user.isAdmin ? children : <Navigate to="/admin-login" replace />;
 }
 
+// ── SplashScreen Component ──────────────────────────────────────
+function SplashScreen({ fadeOut }) {
+  return (
+    <div className={`splash-screen-container${fadeOut ? ' splash-fade-out' : ''}`}>
+      <div className="splash-content splash-logo-animate">
+        <img src="/logo.png" alt="LCU Logo" className="splash-logo" />
+        <h1 className="splash-title">Lead City Marketplace</h1>
+        <p className="splash-subtitle">LCU Errands & Student Hub</p>
+        <div className="splash-loader">
+          <div className="splash-spinner splash-spinner-animate" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Startup Routing Redirection ──────────────────────────────────
+function RootRedirect() {
+  const { user } = useAuth();
+  
+  if (user) {
+    return <Navigate to="/marketplace" replace />;
+  }
+  
+  const hasAccount = localStorage.getItem('lcu_has_account');
+  if (hasAccount === 'true') {
+    return <Navigate to="/auth?mode=login" replace />;
+  } else {
+    return <Navigate to="/auth?mode=register" replace />;
+  }
+}
+
 // ── Main App Shell ─────────────────────────────────────────────
 function AppContent() {
+  const { user, initializing } = useAuth();
+  const [showSplash, setShowSplash] = React.useState(true);
+  const [fadeOut, setFadeOut] = React.useState(false);
+
   // Dismiss the pre-React HTML shell on first mount
   useEffect(() => {
     dismissShell();
   }, []);
 
-  const { user } = useAuth();
+  useEffect(() => {
+    if (!initializing) {
+      setFadeOut(true);
+      const timer = setTimeout(() => {
+        setShowSplash(false);
+      }, 500); // matches the css fadeOut animation duration
+      return () => clearTimeout(timer);
+    }
+  }, [initializing]);
 
   return (
-    <Router>
-      <TopProgressBar />
-      <ScrollToTop />
-      <div style={styles.app}>
-        <Navbar />
-        {/* Main content — extra bottom padding on mobile to clear bottom tab bar */}
-        <div style={styles.main} className={user && !user.isAdmin ? 'has-bottom-nav' : ''}>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              {/* Public */}
-              <Route path="/"            element={<Landing />} />
-              <Route path="/auth"        element={<Auth />} />
-              <Route path="/admin-login" element={<AdminLogin />} />
+    <>
+      {showSplash && <SplashScreen fadeOut={fadeOut} />}
+      {!initializing && (
+        <Router>
+          <TopProgressBar />
+          <ScrollToTop />
+          <div style={styles.app}>
+            <Navbar />
+            {/* Main content — extra bottom padding on mobile to clear bottom tab bar */}
+            <div style={styles.main} className={user && !user.isAdmin ? 'has-bottom-nav' : ''}>
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  {/* Public */}
+                  <Route path="/"            element={<RootRedirect />} />
+                  <Route path="/auth"        element={<Auth />} />
+                  <Route path="/admin-login" element={<AdminLogin />} />
 
-              {/* Protected student routes */}
-              <Route path="/marketplace" element={<PrivateRoute><Marketplace /></PrivateRoute>} />
-              <Route path="/product/:id" element={<PrivateRoute><ProductDetails /></PrivateRoute>} />
-              <Route path="/post"        element={<PrivateRoute><PostProduct /></PrivateRoute>} />
-              <Route path="/edit/:id"    element={<PrivateRoute><PostProduct /></PrivateRoute>} />
-              <Route path="/profile"     element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-              <Route path="/withdraw"    element={<PrivateRoute><Withdraw /></PrivateRoute>} />
+                  {/* Protected student routes */}
+                  <Route path="/marketplace" element={<PrivateRoute><Marketplace /></PrivateRoute>} />
+                  <Route path="/product/:id" element={<PrivateRoute><ProductDetails /></PrivateRoute>} />
+                  <Route path="/post"        element={<PrivateRoute><PostProduct /></PrivateRoute>} />
+                  <Route path="/edit/:id"    element={<PrivateRoute><PostProduct /></PrivateRoute>} />
+                  <Route path="/profile"     element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+                  <Route path="/withdraw"    element={<PrivateRoute><Withdraw /></PrivateRoute>} />
 
-              {/* Admin */}
-              <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+                  {/* Admin */}
+                  <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
 
-              {/* Fallback */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </Suspense>
-        </div>
-        {/* Footer — hidden on mobile when bottom nav is present */}
-        <footer style={styles.footer} className={user && !user.isAdmin ? 'footer-desktop-only' : ''}>
-          <p>© {new Date().getFullYear()} Lead City University Student Marketplace Hub. All rights reserved.</p>
-        </footer>
-      </div>
-    </Router>
+                  {/* Fallback */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </Suspense>
+            </div>
+            {/* Footer — hidden on mobile when bottom nav is present */}
+            <footer style={styles.footer} className={user && !user.isAdmin ? 'footer-desktop-only' : ''}>
+              <p>© {new Date().getFullYear()} Lead City University Student Marketplace Hub. All rights reserved.</p>
+            </footer>
+          </div>
+        </Router>
+      )}
+    </>
   );
 }
 

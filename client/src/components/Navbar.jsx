@@ -296,6 +296,7 @@ export default function Navbar() {
           ═══════════════════════════════════════════════════════ */}
       {user && !user.isAdmin && (
         <nav className="bottom-tab-bar" aria-label="Main navigation">
+          {/* 1. Market */}
           <Link to="/marketplace" className={`btab-item${isActive('/marketplace') ? ' btab-active' : ''}`}>
             <span className="btab-icon">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -307,23 +308,7 @@ export default function Navbar() {
             {isActive('/marketplace') && <span className="btab-dot" />}
           </Link>
 
-          <Link to="/profile" className={`btab-item${isActive('/profile') ? ' btab-active' : ''}`}>
-            <span className="btab-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
-              </svg>
-            </span>
-            <span className="btab-label">Dashboard</span>
-            {isActive('/profile') && <span className="btab-dot" />}
-          </Link>
-
-          {/* Center FAB */}
-          <Link to="/post" className="btab-fab" aria-label="Post Item">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-          </Link>
-
+          {/* 2. Alerts */}
           <button
             onClick={handleNotifOpen}
             className={`btab-item${notifOpen ? ' btab-active' : ''}`}
@@ -339,19 +324,22 @@ export default function Navbar() {
             <span className="btab-label">Alerts</span>
           </button>
 
-          <button onClick={() => { setDropdownOpen(false); setModalOpen(true); }} className="btab-item" aria-label="Profile">
+          {/* 3. Center FAB */}
+          <Link to="/post" className="btab-fab" aria-label="Post Item">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </Link>
+
+          {/* 4. Dashboard */}
+          <Link to="/profile" className={`btab-item${isActive('/profile') ? ' btab-active' : ''}`} aria-label="Dashboard">
             <span className="btab-icon btab-avatar">
               {user.name.charAt(0).toUpperCase()}
               {user.isVerifiedStudent && <span className="btab-verified-dot" />}
             </span>
-            <span className="btab-label">Profile</span>
-          </button>
-
-          {/* Theme toggle inside bottom bar */}
-          <button onClick={toggleTheme} className="btab-item btab-theme" aria-label="Toggle theme">
-            <span className="btab-icon">{theme === 'light' ? '🌙' : '☀️'}</span>
-            <span className="btab-label">Theme</span>
-          </button>
+            <span className="btab-label">Dashboard</span>
+            {isActive('/profile') && <span className="btab-dot" />}
+          </Link>
         </nav>
       )}
 

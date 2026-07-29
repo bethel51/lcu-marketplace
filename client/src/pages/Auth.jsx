@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config';
@@ -13,6 +13,18 @@ import { API_URL } from '../config';
 
 export default function Auth() {
   const [view, setView] = useState('login');
+
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const mode = params.get('mode');
+    if (mode === 'register') {
+      setView('register');
+    } else if (mode === 'login') {
+      setView('login');
+    }
+  }, [location.search]);
 
   // ── Shared fields ──────────────────────────────────────────
   const [email, setEmail] = useState('');
@@ -43,7 +55,6 @@ export default function Auth() {
 
   const { login, register, verifyOtp, resendOtp, loading } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const from = location.state?.from || '/profile';
 
   const clearFeedback = () => { setError(''); setSuccessMsg(''); };
