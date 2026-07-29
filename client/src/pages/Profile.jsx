@@ -255,7 +255,7 @@ export default function Profile() {
                           style={{
                             ...styles.rowBtn,
                             background: p.status === 'Sold' ? 'var(--success)' : 'rgba(255,255,255,0.05)',
-                            color: p.status === 'Sold' ? '#fff' : '#fff',
+                            color: p.status === 'Sold' ? '#fff' : 'var(--text-primary)',
                             border: p.status === 'Sold' ? 'none' : '1px solid var(--border-color)',
                             boxShadow: 'none'
                           }}
@@ -367,7 +367,7 @@ const styles = {
   },
   userName: {
     fontSize: '1.4rem',
-    color: '#fff',
+    color: 'var(--text-primary)',
     marginBottom: '6px',
   },
   userEmail: {
@@ -413,7 +413,7 @@ const styles = {
     color: 'var(--text-gray)',
   },
   infoVal: {
-    color: '#fff',
+    color: 'var(--text-primary)',
     fontWeight: '600',
   },
   content: {
@@ -473,7 +473,7 @@ const styles = {
   },
   rowTitle: {
     fontSize: '1rem',
-    color: '#fff',
+    color: 'var(--text-primary)',
     marginBottom: '4px',
   },
   rowPrice: {
@@ -514,7 +514,7 @@ const styles = {
   },
   verifyTitle: {
     fontSize: '0.95rem',
-    color: '#fff',
+    color: 'var(--text-primary)',
     fontWeight: '600',
     marginBottom: '4px',
     textAlign: 'center',

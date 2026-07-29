@@ -378,7 +378,7 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="dash-wallet-card" style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start' }}>
-              <span className="dash-wallet-label">Escrow Wallet Balance</span>
+              <span className="dash-wallet-label">Wallet Balance</span>
               <span className="dash-wallet-amount">₦{(profileData?.walletBalance || 0).toLocaleString()}</span>
               <button
                 onClick={() => navigate('/withdraw')}
@@ -509,7 +509,7 @@ export default function Dashboard() {
                     <div key={o._id} className="dash-order-card" style={{ padding: '16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
                       <div className="dash-order-info" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: '12px' }}>
                         <div>
-                          <h4 className="dash-order-name" style={{ fontSize: '0.95rem', fontWeight: '700', color: '#fff', marginBottom: '4px' }}>
+                          <h4 className="dash-order-name" style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '4px' }}>
                             {o.product ? o.product.name : 'Deleted Product'}
                           </h4>
                           <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
@@ -658,7 +658,7 @@ export default function Dashboard() {
             <div style={{ display:'flex', flexDirection:'column', gap:'28px' }}>
               {/* Bought */}
               <div className="dash-order-section">
-                <h3 className="dash-order-section-title">🛒 Items Purchased (Escrow)</h3>
+                <h3 className="dash-order-section-title">🛒 Things You Bought</h3>
                 {orders.bought?.length > 0 ? (
                   orders.bought.map(o => (
                     <div key={o._id} className="dash-order-card">
@@ -672,7 +672,7 @@ export default function Dashboard() {
                             Payment: {o.paymentStatus}
                           </span>
                           <span className="dash-order-status" style={{ color: o.escrowStatus === 'Released' ? 'var(--success)' : 'var(--gold)' }}>
-                            Escrow: {o.escrowStatus}
+                            Status: {o.escrowStatus}
                           </span>
                         </div>
 
@@ -702,7 +702,7 @@ export default function Dashboard() {
 
               {/* Sold */}
               <div className="dash-order-section">
-                <h3 className="dash-order-section-title">💰 Items Sold (Escrow Earnings)</h3>
+                <h3 className="dash-order-section-title">💰 Things You Sold</h3>
                 {orders.sold?.length > 0 ? (
                   orders.sold.map(o => (
                     <div key={o._id} className="dash-order-card sold-order">
@@ -716,7 +716,7 @@ export default function Dashboard() {
                             Payment: {o.paymentStatus}
                           </span>
                           <span className="dash-order-status" style={{ color: o.escrowStatus === 'Released' ? 'var(--success)' : 'var(--gold)' }}>
-                            Escrow: {o.escrowStatus}
+                            Status: {o.escrowStatus}
                           </span>
                         </div>
 
@@ -735,7 +735,7 @@ export default function Dashboard() {
                     </div>
                   ))
                 ) : (
-                  <p style={{ fontSize:'0.85rem', color:'var(--text-secondary)' }}>No items sold through escrow yet.</p>
+                  <p style={{ fontSize:'0.85rem', color:'var(--text-secondary)' }}>You haven't sold anything yet.</p>
                 )}
               </div>
             </div>

@@ -212,7 +212,7 @@ export default function Home() {
               <circle cx="11" cy="11" r="8" />
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
-            <h3 style={{ marginTop: '16px', color: '#fff' }}>No Listings Found</h3>
+            <h3 style={{ marginTop: '16px', color: 'var(--text-primary)' }}>No Listings Found</h3>
             <p style={{ color: 'var(--text-gray)', fontSize: '0.9rem', marginTop: '6px' }}>
               We couldn't find any products matching your current filters. Try resetting search parameters.
             </p>

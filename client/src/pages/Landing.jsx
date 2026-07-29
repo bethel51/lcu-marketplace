@@ -100,15 +100,15 @@ export default function Landing() {
         <div className="container landing-hero-inner">
           <div className="landing-hero-badge">
             <span className="badge-dot" />
-            The Official LCU Student Marketplace
+            For LCU Students Only
           </div>
           <h1 className="landing-hero-title">
             Buy, Sell &amp; Swap<br />
-            <span className="landing-hero-accent">Within Campus</span>
+            <span className="landing-hero-accent">On Campus</span>
           </h1>
           <p className="landing-hero-sub">
-            The trusted marketplace built exclusively for Lead City University students.
-            Find hostel essentials, gadgets, textbooks, and student services — all from verified LCU peers.
+            The easiest way to buy and sell stuff at Lead City University. 
+            Find phones, laptops, textbooks, and hostel items from other students.
           </p>
           <div className="landing-hero-ctas">
             {user ? (

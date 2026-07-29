@@ -659,7 +659,7 @@ const styles = {
   },
   descriptionText: {
     lineHeight: '1.6',
-    color: '#fff',
+    color: 'var(--text-primary)',
     whiteSpace: 'pre-line',
   },
   sidebar: {
@@ -696,7 +696,7 @@ const styles = {
   },
   name: {
     fontSize: '2rem',
-    color: '#fff',
+    color: 'var(--text-primary)',
     marginBottom: '8px',
   },
   price: {
@@ -723,7 +723,7 @@ const styles = {
   },
   detailValue: {
     fontWeight: '600',
-    color: '#fff',
+    color: 'var(--text-primary)',
   },
   actionsGroup: {
     display: 'flex',
@@ -803,7 +803,7 @@ const styles = {
   sellerName: {
     fontSize: '1.1rem',
     fontWeight: '600',
-    color: '#fff',
+    color: 'var(--text-primary)',
   },
   verifiedBadge: {
     fontSize: '0.65rem',
@@ -835,7 +835,7 @@ const styles = {
   ratingNumber: {
     fontSize: '1.3rem',
     fontWeight: '700',
-    color: '#fff',
+    color: 'var(--text-primary)',
   },
   ratingCount: {
     fontSize: '0.8rem',
@@ -881,7 +881,7 @@ const styles = {
   },
   reviewFormTitle: {
     fontSize: '0.95rem',
-    color: '#fff',
+    color: 'var(--text-primary)',
     fontWeight: '600',
   },
   ratingSelectContainer: {
