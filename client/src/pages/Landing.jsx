@@ -56,7 +56,7 @@ export default function Landing() {
     },
     {
       icon: '💬',
-      title: 'In-App Messaging',
+      title: 'In-App Messaging (Coming Soon)',
       desc: 'Chat directly with sellers and buyers inside the platform — no need to share personal numbers.',
       color: '#8b5cf6',
     },
