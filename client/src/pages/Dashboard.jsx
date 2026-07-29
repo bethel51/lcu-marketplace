@@ -424,7 +424,17 @@ export default function Dashboard() {
                   { icon: '❤️', value: wishCount,   label: 'Wishlist Items' },
                   { icon: '⭐', value: avgRating,   label: 'Seller Rating' },
                 ].map(m => (
-                  <div key={m.label} className="dash-metric">
+                  <div 
+                    key={m.label} 
+                    className="dash-metric"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => {
+                      if (m.label === 'Active Listings') setActiveTab('listings');
+                      else if (m.label === 'Items Sold') setActiveTab('orders');
+                      else if (m.label === 'Wishlist Items') setActiveTab('wishlist');
+                      else if (m.label === 'Seller Rating') showToast('Detailed ratings page coming soon!', 'info');
+                    }}
+                  >
                     <div className="dash-metric-icon">{m.icon}</div>
                     <div className="dash-metric-value">{m.value}</div>
                     <div className="dash-metric-label">{m.label}</div>
