@@ -36,6 +36,7 @@ export default function Dashboard() {
   const [activeTab,   setActiveTab]     = useState('overview');
   const [orders,      setOrders]        = useState({ bought: [], sold: [] });
   const [listingSearch, setListingSearch] = useState('');
+  const [showBalance, setShowBalance]     = useState(false);
 
   // ── Profile-settings state ──────────────────────────────────
   const [editHostel,      setEditHostel]      = useState('Off-Campus');
@@ -379,7 +380,18 @@ export default function Dashboard() {
             </div>
             <div className="dash-wallet-card" style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start' }}>
               <span className="dash-wallet-label">Wallet Balance</span>
-              <span className="dash-wallet-amount">₦{(profileData?.walletBalance || 0).toLocaleString()}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span className="dash-wallet-amount">
+                  {showBalance ? `₦${(profileData?.walletBalance || 0).toLocaleString()}` : '****'}
+                </span>
+                <button 
+                  onClick={() => setShowBalance(!showBalance)}
+                  style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1.2rem', padding: 0 }}
+                  title={showBalance ? "Hide balance" : "Show balance"}
+                >
+                  {showBalance ? '🙈' : '👁️'}
+                </button>
+              </div>
               <button
                 onClick={() => navigate('/withdraw')}
                 className="btn-primary"

@@ -31,9 +31,7 @@ export const AuthProvider = ({ children }) => {
           logout();
         }
       }
-      setTimeout(() => {
-        setInitializing(false);
-      }, 1000);
+      setInitializing(false);
     };
     initAuth();
   }, []);
