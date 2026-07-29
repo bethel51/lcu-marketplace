@@ -125,13 +125,16 @@ function AppContent() {
     dismissShell();
   }, []);
 
+  const { user } = useAuth();
+
   return (
     <Router>
       <TopProgressBar />
       <ScrollToTop />
       <div style={styles.app}>
         <Navbar />
-        <div style={styles.main}>
+        {/* Main content — extra bottom padding on mobile to clear bottom tab bar */}
+        <div style={styles.main} className={user && !user.isAdmin ? 'has-bottom-nav' : ''}>
           <Suspense fallback={<PageLoader />}>
             <Routes>
               {/* Public */}
@@ -155,7 +158,8 @@ function AppContent() {
             </Routes>
           </Suspense>
         </div>
-        <footer style={styles.footer}>
+        {/* Footer — hidden on mobile when bottom nav is present */}
+        <footer style={styles.footer} className={user && !user.isAdmin ? 'footer-desktop-only' : ''}>
           <p>© {new Date().getFullYear()} Lead City University Student Marketplace Hub. All rights reserved.</p>
         </footer>
       </div>

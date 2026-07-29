@@ -2,19 +2,48 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+
+    <!-- ── PWA / Native App Meta ──────────────────────────── -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#060c1a" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="LCU Market" />
+    <link rel="apple-touch-icon" href="/logo.png" />
+    <link rel="apple-touch-startup-image" href="/logo.png" />
+
+    <!-- ── Icons ───────────────────────────────────────────── -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/logo.png" />
+
+    <!-- ── Viewport (safe area for notch / home indicator) ── -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+
+    <!-- ── SEO ────────────────────────────────────────────── -->
     <meta name="description" content="The official Lead City University student marketplace — buy, sell and swap within campus." />
+    <meta name="keywords" content="LCU, Lead City University, student marketplace, buy sell, campus market, Nigeria" />
+    <meta property="og:title" content="Lead City Marketplace | LCU Student Hub" />
+    <meta property="og:description" content="Buy, sell and swap within LCU campus. The trusted student marketplace." />
+    <meta property="og:type" content="website" />
     <title>Lead City Marketplace | LCU Student Hub</title>
 
-    <!-- Preconnect for faster font fetch -->
+    <!-- ── Fonts ───────────────────────────────────────────── -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- font-display=swap prevents invisible text during font load -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet" />
 
-    <!-- Flutterwave -->
+    <!-- ── Flutterwave ─────────────────────────────────────── -->
     <script src="https://checkout.flutterwave.com/v3.js" defer></script>
+
+    <!-- ── Service Worker Registration ──────────────────────── -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

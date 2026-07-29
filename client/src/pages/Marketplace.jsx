@@ -238,9 +238,15 @@ export default function Marketplace() {
       {/* ─── Product Grid ─────────────────────────────────────── */}
       <main className="mkt-grid-area">
         {loading ? (
-          <div className="mkt-loader">
-            <div className="spinner" />
-            <p>Loading available listings…</p>
+          <div className="grid-cols-auto">
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div key={i} className="skeleton-card">
+                <div className="skeleton-img" />
+                <div className="skeleton-line" style={{ marginTop: '16px' }} />
+                <div className="skeleton-line medium" />
+                <div className="skeleton-line short" style={{ marginBottom: '16px' }} />
+              </div>
+            ))}
           </div>
         ) : sortedProducts.length > 0 ? (
           <div className="grid-cols-auto">
