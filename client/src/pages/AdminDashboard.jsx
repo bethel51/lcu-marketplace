@@ -154,10 +154,28 @@ export default function AdminDashboard() {
   }, [reportedProducts, searchQuery]);
 
   // Fix #5: Only users who actually submitted an ID card
-  const pendingVerifications = useMemo(() => users.filter(u => u.studentIdCard && !u.isVerifiedStudent), [users]);
+  const pendingVerifications = useMemo(() => {
+    const pending = users.filter(u => u.studentIdCard && !u.isVerifiedStudent);
+    if (!searchQuery.trim()) return pending;
+    const q = searchQuery.toLowerCase();
+    return pending.filter(u => u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q) || u.matricNumber?.toLowerCase().includes(q));
+  }, [users, searchQuery]);
+
   const verifiedCount = useMemo(() => users.filter(u => u.isVerifiedStudent).length, [users]);
   const totalRevenue = useMemo(() => allOrders.filter(o => o.paymentStatus === 'Paid').reduce((s, o) => s + (o.amount || 0), 0), [allOrders]);
   const paidOrders = useMemo(() => allOrders.filter(o => o.paymentStatus === 'Paid'), [allOrders]);
+
+  const filteredOrders = useMemo(() => {
+    if (!searchQuery.trim()) return allOrders;
+    const q = searchQuery.toLowerCase();
+    return allOrders.filter(o => 
+      o.product?.name?.toLowerCase().includes(q) || 
+      o.buyer?.name?.toLowerCase().includes(q) || 
+      o.buyer?.email?.toLowerCase().includes(q) || 
+      o.seller?.name?.toLowerCase().includes(q) || 
+      o.seller?.email?.toLowerCase().includes(q)
+    );
+  }, [allOrders, searchQuery]);
 
   const navTabs = [
     { id: 'reports',      icon: '⚠️', label: 'Flagged',  badge: reportedProducts.length },
@@ -260,7 +278,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Search bar */}
-        {['reports', 'users', 'verification'].includes(activeTab) && (
+        {['reports', 'users', 'verification', 'orders'].includes(activeTab) && (
           <div className="mkt-search-wrap" style={{ marginBottom: '8px' }}>
             <span className="mkt-search-icon">🔍</span>
             <input type="text" placeholder="Filter by name, email, matric..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="glass-input mkt-search-input" />
@@ -421,7 +439,7 @@ export default function AdminDashboard() {
                 </div>
               ))}
             </div>
-            {allOrders.length > 0 ? (
+            {filteredOrders.length > 0 ? (
               <div style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: '16px', overflow: 'hidden' }}>
                 <div style={{ overflowX: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem' }}>
@@ -433,7 +451,7 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {allOrders.map(o => (
+                      {filteredOrders.map(o => (
                         <tr key={o._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
                           <td style={{ padding: '11px 14px', color: 'var(--text-primary)', fontWeight: '600' }}>{o.product ? o.product.name : 'Deleted'}</td>
                           <td style={{ padding: '11px 14px', color: 'var(--text-secondary)', fontSize: '0.78rem' }}>{o.buyer?.name || '—'}<br /><span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>{o.buyer?.email}</span></td>
@@ -458,8 +476,8 @@ export default function AdminDashboard() {
             ) : (
               <div className="dash-empty">
                 <div className="dash-empty-icon">💳</div>
-                <p className="dash-empty-title">No Orders Yet</p>
-                <p className="dash-empty-sub">No transactions on the platform yet.</p>
+                <p className="dash-empty-title">No matching orders</p>
+                <p className="dash-empty-sub">Try refining your filter text.</p>
               </div>
             )}
           </>
