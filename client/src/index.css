@@ -131,10 +131,13 @@ body.light-theme {
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+  height: 100%;
+  overflow-y: scroll; /* Always show vertical scrollbar — prevents layout shift */
 }
 
 body {
   overflow-x: hidden;
+  overflow-y: auto;
   max-width: 100%;
   width: 100%;
   background-color: var(--bg-dark);
@@ -845,6 +848,7 @@ body.light-theme .btab-fab { border-color: #f0f4f8; }
 /* ── PWA standalone mode ─────────────────────────────────── */
 @media (display-mode: standalone) {
   .top-nav { position: fixed; top: 0; left: 0; right: 0; }
+  html, body { overflow-y: auto !important; }
   body { padding-top: 64px; }
   @media (max-width: 768px) {
     body { padding-top: 56px; }
@@ -898,7 +902,7 @@ body.light-theme .skeleton-line {
 /* ── Responsive grid helpers ─────────────────────────────────── */
 .details-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 32px; }
 .profile-grid { display: grid; grid-template-columns: 280px 1fr;  gap: 28px; }
-.chat-grid    { display: grid; grid-template-columns: 1fr 2.2fr; height: calc(100vh - 180px); min-height: 500px; border: 1px solid var(--border-color); border-radius: var(--border-radius); overflow: hidden; }
+.chat-grid    { display: grid; grid-template-columns: 1fr 2.2fr; height: calc(100vh - 180px); min-height: 500px; border: 1px solid var(--border-color); border-radius: var(--border-radius); overflow: auto; }
 
 /* ── Mobile responsive grids (no drawer — bottom tab bar now) ── */
 @media (max-width: 768px) {
@@ -938,6 +942,8 @@ body.light-theme .skeleton-line {
   gap: 20px;
   position: sticky;
   top: 88px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
   box-shadow: var(--glass-shadow);
 }
 
