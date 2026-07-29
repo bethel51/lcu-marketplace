@@ -216,69 +216,71 @@ export default function Navbar() {
               </div>
             )}
 
-            {/* Notification bell */}
-            <div ref={notifRef} style={{ position: 'relative' }}>
-              <button className="nav-icon-btn notif-bell-btn" onClick={handleNotifOpen} aria-label="Notifications">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                </svg>
-                {unreadCount > 0 && <span className="notif-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>}
-              </button>
-
-              {notifOpen && (
-                <div className="notif-panel">
-                  <div className="notif-panel-header">
-                    <span className="notif-panel-title">🔔 Notifications</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      {notifications.length > 0 && (
-                        <button className="notif-clear-btn" onClick={clearNotifications}>Clear all</button>
-                      )}
-                      <button onClick={() => setNotifOpen(false)} style={{ background:'none',border:'none',color:'var(--text-muted)',fontSize:'1.1rem',cursor:'pointer' }} aria-label="Close">✕</button>
-                    </div>
-                  </div>
-                  <div className="notif-list">
-                    {notifications.length === 0 ? (
-                      <div className="notif-empty">🎉 You're all caught up!</div>
-                    ) : (
-                      notifications.map(n => (
-                        <div key={n.id} className="notif-item">
-                          <span className={`notif-dot notif-dot-${n.type}`} />
-                          <div style={{ flex: 1 }}>
-                            <div className="notif-item-msg">{n.message}</div>
-                            <div className="notif-item-time">{n.time ? new Date(n.time).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : ''}</div>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Avatar / profile dropdown — shown when logged in */}
+            {/* Notification bell + Avatar — only for logged-in users */}
             {user && (
-              <div style={{ position: 'relative' }} ref={dropdownRef}>
-                <button
-                  className="nav-avatar"
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  aria-haspopup="true"
-                  aria-expanded={dropdownOpen}
-                >
-                  {user.name.charAt(0).toUpperCase()}
-                  {user.isVerifiedStudent && <span className="nav-avatar-badge" title="LCU Verified">✓</span>}
-                </button>
-                {dropdownOpen && (
-                  <div className="nav-profile-dropdown">
-                    <div className="nav-dropdown-header">Hi, {user.name.split(' ')[0]} 👋</div>
-                    <button onClick={() => { setDropdownOpen(false); navigate('/profile'); }} className="nav-profile-dropdown-item">👤 My Dashboard</button>
-                    <button onClick={() => { setDropdownOpen(false); setModalOpen(true); }} className="nav-profile-dropdown-item">✏️ Edit Profile</button>
-                    <button onClick={() => { setDropdownOpen(false); navigate('/post'); }} className="nav-profile-dropdown-item">📦 Post Item</button>
-                    <div className="nav-profile-dropdown-divider" />
-                    <button onClick={handleLogout} className="nav-profile-dropdown-item" style={{ color: 'var(--error)' }}>🚪 Logout</button>
-                  </div>
-                )}
-              </div>
+              <>
+                <div ref={notifRef} style={{ position: 'relative' }}>
+                  <button className="nav-icon-btn notif-bell-btn" onClick={handleNotifOpen} aria-label="Notifications">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                    </svg>
+                    {unreadCount > 0 && <span className="notif-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>}
+                  </button>
+
+                  {notifOpen && (
+                    <div className="notif-panel">
+                      <div className="notif-panel-header">
+                        <span className="notif-panel-title">🔔 Notifications</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          {notifications.length > 0 && (
+                            <button className="notif-clear-btn" onClick={clearNotifications}>Clear all</button>
+                          )}
+                          <button onClick={() => setNotifOpen(false)} style={{ background:'none',border:'none',color:'var(--text-muted)',fontSize:'1.1rem',cursor:'pointer' }} aria-label="Close">✕</button>
+                        </div>
+                      </div>
+                      <div className="notif-list">
+                        {notifications.length === 0 ? (
+                          <div className="notif-empty">🎉 You're all caught up!</div>
+                        ) : (
+                          notifications.map(n => (
+                            <div key={n.id} className="notif-item">
+                              <span className={`notif-dot notif-dot-${n.type}`} />
+                              <div style={{ flex: 1 }}>
+                                <div className="notif-item-msg">{n.message}</div>
+                                <div className="notif-item-time">{n.time ? new Date(n.time).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : ''}</div>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Avatar / profile dropdown */}
+                <div style={{ position: 'relative' }} ref={dropdownRef}>
+                  <button
+                    className="nav-avatar"
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                    aria-haspopup="true"
+                    aria-expanded={dropdownOpen}
+                  >
+                    {user.name.charAt(0).toUpperCase()}
+                    {user.isVerifiedStudent && <span className="nav-avatar-badge" title="LCU Verified">✓</span>}
+                  </button>
+                  {dropdownOpen && (
+                    <div className="nav-profile-dropdown">
+                      <div className="nav-dropdown-header">Hi, {user.name.split(' ')[0]} 👋</div>
+                      <button onClick={() => { setDropdownOpen(false); navigate('/profile'); }} className="nav-profile-dropdown-item">👤 My Dashboard</button>
+                      <button onClick={() => { setDropdownOpen(false); setModalOpen(true); }} className="nav-profile-dropdown-item">✏️ Edit Profile</button>
+                      <button onClick={() => { setDropdownOpen(false); navigate('/post'); }} className="nav-profile-dropdown-item">📦 Post Item</button>
+                      <div className="nav-profile-dropdown-divider" />
+                      <button onClick={handleLogout} className="nav-profile-dropdown-item" style={{ color: 'var(--error)' }}>🚪 Logout</button>
+                    </div>
+                  )}
+                </div>
+              </>
             )}
 
             {/* Login btn when not logged in — mobile */}

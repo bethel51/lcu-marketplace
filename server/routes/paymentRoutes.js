@@ -3,6 +3,7 @@ import { protect } from '../middleware/auth.js';
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import User from '../models/User.js';
+import { createNotification } from './notificationRoutes.js';
 
 const router = express.Router();
 
@@ -148,6 +149,19 @@ router.post('/verify', protect, async (req, res) => {
         if (product) {
           product.status = 'Sold';
           await product.save();
+
+          // Notify seller: someone bought their item
+          await createNotification(
+            order.seller,
+            `💰 Your item "${product.name}" was purchased! Funds are held in escrow until delivery is confirmed.`,
+            'success'
+          );
+          // Notify buyer: payment confirmed
+          await createNotification(
+            order.buyer,
+            `✅ Payment confirmed for "${product.name}"! Meet up with the seller to collect your item.`,
+            'info'
+          );
         }
       } else if (order.orderType === 'boost') {
         const product = await Product.findById(order.product);
@@ -219,6 +233,19 @@ router.post('/confirm-delivery/:orderId', protect, async (req, res) => {
       seller.walletBalance = (seller.walletBalance || 0) + order.amount;
       await seller.save();
     }
+
+    // Notify seller: money has landed in their wallet
+    await createNotification(
+      order.seller,
+      `🎉 ₦${order.amount.toLocaleString()} has been credited to your LCU Marketplace wallet!`,
+      'success'
+    );
+    // Notify buyer: delivery confirmed
+    await createNotification(
+      order.buyer,
+      `👍 Delivery confirmed! Thank you for using LCU Marketplace.`,
+      'success'
+    );
 
     res.status(200).json({ message: 'Funds released to seller successfully', order });
   } catch (error) {

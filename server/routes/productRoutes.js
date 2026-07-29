@@ -4,6 +4,7 @@ import User from '../models/User.js';
 import { protect } from '../middleware/auth.js';
 import multer from 'multer';
 import path from 'path';
+import { createNotification } from './notificationRoutes.js';
 
 const router = express.Router();
 
@@ -158,6 +159,13 @@ router.post('/', protect, handleUpload, async (req, res) => {
     });
     
     res.status(201).json(product);
+
+    // Notify the seller that their item is now live
+    await createNotification(
+      req.user._id,
+      `🎉 Your listing "${name}" is now live on the marketplace!`,
+      'success'
+    );
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -269,6 +277,18 @@ router.post('/:id/wishlist', protect, async (req, res) => {
     
     await user.save();
     res.json({ isWishlisted, wishlist: user.wishlist });
+
+    // Notify the product seller when someone wishlists their item
+    if (isWishlisted) {
+      const product = await Product.findById(productId).select('name seller');
+      if (product && product.seller.toString() !== req.user._id.toString()) {
+        await createNotification(
+          product.seller,
+          `❤️ Someone saved your listing "${product.name}" to their wishlist!`,
+          'info'
+        );
+      }
+    }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
