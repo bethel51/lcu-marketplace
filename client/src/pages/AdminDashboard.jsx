@@ -30,8 +30,8 @@ export default function AdminDashboard() {
     if (!user.isAdmin) { showToast('Access denied: Admins only.', 'error'); navigate('/admin-login'); }
   }, [user, token, navigate]);
 
-  const loadAdminData = async () => {
-    setLoading(true);
+  const loadAdminData = async (silent = false) => {
+    if (!silent) setLoading(true);
     
     // 1. Fetch reported products
     try {
@@ -99,27 +99,27 @@ export default function AdminDashboard() {
 
   const handleDismissReports = async (productId) => {
     const res = await fetch(`${API_URL}/api/products/${productId}/dismiss-reports`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
-    if (res.ok) { showToast('Reports dismissed', 'success'); loadAdminData(); }
+    if (res.ok) { showToast('Reports dismissed', 'success'); loadAdminData(true); }
     else showToast((await res.json()).message, 'error');
   };
 
   const handleDeleteListing = async (productId) => {
     if (!window.confirm('Delete this listing permanently?')) return;
     const res = await fetch(`${API_URL}/api/products/${productId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
-    if (res.ok) { showToast('Listing deleted', 'success'); loadAdminData(); }
+    if (res.ok) { showToast('Listing deleted', 'success'); loadAdminData(true); }
     else showToast((await res.json()).message, 'error');
   };
 
   const handleToggleVerification = async (userId) => {
     const res = await fetch(`${API_URL}/api/auth/admin/verify-student/${userId}`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
-    if (res.ok) { showToast('Verification updated', 'success'); loadAdminData(); }
+    if (res.ok) { showToast('Verification updated', 'success'); loadAdminData(true); }
     else showToast((await res.json()).message, 'error');
   };
 
   const handleDeleteUser = async (userId, userName) => {
     if (!window.confirm(`Ban & permanently delete "${userName}"?\n\nThis removes their account, listings, and orders.`)) return;
     const res = await fetch(`${API_URL}/api/auth/admin/users/${userId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
-    if (res.ok) { showToast(`${userName} removed`, 'success'); loadAdminData(); }
+    if (res.ok) { showToast(`${userName} removed`, 'success'); loadAdminData(true); }
     else showToast((await res.json()).message, 'error');
   };
 
