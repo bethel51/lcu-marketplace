@@ -241,7 +241,17 @@ export default function AdminDashboard() {
             { icon: '⚠️', val: reportedProducts.length, label: 'Flagged Listings', col: reportedProducts.length > 0 ? 'var(--error)' : 'var(--text-primary)' },
             { icon: '💳', val: paidOrders.length, label: 'Paid Orders', col: 'var(--gold)' },
           ].map(m => (
-            <div key={m.label} className="dash-metric">
+            <div 
+              key={m.label} 
+              className="dash-metric"
+              style={{ cursor: 'pointer' }}
+              onClick={() => {
+                if (m.label === 'Total Accounts') setActiveTab('users');
+                else if (m.label === 'Verified Students') setActiveTab('users');
+                else if (m.label === 'Flagged Listings') setActiveTab('reports');
+                else if (m.label === 'Paid Orders') setActiveTab('orders');
+              }}
+            >
               <div className="dash-metric-icon">{m.icon}</div>
               <div className="dash-metric-value" style={{ color: m.col }}>{m.val}</div>
               <div className="dash-metric-label">{m.label}</div>
