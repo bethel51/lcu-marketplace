@@ -11,10 +11,12 @@ const Marketplace    = lazy(() => import('./pages/Marketplace'));
 const Auth           = lazy(() => import('./pages/Auth'));
 const ProductDetails = lazy(() => import('./pages/ProductDetails'));
 const PostProduct    = lazy(() => import('./pages/PostProduct'));
-const Dashboard      = lazy(() => import('./pages/Dashboard'));
 const Withdraw       = lazy(() => import('./pages/Withdraw'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const AdminLogin     = lazy(() => import('./pages/AdminLogin'));
+
+// ── Eagerly import Dashboard (most visited by logged-in users) ──
+import Dashboard from './pages/Dashboard';
 
 // ── Dismiss the pre-React HTML shell once React boots ──────────
 function dismissShell() {
