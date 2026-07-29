@@ -13,153 +13,119 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [reportedProducts, setReportedProducts] = useState([]);
   const [allProductsCount, setAllProductsCount] = useState(0);
+  const [allOrders, setAllOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('reports'); // 'reports' | 'users' | 'verification'
+  const [activeTab, setActiveTab] = useState('reports');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDocUser, setSelectedDocUser] = useState(null);
 
+  // Broadcast notification state
+  const [broadcastMsg, setBroadcastMsg] = useState('');
+  const [broadcastType, setBroadcastType] = useState('info');
+  const [broadcastSending, setBroadcastSending] = useState(false);
+
   // Guard non-admins
   useEffect(() => {
-    if (!token || !user) {
-      navigate('/admin-login');
-      return;
-    }
-    if (!user.isAdmin) {
-      showToast('Access denied: Admins only.', 'error');
-      navigate('/admin-login');
-    }
+    if (!token || !user) { navigate('/admin-login'); return; }
+    if (!user.isAdmin) { showToast('Access denied: Admins only.', 'error'); navigate('/admin-login'); }
   }, [user, token, navigate]);
 
   const loadAdminData = async () => {
     setLoading(true);
     try {
-      // Fetch reported products
-      const reportRes = await fetch(`${API_URL}/api/products/admin/reported`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (reportRes.ok) {
-        const data = await reportRes.json();
-        setReportedProducts(data);
-      }
-
-      // Fetch users
-      const usersRes = await fetch(`${API_URL}/api/auth/admin/users`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (usersRes.ok) {
-        const data = await usersRes.json();
-        setUsers(data);
-      }
-
-      // Fetch all products count for system stats
-      const prodRes = await fetch(`${API_URL}/api/products?status=All`);
-      if (prodRes.ok) {
-        const prods = await prodRes.json();
-        setAllProductsCount(prods.length);
-      }
-    } catch {
-      showToast('Error loading admin control panel data', 'error');
-    } finally {
-      setLoading(false);
-    }
+      const [reportRes, usersRes, prodRes, ordersRes] = await Promise.all([
+        fetch(`${API_URL}/api/products/admin/reported`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${API_URL}/api/auth/admin/users`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${API_URL}/api/products?status=All`),
+        fetch(`${API_URL}/api/auth/admin/orders`, { headers: { 'Authorization': `Bearer ${token}` } }),
+      ]);
+      if (reportRes.ok) setReportedProducts(await reportRes.json());
+      if (usersRes.ok) setUsers(await usersRes.json());
+      if (prodRes.ok) { const p = await prodRes.json(); setAllProductsCount(p.length); }
+      if (ordersRes.ok) setAllOrders(await ordersRes.json());
+    } catch { showToast('Error loading admin data', 'error'); }
+    finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    if (token && user?.isAdmin) {
-      loadAdminData();
-    }
-  }, [token, user]);
+  useEffect(() => { if (token && user?.isAdmin) loadAdminData(); }, [token, user]);
+
+  // ── Handlers ──────────────────────────────────────────────────
 
   const handleDismissReports = async (productId) => {
-    try {
-      const res = await fetch(`${API_URL}/api/products/${productId}/dismiss-reports`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        showToast('Listing reports dismissed successfully! 🤝', 'success');
-        loadAdminData();
-      } else {
-        const data = await res.json();
-        showToast(data.message || 'Failed to dismiss reports', 'error');
-      }
-    } catch {
-      showToast('Error dismissing reports', 'error');
-    }
+    const res = await fetch(`${API_URL}/api/products/${productId}/dismiss-reports`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+    if (res.ok) { showToast('Reports dismissed', 'success'); loadAdminData(); }
+    else showToast((await res.json()).message, 'error');
   };
 
   const handleDeleteListing = async (productId) => {
-    if (!window.confirm('Are you sure you want to permanently delete this listing?')) return;
-    try {
-      const res = await fetch(`${API_URL}/api/products/${productId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        showToast('Listing deleted successfully!', 'success');
-        loadAdminData();
-      } else {
-        const data = await res.json();
-        showToast(data.message || 'Failed to delete listing', 'error');
-      }
-    } catch {
-      showToast('Error deleting listing', 'error');
-    }
+    if (!window.confirm('Delete this listing permanently?')) return;
+    const res = await fetch(`${API_URL}/api/products/${productId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+    if (res.ok) { showToast('Listing deleted', 'success'); loadAdminData(); }
+    else showToast((await res.json()).message, 'error');
   };
 
   const handleToggleVerification = async (userId) => {
-    try {
-      const res = await fetch(`${API_URL}/api/auth/admin/verify-student/${userId}`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        showToast('User verification status updated!', 'success');
-        loadAdminData();
-      } else {
-        const data = await res.json();
-        showToast(data.message || 'Failed to update user verification', 'error');
-      }
-    } catch {
-      showToast('Error updating verification status', 'error');
-    }
+    const res = await fetch(`${API_URL}/api/auth/admin/verify-student/${userId}`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+    if (res.ok) { showToast('Verification updated', 'success'); loadAdminData(); }
+    else showToast((await res.json()).message, 'error');
   };
 
-  // Filtered queries
+  const handleDeleteUser = async (userId, userName) => {
+    if (!window.confirm(`Ban & permanently delete "${userName}"?\n\nThis removes their account, listings, and orders.`)) return;
+    const res = await fetch(`${API_URL}/api/auth/admin/users/${userId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+    if (res.ok) { showToast(`${userName} removed`, 'success'); loadAdminData(); }
+    else showToast((await res.json()).message, 'error');
+  };
+
+  const handleBroadcast = async () => {
+    if (!broadcastMsg.trim()) return showToast('Enter a message first', 'error');
+    setBroadcastSending(true);
+    try {
+      const res = await fetch(`${API_URL}/api/auth/admin/broadcast`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: broadcastMsg.trim(), type: broadcastType })
+      });
+      const data = await res.json();
+      if (res.ok) { showToast(data.message, 'success'); setBroadcastMsg(''); }
+      else showToast(data.message, 'error');
+    } catch { showToast('Error sending notification', 'error'); }
+    finally { setBroadcastSending(false); }
+  };
+
+  // ── Computed ──────────────────────────────────────────────────
+
   const filteredUsers = useMemo(() => {
     if (!searchQuery.trim()) return users;
     const q = searchQuery.toLowerCase();
-    return users.filter(u => 
-      u.name?.toLowerCase().includes(q) ||
-      u.email?.toLowerCase().includes(q) ||
-      u.matricNumber?.toLowerCase().includes(q) ||
-      u.hostel?.toLowerCase().includes(q)
-    );
+    return users.filter(u => u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q) || u.matricNumber?.toLowerCase().includes(q) || u.hostel?.toLowerCase().includes(q));
   }, [users, searchQuery]);
 
   const filteredReports = useMemo(() => {
     if (!searchQuery.trim()) return reportedProducts;
     const q = searchQuery.toLowerCase();
-    return reportedProducts.filter(p =>
-      p.name?.toLowerCase().includes(q) ||
-      p.seller?.name?.toLowerCase().includes(q) ||
-      p.category?.toLowerCase().includes(q)
-    );
+    return reportedProducts.filter(p => p.name?.toLowerCase().includes(q) || p.seller?.name?.toLowerCase().includes(q));
   }, [reportedProducts, searchQuery]);
 
-  const pendingVerifications = useMemo(() => {
-    return users.filter(u => u.studentIdCard || u.matricNumber && !u.isVerifiedStudent);
-  }, [users]);
+  // Fix #5: Only users who actually submitted an ID card
+  const pendingVerifications = useMemo(() => users.filter(u => u.studentIdCard && !u.isVerifiedStudent), [users]);
+  const verifiedCount = useMemo(() => users.filter(u => u.isVerifiedStudent).length, [users]);
+  const totalRevenue = useMemo(() => allOrders.filter(o => o.paymentStatus === 'Paid').reduce((s, o) => s + (o.amount || 0), 0), [allOrders]);
+  const paidOrders = useMemo(() => allOrders.filter(o => o.paymentStatus === 'Paid'), [allOrders]);
 
-  const verifiedCount = useMemo(() => {
-    return users.filter(u => u.isVerifiedStudent).length;
-  }, [users]);
+  const navTabs = [
+    { id: 'reports',      icon: '⚠️', label: 'Flagged',  badge: reportedProducts.length },
+    { id: 'users',        icon: '👥', label: 'Users',    badge: users.length },
+    { id: 'verification', icon: '🎓', label: 'Verify',   badge: pendingVerifications.length },
+    { id: 'orders',       icon: '💳', label: 'Orders',   badge: 0 },
+    { id: 'notify',       icon: '📢', label: 'Notify',   badge: 0 },
+  ];
 
   if (loading) {
     return (
       <div style={{ height: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '16px' }} className="container">
         <div style={{ width: '44px', height: '44px', border: '4px solid var(--border-color)', borderTop: '4px solid var(--gold)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Loading Admin Control Center…</p>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Loading Admin Panel…</p>
       </div>
     );
   }
@@ -167,7 +133,7 @@ export default function AdminDashboard() {
   return (
     <div className="dash-shell animate-fade-in">
 
-      {/* ═══════════════════ ADMIN SIDEBAR ═══════════════════ */}
+      {/* ═══ ADMIN SIDEBAR ═══ */}
       <aside className="dash-sidebar">
         <div className="dash-sidebar-profile">
           <div className="dash-avatar-ring">
@@ -176,123 +142,77 @@ export default function AdminDashboard() {
           <h3 className="dash-sidebar-name">{user?.name}</h3>
           <p className="dash-sidebar-email">{user?.email}</p>
           <div className="dash-sidebar-badges">
-            <span className="dash-status-pill" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
-              🔑 System Admin
-            </span>
+            <span className="dash-status-pill" style={{ background: 'rgba(239,68,68,0.15)', color: '#f87171', border: '1px solid rgba(239,68,68,0.3)' }}>🔑 Admin</span>
           </div>
         </div>
-
-        {/* Navigation */}
         <nav className="dash-nav">
-          <button
-            onClick={() => setActiveTab('reports')}
-            className={`dash-nav-item${activeTab === 'reports' ? ' active' : ''}`}
-          >
-            <span className="dash-nav-icon">⚠️</span>
-            <span>Flagged Items</span>
-            {reportedProducts.length > 0 && (
-              <span className="dash-nav-badge" style={{ background: 'rgba(239,68,68,0.2)', color: '#f87171' }}>
-                {reportedProducts.length}
-              </span>
-            )}
-          </button>
-
-          <button
-            onClick={() => setActiveTab('users')}
-            className={`dash-nav-item${activeTab === 'users' ? ' active' : ''}`}
-          >
-            <span className="dash-nav-icon">👥</span>
-            <span>User Management</span>
-            <span className="dash-nav-badge">{users.length}</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('verification')}
-            className={`dash-nav-item${activeTab === 'verification' ? ' active' : ''}`}
-          >
-            <span className="dash-nav-icon">🎓</span>
-            <span>Pending Reviews</span>
-            {pendingVerifications.length > 0 && (
-              <span className="dash-nav-badge" style={{ background: 'rgba(245,158,11,0.2)', color: 'var(--warning)' }}>
-                {pendingVerifications.length}
-              </span>
-            )}
-          </button>
+          {navTabs.map(tab => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`dash-nav-item${activeTab === tab.id ? ' active' : ''}`}>
+              <span className="dash-nav-icon">{tab.icon}</span>
+              <span>{tab.label}</span>
+              {tab.badge > 0 && (
+                <span className="dash-nav-badge" style={
+                  tab.id === 'reports' ? { background: 'rgba(239,68,68,0.2)', color: '#f87171' } :
+                  tab.id === 'verification' ? { background: 'rgba(245,158,11,0.2)', color: 'var(--warning)' } : {}
+                }>{tab.badge}</span>
+              )}
+            </button>
+          ))}
         </nav>
-
-        {/* Quick System Stats */}
         <div className="dash-sidebar-actions">
           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Total Listings:</span>
-              <strong style={{ color: 'var(--text-primary)' }}>{allProductsCount}</strong>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Verified Students:</span>
-              <strong style={{ color: 'var(--success)' }}>{verifiedCount}</strong>
-            </div>
+            {[
+              { label: 'Total Listings', val: allProductsCount, col: 'var(--text-primary)' },
+              { label: 'Verified Students', val: verifiedCount, col: 'var(--success)' },
+              { label: 'Total Revenue', val: `₦${totalRevenue.toLocaleString()}`, col: 'var(--gold)' },
+            ].map(s => (
+              <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>{s.label}:</span>
+                <strong style={{ color: s.col }}>{s.val}</strong>
+              </div>
+            ))}
           </div>
         </div>
       </aside>
 
-      {/* ═══════════════════ MAIN ADMIN PANEL ═══════════════════ */}
+      {/* ═══ MAIN PANEL ═══ */}
       <main className="dash-main">
 
-        {/* Welcome Admin Banner */}
+        {/* Banner */}
         <div className="dash-banner" style={{ background: 'linear-gradient(135deg, rgba(239,68,68,0.12) 0%, var(--bg-card) 100%)' }}>
           <div>
-            <h1 className="dash-banner-title">🛡️ Admin Control Hub</h1>
-            <p className="dash-banner-sub">Lead City University Student Marketplace Management Portal</p>
+            <h1 className="dash-banner-title">🛡️ Admin Control Panel</h1>
+            <p className="dash-banner-sub">LCU Marketplace — Manage users, listings, and orders</p>
           </div>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button onClick={loadAdminData} className="btn-secondary" style={{ padding: '8px 16px', fontSize: '0.82rem' }}>
-              🔄 Refresh Data
-            </button>
-          </div>
+          <button onClick={loadAdminData} className="btn-secondary" style={{ padding: '8px 16px', fontSize: '0.82rem' }}>🔄 Refresh</button>
         </div>
 
-        {/* Metrics Grid */}
+        {/* Metrics */}
         <div className="dash-metrics">
-          <div className="dash-metric">
-            <div className="dash-metric-icon">👥</div>
-            <div className="dash-metric-value">{users.length}</div>
-            <div className="dash-metric-label">Total Accounts</div>
-          </div>
-          <div className="dash-metric">
-            <div className="dash-metric-icon">🎓</div>
-            <div className="dash-metric-value" style={{ color: 'var(--success)' }}>{verifiedCount}</div>
-            <div className="dash-metric-label">Verified Students</div>
-          </div>
-          <div className="dash-metric">
-            <div className="dash-metric-icon">⚠️</div>
-            <div className="dash-metric-value" style={{ color: reportedProducts.length > 0 ? 'var(--error)' : 'var(--text-primary)' }}>
-              {reportedProducts.length}
+          {[
+            { icon: '👥', val: users.length, label: 'Total Accounts', col: 'var(--text-primary)' },
+            { icon: '🎓', val: verifiedCount, label: 'Verified Students', col: 'var(--success)' },
+            { icon: '⚠️', val: reportedProducts.length, label: 'Flagged Listings', col: reportedProducts.length > 0 ? 'var(--error)' : 'var(--text-primary)' },
+            { icon: '💳', val: paidOrders.length, label: 'Paid Orders', col: 'var(--gold)' },
+          ].map(m => (
+            <div key={m.label} className="dash-metric">
+              <div className="dash-metric-icon">{m.icon}</div>
+              <div className="dash-metric-value" style={{ color: m.col }}>{m.val}</div>
+              <div className="dash-metric-label">{m.label}</div>
             </div>
-            <div className="dash-metric-label">Flagged Listings</div>
-          </div>
-          <div className="dash-metric">
-            <div className="dash-metric-icon">📦</div>
-            <div className="dash-metric-value">{allProductsCount}</div>
-            <div className="dash-metric-label">Marketplace Items</div>
-          </div>
+          ))}
         </div>
 
-        {/* Search Bar */}
-        <div className="mkt-search-wrap" style={{ marginBottom: '8px' }}>
-          <span className="mkt-search-icon">🔍</span>
-          <input
-            type="text"
-            placeholder="Filter records by name, email, matric number, or category..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="glass-input mkt-search-input"
-          />
-          {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="mkt-search-clear">✕</button>
-          )}
-        </div>
+        {/* Search bar */}
+        {['reports', 'users', 'verification'].includes(activeTab) && (
+          <div className="mkt-search-wrap" style={{ marginBottom: '8px' }}>
+            <span className="mkt-search-icon">🔍</span>
+            <input type="text" placeholder="Filter by name, email, matric..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="glass-input mkt-search-input" />
+            {searchQuery && <button onClick={() => setSearchQuery('')} className="mkt-search-clear">✕</button>}
+          </div>
+        )}
 
-        {/* ══════════ FLAGGED ITEMS TAB ══════════ */}
+        {/* ══ FLAGGED TAB ══ */}
         {activeTab === 'reports' && (
           <>
             <div className="dash-section-header">
@@ -302,25 +222,18 @@ export default function AdminDashboard() {
               <div className="dash-listing-grid">
                 {filteredReports.map(p => (
                   <div key={p._id} className="dash-listing-card" style={{ borderLeft: '3px solid var(--error)' }}>
-                    {p.image
-                      ? <img src={p.image} alt={p.name} className="dash-listing-img" />
-                      : <div className="dash-listing-placeholder">🖼️</div>
-                    }
+                    {p.image ? <img src={p.image} alt={p.name} className="dash-listing-img" /> : <div className="dash-listing-placeholder">🖼️</div>}
                     <div className="dash-listing-info">
                       <h4 className="dash-listing-name">{p.name}</h4>
                       <span className="dash-listing-price">₦{p.price?.toLocaleString()}</span>
                       <div className="dash-listing-meta">
-                        <span>Seller: <strong>{p.seller?.name || 'Unknown'}</strong> ({p.seller?.email})</span>
-                        <span style={{ color: 'var(--error)', fontWeight: '700' }}>⚠️ {p.reports?.length || 0} Reports</span>
+                        <span>Seller: <strong>{p.seller?.name || 'Unknown'}</strong></span>
+                        <span style={{ color: 'var(--error)', fontWeight: '700' }}>⚠️ {p.reports?.length || 0} reports</span>
                       </div>
                     </div>
                     <div className="dash-listing-actions">
-                      <button onClick={() => handleDismissReports(p._id)} className="btn-primary" style={{ padding: '8px 14px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
-                        ✓ Dismiss
-                      </button>
-                      <button onClick={() => handleDeleteListing(p._id)} className="btn-danger" style={{ padding: '8px 14px', fontSize: '0.8rem' }}>
-                        🗑 Delete
-                      </button>
+                      <button onClick={() => handleDismissReports(p._id)} className="btn-primary" style={{ padding: '8px 14px', fontSize: '0.8rem' }}>✓ Dismiss</button>
+                      <button onClick={() => handleDeleteListing(p._id)} className="btn-danger" style={{ padding: '8px 14px', fontSize: '0.8rem' }}>🗑 Delete</button>
                     </div>
                   </div>
                 ))}
@@ -329,68 +242,60 @@ export default function AdminDashboard() {
               <div className="dash-empty">
                 <div className="dash-empty-icon">🎉</div>
                 <p className="dash-empty-title">All Clean!</p>
-                <p className="dash-empty-sub">There are no flagged or reported listings awaiting review.</p>
+                <p className="dash-empty-sub">No flagged listings right now.</p>
               </div>
             )}
           </>
         )}
 
-        {/* ══════════ USER MANAGEMENT TAB ══════════ */}
+        {/* ══ USERS TAB ══ */}
         {activeTab === 'users' && (
           <>
             <div className="dash-section-header">
-              <h2 className="dash-section-title">👥 Registered Accounts <span className="dash-section-count">{filteredUsers.length}</span></h2>
+              <h2 className="dash-section-title">👥 All Users <span className="dash-section-count">{filteredUsers.length}</span></h2>
             </div>
             <div style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: '16px', overflow: 'hidden' }}>
               <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
                   <thead>
                     <tr style={{ background: 'rgba(0,0,0,0.2)', borderBottom: '1px solid var(--border-color)' }}>
-                      <th style={{ padding: '14px 18px', color: 'var(--gold)' }}>User</th>
-                      <th style={{ padding: '14px 18px', color: 'var(--gold)' }}>Affiliation</th>
-                      <th style={{ padding: '14px 18px', color: 'var(--gold)' }}>Status</th>
-                      <th style={{ padding: '14px 18px', color: 'var(--gold)', textAlign: 'right' }}>Actions</th>
+                      {['User', 'Affiliation', 'Status', 'Actions'].map(h => (
+                        <th key={h} style={{ padding: '12px 16px', color: 'var(--gold)', textAlign: h === 'Actions' ? 'right' : 'left' }}>{h}</th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
                     {filteredUsers.map(u => (
                       <tr key={u._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                        <td style={{ padding: '14px 18px' }}>
-                          <div style={{ fontWeight: '700', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <td style={{ padding: '12px 16px' }}>
+                          <div style={{ fontWeight: '700', color: 'var(--text-primary)', display: 'flex', gap: '6px', alignItems: 'center' }}>
                             {u.name}
                             {u.isAdmin && <span className="dash-boosted-badge" style={{ background: 'rgba(239,68,68,0.15)', color: '#f87171', border: '1px solid rgba(239,68,68,0.3)' }}>Admin</span>}
                           </div>
-                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{u.email}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{u.email}</div>
                         </td>
-                        <td style={{ padding: '14px 18px' }}>
-                          <div>🏛️ {u.faculty || 'Unspecified'}</div>
-                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>🏠 {u.hostel || 'Off-Campus'} {u.matricNumber ? `• 🪪 ${u.matricNumber}` : ''}</div>
+                        <td style={{ padding: '12px 16px' }}>
+                          <div style={{ color: 'var(--text-secondary)' }}>🏛️ {u.faculty || 'Unspecified'}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>🏠 {u.hostel || 'Off-Campus'}{u.matricNumber ? ` • 🪪 ${u.matricNumber}` : ''}</div>
                         </td>
-                        <td style={{ padding: '14px 18px' }}>
-                          {u.isVerifiedStudent ? (
-                            <VerifiedBadge size="sm" />
-                          ) : (
-                            <span className="dash-status-pill unverified">⏳ Unverified</span>
-                          )}
+                        <td style={{ padding: '12px 16px' }}>
+                          {u.isVerifiedStudent ? <VerifiedBadge size="sm" /> : <span className="dash-status-pill unverified">⏳ Unverified</span>}
                         </td>
-                        <td style={{ padding: '14px 18px', textAlign: 'right' }}>
-                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                        <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                          <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                             {u.studentIdCard && (
-                              <button onClick={() => setSelectedDocUser(u)} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.75rem' }}>
-                                📎 ID Doc
-                              </button>
+                              <button onClick={() => setSelectedDocUser(u)} className="btn-secondary" style={{ padding: '5px 10px', fontSize: '0.73rem' }}>📎 ID</button>
                             )}
                             <button
                               onClick={() => handleToggleVerification(u._id)}
                               className="btn-secondary"
-                              style={{
-                                padding: '6px 14px', fontSize: '0.75rem',
-                                color: u.isVerifiedStudent ? 'var(--warning)' : 'var(--success)',
-                                borderColor: u.isVerifiedStudent ? 'rgba(245,158,11,0.4)' : 'rgba(16,185,129,0.4)'
-                              }}
+                              style={{ padding: '5px 10px', fontSize: '0.73rem', color: u.isVerifiedStudent ? 'var(--warning)' : 'var(--success)', borderColor: u.isVerifiedStudent ? 'rgba(245,158,11,0.4)' : 'rgba(16,185,129,0.4)' }}
                             >
-                              {u.isVerifiedStudent ? 'Revoke Badge' : '✓ Grant Badge'}
+                              {u.isVerifiedStudent ? 'Revoke' : '✓ Verify'}
                             </button>
+                            {!u.isAdmin && (
+                              <button onClick={() => handleDeleteUser(u._id, u.name)} className="btn-danger" style={{ padding: '5px 10px', fontSize: '0.73rem' }}>🚫 Ban</button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -402,11 +307,11 @@ export default function AdminDashboard() {
           </>
         )}
 
-        {/* ══════════ PENDING VERIFICATION REVIEWS TAB ══════════ */}
+        {/* ══ VERIFICATION TAB ══ */}
         {activeTab === 'verification' && (
           <>
             <div className="dash-section-header">
-              <h2 className="dash-section-title">🎓 Verification Applications <span className="dash-section-count">{pendingVerifications.length}</span></h2>
+              <h2 className="dash-section-title">🎓 ID Submissions <span className="dash-section-count">{pendingVerifications.length}</span></h2>
             </div>
             {pendingVerifications.length > 0 ? (
               <div className="dash-listing-grid">
@@ -419,19 +324,13 @@ export default function AdminDashboard() {
                       <h4 className="dash-listing-name">{u.name}</h4>
                       <div className="dash-listing-meta">
                         <span>📧 {u.email}</span>
-                        <span>🪪 Matric: <strong>{u.matricNumber || 'Not provided'}</strong></span>
+                        <span>🪪 <strong>{u.matricNumber || 'No matric'}</strong></span>
                         <span>🏛️ {u.faculty || 'No faculty'}</span>
                       </div>
                     </div>
                     <div className="dash-listing-actions">
-                      {u.studentIdCard && (
-                        <button onClick={() => setSelectedDocUser(u)} className="btn-secondary" style={{ padding: '8px 14px', fontSize: '0.78rem' }}>
-                          👁️ View ID Image
-                        </button>
-                      )}
-                      <button onClick={() => handleToggleVerification(u._id)} className="btn-primary" style={{ padding: '8px 16px', fontSize: '0.78rem' }}>
-                        🎓 Approve Verification
-                      </button>
+                      <button onClick={() => setSelectedDocUser(u)} className="btn-secondary" style={{ padding: '8px 14px', fontSize: '0.78rem' }}>👁️ View ID</button>
+                      <button onClick={() => handleToggleVerification(u._id)} className="btn-primary" style={{ padding: '8px 14px', fontSize: '0.78rem' }}>🎓 Approve</button>
                     </div>
                   </div>
                 ))}
@@ -439,63 +338,153 @@ export default function AdminDashboard() {
             ) : (
               <div className="dash-empty">
                 <div className="dash-empty-icon">🎓</div>
-                <p className="dash-empty-title">No Pending Verification Requests</p>
-                <p className="dash-empty-sub">All student verification requests have been processed.</p>
+                <p className="dash-empty-title">No Pending ID Submissions</p>
+                <p className="dash-empty-sub">All submitted student IDs have been reviewed.</p>
               </div>
             )}
           </>
         )}
+
+        {/* ══ ORDERS TAB ══ */}
+        {activeTab === 'orders' && (
+          <>
+            <div className="dash-section-header">
+              <h2 className="dash-section-title">💳 All Orders <span className="dash-section-count">{allOrders.length}</span></h2>
+            </div>
+            {/* Revenue summary */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px,1fr))', gap: '12px', marginBottom: '24px' }}>
+              {[
+                { label: 'Total Orders', val: allOrders.length, col: 'var(--text-primary)' },
+                { label: 'Paid Orders', val: paidOrders.length, col: 'var(--success)' },
+                { label: 'Total Revenue', val: `₦${totalRevenue.toLocaleString()}`, col: 'var(--gold)' },
+                { label: 'Pending Payment', val: allOrders.filter(o => o.paymentStatus !== 'Paid').length, col: 'var(--warning)' },
+              ].map(s => (
+                <div key={s.label} className="glass-panel" style={{ padding: '16px 18px', borderRadius: '14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '1.3rem', fontWeight: '800', color: s.col }}>{s.val}</div>
+                  <div style={{ fontSize: '0.73rem', color: 'var(--text-secondary)', marginTop: '4px' }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+            {allOrders.length > 0 ? (
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: '16px', overflow: 'hidden' }}>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem' }}>
+                    <thead>
+                      <tr style={{ background: 'rgba(0,0,0,0.2)', borderBottom: '1px solid var(--border-color)' }}>
+                        {['Product', 'Buyer', 'Seller', 'Amount', 'Payment', 'Escrow'].map(h => (
+                          <th key={h} style={{ padding: '12px 14px', color: 'var(--gold)', textAlign: 'left' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {allOrders.map(o => (
+                        <tr key={o._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                          <td style={{ padding: '11px 14px', color: 'var(--text-primary)', fontWeight: '600' }}>{o.product ? o.product.name : 'Deleted'}</td>
+                          <td style={{ padding: '11px 14px', color: 'var(--text-secondary)', fontSize: '0.78rem' }}>{o.buyer?.name || '—'}<br /><span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>{o.buyer?.email}</span></td>
+                          <td style={{ padding: '11px 14px', color: 'var(--text-secondary)', fontSize: '0.78rem' }}>{o.seller?.name || '—'}<br /><span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>{o.seller?.email}</span></td>
+                          <td style={{ padding: '11px 14px', color: 'var(--gold)', fontWeight: '700' }}>₦{o.amount?.toLocaleString()}</td>
+                          <td style={{ padding: '11px 14px' }}>
+                            <span style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '0.72rem', fontWeight: '600', background: o.paymentStatus === 'Paid' ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)', color: o.paymentStatus === 'Paid' ? 'var(--success)' : 'var(--warning)' }}>
+                              {o.paymentStatus}
+                            </span>
+                          </td>
+                          <td style={{ padding: '11px 14px' }}>
+                            <span style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '0.72rem', fontWeight: '600', background: o.escrowStatus === 'Released' ? 'rgba(16,185,129,0.15)' : 'rgba(59,130,246,0.15)', color: o.escrowStatus === 'Released' ? 'var(--success)' : 'var(--gold)' }}>
+                              {o.escrowStatus}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div className="dash-empty">
+                <div className="dash-empty-icon">💳</div>
+                <p className="dash-empty-title">No Orders Yet</p>
+                <p className="dash-empty-sub">No transactions on the platform yet.</p>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ══ BROADCAST NOTIFICATION TAB ══ */}
+        {activeTab === 'notify' && (
+          <>
+            <div className="dash-section-header">
+              <h2 className="dash-section-title">📢 Send a Message to All Users</h2>
+            </div>
+            <div className="glass-panel" style={{ padding: '28px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '18px', maxWidth: '600px' }}>
+              <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: 0 }}>
+                This sends a notification to every student on the platform. Good for announcements, downtime warnings, or updates.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: '600' }}>Type</label>
+                <select value={broadcastType} onChange={e => setBroadcastType(e.target.value)} className="glass-input" style={{ maxWidth: '200px' }}>
+                  <option value="info" style={{ background: 'var(--bg-input)' }}>ℹ️ Info</option>
+                  <option value="success" style={{ background: 'var(--bg-input)' }}>✅ Good News</option>
+                  <option value="warning" style={{ background: 'var(--bg-input)' }}>⚠️ Warning</option>
+                  <option value="error" style={{ background: 'var(--bg-input)' }}>🚨 Alert</option>
+                </select>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: '600' }}>Message</label>
+                <textarea
+                  value={broadcastMsg}
+                  onChange={e => setBroadcastMsg(e.target.value)}
+                  placeholder="e.g. The marketplace will be down for maintenance at 2pm today."
+                  className="glass-input"
+                  rows={4}
+                  style={{ resize: 'vertical', fontFamily: 'inherit' }}
+                />
+                <span style={{ fontSize: '0.73rem', color: 'var(--text-muted)', textAlign: 'right' }}>{broadcastMsg.length} chars</span>
+              </div>
+              <button
+                onClick={handleBroadcast}
+                disabled={broadcastSending || !broadcastMsg.trim()}
+                className="btn-primary"
+                style={{ padding: '12px 24px', fontSize: '0.9rem', alignSelf: 'flex-start' }}
+              >
+                {broadcastSending ? '⏳ Sending…' : `📢 Send to ${users.length} Users`}
+              </button>
+            </div>
+          </>
+        )}
+
       </main>
 
-      {/* ID Card Document Modal */}
+      {/* ID Card Modal */}
       {selectedDocUser && (
         <div className="profile-modal-overlay" onClick={() => setSelectedDocUser(null)}>
           <div className="profile-modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '560px' }}>
             <div className="profile-modal-header">
-              <h3 className="profile-modal-title">Student ID Card — {selectedDocUser.name}</h3>
+              <h3 className="profile-modal-title">Student ID — {selectedDocUser.name}</h3>
               <button className="profile-modal-close" onClick={() => setSelectedDocUser(null)}>✕</button>
             </div>
             <div className="profile-modal-body" style={{ alignItems: 'center', textAlign: 'center' }}>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                Matric Number: <strong>{selectedDocUser.matricNumber || 'Unspecified'}</strong>
-              </p>
-              <img
-                src={selectedDocUser.studentIdCard}
-                alt="Student ID Card"
-                style={{ width: '100%', maxHeight: '380px', objectFit: 'contain', borderRadius: '10px', border: '1px solid var(--border-color)' }}
-              />
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Matric: <strong>{selectedDocUser.matricNumber || 'Not provided'}</strong></p>
+              <img src={selectedDocUser.studentIdCard} alt="Student ID" style={{ width: '100%', maxHeight: '380px', objectFit: 'contain', borderRadius: '10px', border: '1px solid var(--border-color)' }} />
             </div>
             <div className="profile-modal-footer">
               <button onClick={() => setSelectedDocUser(null)} className="btn-secondary" style={{ padding: '8px 16px', fontSize: '0.85rem' }}>Close</button>
               {!selectedDocUser.isVerifiedStudent && (
-                <button
-                  onClick={() => { handleToggleVerification(selectedDocUser._id); setSelectedDocUser(null); }}
-                  className="btn-primary"
-                  style={{ padding: '8px 16px', fontSize: '0.85rem' }}
-                >
-                  🎓 Approve Verification
-                </button>
+                <button onClick={() => { handleToggleVerification(selectedDocUser._id); setSelectedDocUser(null); }} className="btn-primary" style={{ padding: '8px 16px', fontSize: '0.85rem' }}>🎓 Approve</button>
               )}
             </div>
           </div>
         </div>
       )}
 
-      {/* Mobile Bottom Navigation for Admin */}
+      {/* Mobile Bottom Nav for Admin */}
       <div className="dash-mobile-toggle">
         <div className="dash-mobile-nav">
-          <button onClick={() => setActiveTab('reports')} className={`dash-mobile-nav-item${activeTab === 'reports' ? ' active' : ''}`}>
-            <span className="dash-mobile-icon">⚠️</span>
-            <span>Flagged</span>
-          </button>
-          <button onClick={() => setActiveTab('users')} className={`dash-mobile-nav-item${activeTab === 'users' ? ' active' : ''}`}>
-            <span className="dash-mobile-icon">👥</span>
-            <span>Users</span>
-          </button>
-          <button onClick={() => setActiveTab('verification')} className={`dash-mobile-nav-item${activeTab === 'verification' ? ' active' : ''}`}>
-            <span className="dash-mobile-icon">🎓</span>
-            <span>Reviews</span>
-          </button>
+          {navTabs.map(tab => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`dash-mobile-nav-item${activeTab === tab.id ? ' active' : ''}`}>
+              <span className="dash-mobile-icon">{tab.icon}</span>
+              <span>{tab.label}</span>
+            </button>
+          ))}
         </div>
       </div>
     </div>

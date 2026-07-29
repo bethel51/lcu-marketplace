@@ -393,6 +393,67 @@ router.post('/admin/verify-student/:id', protect, async (req, res) => {
   }
 });
 
+// Admin: Delete a user account and all their data
+router.delete('/admin/users/:id', protect, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ message: 'Admin access denied' });
+    }
+    const userId = req.params.id;
+    if (userId === req.user._id.toString()) {
+      return res.status(400).json({ message: 'You cannot delete your own admin account.' });
+    }
+    await Product.deleteMany({ seller: userId });
+    await Notification.deleteMany({ recipient: userId });
+    await Order.deleteMany({ $or: [{ buyer: userId }, { seller: userId }] });
+    await User.findByIdAndDelete(userId);
+    res.json({ message: 'User and all associated data deleted.' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Admin: Get all orders (payment/escrow overview)
+router.get('/admin/orders', protect, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ message: 'Admin access denied' });
+    }
+    const orders = await Order.find({})
+      .populate('buyer', 'name email')
+      .populate('seller', 'name email')
+      .populate('product', 'name price image')
+      .sort({ createdAt: -1 })
+      .limit(200);
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Admin: Broadcast notification to all users
+router.post('/admin/broadcast', protect, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ message: 'Admin access denied' });
+    }
+    const { message, type } = req.body;
+    if (!message?.trim()) {
+      return res.status(400).json({ message: 'Message is required.' });
+    }
+    const allUsers = await User.find({}).select('_id');
+    const notifications = allUsers.map(u => ({
+      recipient: u._id,
+      message: message.trim(),
+      type: type || 'info',
+    }));
+    await Notification.insertMany(notifications);
+    res.json({ message: `Notification sent to ${allUsers.length} users.` });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Forgot Password - Send OTP
 router.post('/forgot-password', async (req, res) => {
   try {
