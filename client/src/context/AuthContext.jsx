@@ -180,8 +180,28 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const deleteAccount = async () => {
+    if (!token) return null;
+    try {
+      const response = await fetch(`${API_URL}/api/auth/delete-account`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (response.ok) {
+        logout();
+        return data;
+      } else {
+        throw new Error(data.message || 'Failed to delete account');
+      }
+    } catch (err) {
+      console.error('Error deleting account:', err);
+      throw err;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout, fetchProfile, verifyStudent, verifyOtp, resendOtp, updateProfile }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, logout, fetchProfile, verifyStudent, verifyOtp, resendOtp, updateProfile, deleteAccount }}>
       {children}
     </AuthContext.Provider>
   );

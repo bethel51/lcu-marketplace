@@ -26,7 +26,7 @@ const DEPTS_BY_FACULTY = {
 };
 
 export default function Dashboard() {
-  const { user, token, fetchProfile, verifyStudent } = useAuth();
+  const { user, token, fetchProfile, verifyStudent, deleteAccount } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast();
 
@@ -43,6 +43,7 @@ export default function Dashboard() {
   const [editDept,        setEditDept]        = useState('');
   const [editPhone,       setEditPhone]       = useState('');
   const [editSaving,      setEditSaving]      = useState(false);
+  const [deleteSaving,    setDeleteSaving]    = useState(false);
 
   // ── Verification state ──────────────────────────────────────
   const [showVerifyForm,  setShowVerifyForm]  = useState(false);
@@ -50,11 +51,35 @@ export default function Dashboard() {
   const [idCardFile,      setIdCardFile]      = useState(null);
   const [idCardLabel,     setIdCardLabel]     = useState('');
 
-  // Checkout Modal state ────────────────────────────────────
+  // ── Checkout Modal state ────────────────────────────────────
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [checkoutOrderId, setCheckoutOrderId] = useState('');
   const [checkoutAmount, setCheckoutAmount] = useState(0);
   const [checkoutType, setCheckoutType] = useState('');
+
+  // ── Delete Account handler ──────────────────────────────────
+  const handleDeleteAccount = async () => {
+    const firstConfirm = window.confirm(
+      "WARNING: Are you absolutely sure you want to permanently delete your account?\n\nThis will delete your profile, all your listings, orders, and notifications. This action CANNOT be undone."
+    );
+    if (!firstConfirm) return;
+
+    const secondConfirm = window.confirm(
+      "FINAL CONFIRMATION:\nThis is your last chance. Click OK to permanently delete your account and all associated data."
+    );
+    if (!secondConfirm) return;
+
+    setDeleteSaving(true);
+    try {
+      await deleteAccount();
+      showToast('Your account was permanently deleted. Goodbye!', 'info');
+      navigate('/');
+    } catch (error) {
+      showToast(error.message || 'Failed to delete account', 'error');
+    } finally {
+      setDeleteSaving(false);
+    }
+  };
 
   // ─────────────────────────────────────────────────────────────
   const loadDashboard = async () => {
@@ -858,6 +883,54 @@ export default function Dashboard() {
                   <p style={{ fontSize:'0.82rem', color:'var(--text-secondary)', marginTop:'10px' }}>Your account is verified as an LCU student.</p>
                 </div>
               )}
+
+              {/* Danger Zone */}
+              <div className="dash-settings-section" style={{
+                marginTop: '32px',
+                border: '1px solid rgba(239, 68, 68, 0.2)',
+                background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.03) 0%, rgba(0, 0, 0, 0) 100%)',
+                borderRadius: '16px',
+                padding: '24px'
+              }}>
+                <p className="dash-settings-title" style={{ color: '#ef4444', display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 12px 0', fontSize: '1.1rem', fontWeight: 'bold' }}>
+                  ⚠️ Danger Zone
+                </p>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '20px', lineHeight: '1.5' }}>
+                  Once you delete your account, there is no going back. All of your products, orders, history, and profile data will be permanently removed.
+                </p>
+                <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                  <button
+                    onClick={handleDeleteAccount}
+                    disabled={deleteSaving}
+                    className="btn-danger"
+                    style={{
+                      background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '12px 24px',
+                      borderRadius: '12px',
+                      fontSize: '0.88rem',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 14px rgba(220, 38, 38, 0.25)',
+                      transition: 'all 0.2s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(220, 38, 38, 0.4)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 14px rgba(220, 38, 38, 0.25)';
+                    }}
+                  >
+                    {deleteSaving ? 'Deleting Account…' : '🗑️ Delete Account Permanently'}
+                  </button>
+                </div>
+              </div>
             </>
           )}
         </main>

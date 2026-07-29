@@ -2,6 +2,8 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import Product from '../models/Product.js';
+import Notification from '../models/Notification.js';
+import Order from '../models/Order.js';
 import { protect } from '../middleware/auth.js';
 import multer from 'multer';
 import path from 'path';
@@ -432,6 +434,29 @@ router.post('/reset-password', async (req, res) => {
     await user.save();
 
     res.json({ message: 'Password reset successfully! You can now log in with your new password.' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Delete account permanently
+router.delete('/delete-account', protect, async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Delete user's products
+    await Product.deleteMany({ seller: userId });
+
+    // Delete user's notifications
+    await Notification.deleteMany({ recipient: userId });
+
+    // Delete user's orders (both bought and sold)
+    await Order.deleteMany({ $or: [{ buyer: userId }, { seller: userId }] });
+
+    // Delete the user
+    await User.findByIdAndDelete(userId);
+
+    res.json({ message: 'Account and all associated data deleted permanently.' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
