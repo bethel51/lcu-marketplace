@@ -32,19 +32,65 @@ export default function AdminDashboard() {
 
   const loadAdminData = async () => {
     setLoading(true);
+    
+    // 1. Fetch reported products
     try {
-      const [reportRes, usersRes, prodRes, ordersRes] = await Promise.all([
-        fetch(`${API_URL}/api/products/admin/reported`, { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch(`${API_URL}/api/auth/admin/users`, { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch(`${API_URL}/api/products?status=All`),
-        fetch(`${API_URL}/api/auth/admin/orders`, { headers: { 'Authorization': `Bearer ${token}` } }),
-      ]);
-      if (reportRes.ok) setReportedProducts(await reportRes.json());
-      if (usersRes.ok) setUsers(await usersRes.json());
-      if (prodRes.ok) { const p = await prodRes.json(); setAllProductsCount(p.length); }
-      if (ordersRes.ok) setAllOrders(await ordersRes.json());
-    } catch { showToast('Error loading admin data', 'error'); }
-    finally { setLoading(false); }
+      const res = await fetch(`${API_URL}/api/products/admin/reported`, { 
+        headers: { 'Authorization': `Bearer ${token}` } 
+      });
+      if (res.ok) {
+        setReportedProducts(await res.json());
+      } else {
+        console.error('Failed to load reported products:', res.status, await res.text().catch(() => ''));
+      }
+    } catch (err) {
+      console.error('Error fetching reported products:', err);
+    }
+
+    // 2. Fetch users
+    try {
+      const res = await fetch(`${API_URL}/api/auth/admin/users`, { 
+        headers: { 'Authorization': `Bearer ${token}` } 
+      });
+      if (res.ok) {
+        setUsers(await res.json());
+      } else {
+        console.error('Failed to load users:', res.status, await res.text().catch(() => ''));
+      }
+    } catch (err) {
+      console.error('Error fetching users:', err);
+    }
+
+    // 3. Fetch all products count
+    try {
+      const res = await fetch(`${API_URL}/api/products?status=All`);
+      if (res.ok) {
+        const p = await res.json();
+        if (Array.isArray(p)) {
+          setAllProductsCount(p.length);
+        }
+      } else {
+        console.error('Failed to load products count:', res.status, await res.text().catch(() => ''));
+      }
+    } catch (err) {
+      console.error('Error fetching products count:', err);
+    }
+
+    // 4. Fetch orders
+    try {
+      const res = await fetch(`${API_URL}/api/auth/admin/orders`, { 
+        headers: { 'Authorization': `Bearer ${token}` } 
+      });
+      if (res.ok) {
+        setAllOrders(await res.json());
+      } else {
+        console.error('Failed to load orders:', res.status, await res.text().catch(() => ''));
+      }
+    } catch (err) {
+      console.error('Error fetching orders:', err);
+    }
+
+    setLoading(false);
   };
 
   useEffect(() => { if (token && user?.isAdmin) loadAdminData(); }, [token, user]);
