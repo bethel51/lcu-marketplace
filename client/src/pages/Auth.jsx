@@ -188,6 +188,21 @@ export default function Auth() {
           ← Back to Homepage
         </Link>
 
+        {/* ── LCU Logo ──────────────────────────────────────── */}
+        <div style={styles.logoWrap}>
+          <img
+            src="/logo.png"
+            alt="LCU Marketplace Logo"
+            style={styles.logoImg}
+            fetchpriority="high"
+            decoding="async"
+          />
+          <div style={styles.logoText}>
+            <span style={styles.logoTitle}>Lead City</span>
+            <span style={styles.logoSub}>MARKETPLACE</span>
+          </div>
+        </div>
+
         {/* ── Header ───────────────────────────────────────── */}
         <div style={styles.header}>
           <h2 style={styles.title}>{titles[view]}</h2>
@@ -426,6 +441,45 @@ const styles = {
     marginBottom: '20px',
     transition: 'color 0.2s',
     textDecoration: 'none',
+  },
+  logoWrap: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '12px',
+    marginBottom: '24px',
+    padding: '16px',
+    background: 'var(--bg-input)',
+    borderRadius: '16px',
+    border: '1px solid var(--border-color)',
+  },
+  logoImg: {
+    width: '52px',
+    height: '52px',
+    borderRadius: '50%',
+    border: '2.5px solid rgba(59,130,246,0.5)',
+    boxShadow: '0 0 16px rgba(59,130,246,0.2)',
+    objectFit: 'cover',
+  },
+  logoText: {
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  logoTitle: {
+    fontFamily: "'Outfit', sans-serif",
+    fontWeight: 800,
+    fontSize: '1.25rem',
+    color: 'var(--text-primary)',
+    letterSpacing: '-0.02em',
+    lineHeight: 1.1,
+  },
+  logoSub: {
+    fontSize: '0.55rem',
+    letterSpacing: '0.22em',
+    color: 'var(--gold)',
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    marginTop: '2px',
   },
   header: {
     textAlign: 'center',
