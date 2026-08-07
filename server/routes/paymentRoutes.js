@@ -4,6 +4,7 @@ import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import User from '../models/User.js';
 import { createNotification } from './notificationRoutes.js';
+import { sendOrderReceiptEmail } from '../utils/email.js';
 
 const router = express.Router();
 
@@ -485,6 +486,34 @@ router.post('/verify-custom-charge', protect, async (req, res) => {
       if (product) {
         product.status = 'Sold';
         await product.save();
+      }
+
+      // Send order receipt email to buyer
+      try {
+        const buyer = await User.findById(order.buyer);
+        const seller = await User.findById(order.seller);
+        if (buyer && product) {
+          await sendOrderReceiptEmail({
+            email: buyer.email,
+            name: buyer.name,
+            order: {
+              _id: order._id,
+              amount: order.amount,
+              meetingPoint: order.meetingPoint || product.agreedLocation || 'To be arranged',
+              pickupDate: order.pickupDate || 'To be arranged',
+              pickupTime: order.pickupTime || 'To be arranged',
+            },
+            product: {
+              name: product.name,
+              category: product.category || 'General',
+            },
+            seller: {
+              name: seller?.name || 'LCU Seller',
+            },
+          });
+        }
+      } catch (emailErr) {
+        console.error('Receipt email failed (non-blocking):', emailErr.message);
       }
     } else if (order.orderType === 'boost') {
       const product = await Product.findById(order.product);
