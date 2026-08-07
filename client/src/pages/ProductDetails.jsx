@@ -37,6 +37,14 @@ export default function ProductDetails() {
   const [reportMessage, setReportMessage] = useState('');
   const [hasReported, setHasReported] = useState(false);
 
+  const sellerObj = (product?.seller && typeof product.seller === 'object') ? product.seller : {};
+  const sellerId  = sellerObj._id || product?.seller;
+  const isOwnListing = user && (user._id === sellerId || user.id === sellerId);
+
+  const averageRating = sellerObj.ratings?.length > 0
+    ? (sellerObj.ratings.reduce((acc, curr) => acc + curr.rating, 0) / sellerObj.ratings.length).toFixed(1)
+    : null;
+
   const fetchProduct = async () => {
     try {
       const response = await fetch(`${API_URL}/api/products/${id}`);
@@ -282,14 +290,6 @@ export default function ProductDetails() {
       </div>
     );
   }
-
-  const sellerObj = (product?.seller && typeof product.seller === 'object') ? product.seller : {};
-  const sellerId  = sellerObj._id || product?.seller;
-  const isOwnListing = user && (user._id === sellerId || user.id === sellerId);
-
-  const averageRating = sellerObj.ratings?.length > 0
-    ? (sellerObj.ratings.reduce((acc, curr) => acc + curr.rating, 0) / sellerObj.ratings.length).toFixed(1)
-    : null;
 
   return (
     <div style={{ maxWidth: '480px', margin: '0 auto', background: 'var(--bg-dark)', minHeight: '100vh', position: 'relative', paddingBottom: '90px' }}>
