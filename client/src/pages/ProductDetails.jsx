@@ -421,7 +421,7 @@ export default function ProductDetails() {
               {product.hostelLocation || 'Lead City Hostels'}, Lead City University
             </span>
             <button 
-              onClick={() => showToast('Directions to Campus meetup points loading...', 'info')}
+              onClick={() => showToast('Coming soon', 'info')}
               style={{ border: 'none', background: 'transparent', color: 'var(--gold)', fontSize: '0.8rem', fontWeight: '700', textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
             >
               View on map
