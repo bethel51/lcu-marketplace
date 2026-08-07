@@ -265,25 +265,6 @@ export default function Dashboard() {
     }
   };
 
-  // ── Delete account ────────────────────────────────────────────
-  const handleDeleteAccount = async () => {
-    const confirmed = window.confirm(
-      '⚠️ Are you sure you want to permanently delete your account?\n\nThis will remove all your listings, orders, and profile data and cannot be undone.'
-    );
-    if (!confirmed) return;
-    setDeleteSaving(true);
-    try {
-      await deleteAccount();
-      showToast('Account deleted permanently. Goodbye! 👋', 'info');
-      navigate('/auth');
-    } catch (err) {
-      showToast(err.message || 'Failed to delete account', 'error');
-    } finally {
-      setDeleteSaving(false);
-    }
-  };
-
-
   // ── Derived stats ─────────────────────────────────────────────
   const activeCount  = myProducts.filter(p => p.status === 'Available').length;
   const soldCount    = myProducts.filter(p => p.status === 'Sold').length;
