@@ -3943,6 +3943,16 @@ body.light-theme .splash-title {
   background: linear-gradient(135deg, rgba(239, 68, 68, 0.06) 0%, rgba(0,0,0,0) 100%);
 }
 
+.mobile-only-quick {
+  display: none !important;
+}
+
+@media (max-width: 900px) {
+  .mobile-only-quick {
+    display: block !important;
+  }
+}
+
 /* ── Global Danger Button ─────────────────────────────────── */
 .btn-danger {
   display: inline-flex;

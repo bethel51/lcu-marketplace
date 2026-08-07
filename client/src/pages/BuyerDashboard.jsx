@@ -406,6 +406,10 @@ export default function BuyerDashboard() {
                       </div>
                     </Link>
                   ))}
+                </div>
+              </>
+            )}
+
             {/* Quick Access — Mobile only */}
             <div className="buyer-dash-quick mobile-only-quick" style={{ marginTop: '32px' }}>
               <p className="buyer-dash-quick-title">⚡ Quick Access</p>
