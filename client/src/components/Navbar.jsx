@@ -369,7 +369,7 @@ export default function Navbar() {
       {/* ═══════════════════════════════════════════════════════
           BOTTOM TAB BAR (mobile only, logged-in users)
           ═══════════════════════════════════════════════════════ */}
-      {user && !user.isAdmin && (
+      {user && !user.isAdmin && !location.pathname.startsWith('/product/') && !location.pathname.startsWith('/checkout/') && (
         <nav className="bottom-tab-bar" aria-label="Main navigation">
           {/* 1. Market */}
           <Link to="/marketplace" className={`btab-item${isActive('/marketplace') ? ' btab-active' : ''}`}>

@@ -89,6 +89,18 @@ export default function ProductDetails() {
     if (token) fetchUserProfile();
   }, [id, token]);
 
+  useEffect(() => {
+    const mainEl = document.querySelector('.has-bottom-nav');
+    if (mainEl) {
+      mainEl.style.paddingBottom = '0px';
+    }
+    return () => {
+      if (mainEl) {
+        mainEl.style.paddingBottom = '';
+      }
+    };
+  }, []);
+
   const handleWishlist = async () => {
     if (!token) {
       navigate('/auth', { state: { from: `/product/${id}` } });
@@ -432,7 +444,7 @@ export default function ProductDetails() {
       </div>
 
       {/* ── Sticky Bottom Action Bar ── */}
-      <div style={{ position: 'fixed', bottom: 0, left: '0', right: '0', maxWidth: '480px', margin: '0 auto', background: 'var(--bg-nav)', borderTop: '1px solid var(--border-color)', padding: '16px 20px', display: 'flex', gap: '12px', zIndex: 100, boxSizing: 'border-box' }}>
+      <div style={{ position: 'sticky', bottom: 0, width: '100%', background: 'var(--bg-nav)', borderTop: '1px solid var(--border-color)', padding: '16px 20px', display: 'flex', gap: '12px', zIndex: 100, boxSizing: 'border-box', marginTop: '30px' }}>
         {product && product.status !== 'Sold' && (
           <button 
             onClick={() => {
