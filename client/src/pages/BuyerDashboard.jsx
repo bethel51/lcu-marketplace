@@ -34,6 +34,8 @@ export default function BuyerDashboard() {
   const [activeTab, setActiveTab]         = useState('overview');
   const [orders, setOrders]               = useState({ bought: [], sold: [] });
   const [wishlistItems, setWishlistItems] = useState([]);
+  const purchaseCount                     = orders.bought?.length || 0;
+  const wishCount                         = wishlistItems.length;
 
   const [readCounts, setReadCounts] = useState(() => ({
     purchases: parseInt(localStorage.getItem('lcu_read_purchases_count') ?? '-1'),
@@ -182,9 +184,7 @@ export default function BuyerDashboard() {
     }
   };
 
-  const purchaseCount = orders.bought?.length || 0;
   const totalSpent    = (orders.bought || []).reduce((s, o) => s + (o.amount || 0), 0);
-  const wishCount     = wishlistItems.length;
   const pendingOrders = (orders.bought || []).filter(o => o.escrowStatus === 'Held').length;
 
   const navTabs = [

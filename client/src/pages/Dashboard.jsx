@@ -30,6 +30,7 @@ export default function Dashboard() {
   const { showToast } = useToast();
 
   const [profileData, setProfileData]   = useState(null);
+  const wishCount                       = profileData?.wishlist?.length || 0;
   const [myProducts,  setMyProducts]    = useState([]);
   const [loading,     setLoading]       = useState(true);
   const [activeTab,   setActiveTab]     = useState('overview');
@@ -307,7 +308,6 @@ export default function Dashboard() {
   // ── Derived stats ─────────────────────────────────────────────
   const activeCount  = myProducts.filter(p => p.status === 'Available').length;
   const soldCount    = myProducts.filter(p => p.status === 'Sold').length;
-  const wishCount    = profileData?.wishlist?.length || 0;
   const ratings      = profileData?.ratings || [];
   const avgRating    = ratings.length > 0
     ? (ratings.reduce((a,c) => a + c.rating, 0) / ratings.length).toFixed(1)
