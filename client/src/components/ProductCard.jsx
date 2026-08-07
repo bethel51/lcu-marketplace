@@ -1,11 +1,16 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 
 const ProductCard = React.memo(function ProductCard({ product }) {
   const { _id, name, price, image, category, hostelLocation, seller, status } = product;
   const { user } = useAuth();
+  const { addToCart, removeFromCart, isInCart } = useCart();
+  const navigate = useNavigate();
+  
   const isSameHostel = user?.hostel && hostelLocation && user.hostel.toLowerCase().trim() === hostelLocation.toLowerCase().trim();
+  const inCart = isInCart(_id);
 
   const getCategoryEmoji = (cat) => {
     switch (cat) {
@@ -18,8 +23,20 @@ const ProductCard = React.memo(function ProductCard({ product }) {
     }
   };
 
+  const handleCardClick = (e) => {
+    // If user clicks a button or interactive element, do not trigger card navigation
+    if (e.target.closest('button') || e.target.closest('a')) {
+      return;
+    }
+    navigate(`/product/${_id}`);
+  };
+
   return (
-    <div className="premium-card animate-fade-in">
+    <div 
+      className="premium-card animate-fade-in" 
+      onClick={handleCardClick}
+      style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', height: '100%' }}
+    >
       {/* Floating Badges */}
       <div style={styles.badgeContainer}>
         <span style={styles.categoryBadge}>{getCategoryEmoji(category)} {category}</span>
@@ -53,7 +70,7 @@ const ProductCard = React.memo(function ProductCard({ product }) {
       </div>
 
       {/* Card Info */}
-      <div className="premium-card-info">
+      <div className="premium-card-info" style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
         <div className="premium-card-price-row">
           <span className="premium-card-price">₦{price.toLocaleString()}</span>
           {seller?.isVerifiedStudent && <VerifiedBadge />}
@@ -61,11 +78,43 @@ const ProductCard = React.memo(function ProductCard({ product }) {
 
         <h3 className="premium-card-title" title={name}>{name}</h3>
 
-        <div className="premium-card-footer">
-          <span className="premium-card-location">📍 {hostelLocation}</span>
-          <Link to={`/product/${_id}`} className="btn-primary premium-card-btn">
-            View Details →
-          </Link>
+        <div style={{ marginTop: 'auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+            <span>📍 {hostelLocation}</span>
+          </div>
+          <div className="premium-card-footer" style={{ display: 'flex', gap: '8px', width: '100%' }}>
+            <button 
+              onClick={() => navigate(`/product/${_id}`)} 
+              className="btn-secondary" 
+              style={{ flex: 1, padding: '10px', fontSize: '0.8rem', fontWeight: '600' }}
+            >
+              Details
+            </button>
+            {status !== 'Sold' && (
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (inCart) {
+                    removeFromCart(_id);
+                  } else {
+                    addToCart(product);
+                  }
+                }} 
+                className={inCart ? "btn-secondary" : "btn-primary"}
+                style={{ 
+                  flex: 1, 
+                  padding: '10px', 
+                  fontSize: '0.8rem', 
+                  fontWeight: '700',
+                  background: inCart ? 'rgba(239, 68, 68, 0.15)' : 'var(--gold)',
+                  color: inCart ? 'var(--error)' : '#fff',
+                  border: inCart ? '1px solid rgba(239, 68, 68, 0.3)' : 'none'
+                }}
+              >
+                {inCart ? '👜 Remove' : '👜 Add to Bag'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

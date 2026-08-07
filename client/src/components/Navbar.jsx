@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useCart } from '../context/CartContext';
 
 const HOSTELS = [
   'Bronze Hostel','Silver Hostel','Gold Hostel','Platinum Hostel',
@@ -123,8 +124,11 @@ export default function Navbar() {
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
   const [modalOpen, setModalOpen] = React.useState(false);
   const [notifOpen, setNotifOpen] = React.useState(false);
+  const [cartOpen, setCartOpen] = React.useState(false);
   const dropdownRef = React.useRef(null);
   const notifRef = React.useRef(null);
+  const cartRef = React.useRef(null);
+  const { cartItems, removeFromCart, clearCart } = useCart();
   const [theme, setTheme] = React.useState(() => localStorage.getItem('theme') || 'light');
 
   React.useEffect(() => {
@@ -136,6 +140,7 @@ export default function Navbar() {
     const handler = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setDropdownOpen(false);
       if (notifRef.current && !notifRef.current.contains(e.target)) setNotifOpen(false);
+      if (cartRef.current && !cartRef.current.contains(e.target)) setCartOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -218,9 +223,64 @@ export default function Navbar() {
               </div>
             )}
 
-            {/* Notification bell + Avatar — only for logged-in users */}
+            {/* Bag icon + Notification bell + Avatar — only for logged-in users */}
             {user && (
               <>
+                {/* Shopping Bag Icon */}
+                <div ref={cartRef} style={{ position: 'relative' }}>
+                  <button className="nav-icon-btn" onClick={() => setCartOpen(o => !o)} aria-label="Shopping Bag" style={{ position: 'relative' }}>
+                    <span style={{ fontSize: '1.15rem' }}>👜</span>
+                    {cartItems.length > 0 && <span className="notif-badge">{cartItems.length > 9 ? '9+' : cartItems.length}</span>}
+                  </button>
+
+                  {cartOpen && (
+                    <div className="notif-panel" style={{ minWidth: '300px' }}>
+                      <div className="notif-panel-header">
+                        <span className="notif-panel-title">👜 My Bag ({cartItems.length})</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          {cartItems.length > 0 && (
+                            <button className="notif-clear-btn" onClick={clearCart}>Clear all</button>
+                          )}
+                          <button onClick={() => setCartOpen(false)} style={{ background:'none',border:'none',color:'var(--text-muted)',fontSize:'1.1rem',cursor:'pointer' }} aria-label="Close">✕</button>
+                        </div>
+                      </div>
+                      <div className="notif-list" style={{ maxHeight: '340px', overflowY: 'auto' }}>
+                        {cartItems.length === 0 ? (
+                          <div className="notif-empty">Your bag is empty 👜</div>
+                        ) : (
+                          cartItems.map(item => (
+                            <div key={item._id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderBottom: '1px solid var(--border-color)' }}>
+                              <div style={{ width: '44px', height: '44px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, background: 'var(--bg-secondary)' }}>
+                                {item.image ? (
+                                  <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>🖼️</div>
+                                )}
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: '0.82rem', fontWeight: '600', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</div>
+                                <div style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--gold)' }}>₦{item.price?.toLocaleString()}</div>
+                              </div>
+                              <button
+                                onClick={() => removeFromCart(item._id)}
+                                style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '6px', padding: '4px 8px', color: 'var(--error)', fontSize: '0.72rem', fontWeight: '700', cursor: 'pointer' }}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                      {cartItems.length > 0 && (
+                        <div style={{ padding: '12px 14px', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-primary)' }}>Total: ₦{cartItems.reduce((s, i) => s + (i.price || 0), 0).toLocaleString()}</span>
+                          <button onClick={() => { setCartOpen(false); navigate('/marketplace'); }} className="btn-primary" style={{ padding: '6px 14px', fontSize: '0.78rem' }}>Browse More</button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 <div ref={notifRef} style={{ position: 'relative' }}>
                   <button className="nav-icon-btn notif-bell-btn" onClick={handleNotifOpen} aria-label="Notifications">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

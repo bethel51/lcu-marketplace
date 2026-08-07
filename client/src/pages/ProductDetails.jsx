@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useCart } from '../context/CartContext';
 import { API_URL } from '../config';
 import { VerifiedBadge } from '../components/ProductCard';
 import CheckoutModal from '../components/CheckoutModal';
@@ -11,6 +12,7 @@ export default function ProductDetails() {
   const navigate = useNavigate();
   const { token, user } = useAuth();
   const { showToast } = useToast();
+  const { addToCart, removeFromCart, isInCart } = useCart();
   
   const getCategoryEmoji = (cat) => {
     switch (cat) {
@@ -101,10 +103,10 @@ export default function ProductDetails() {
       const data = await response.json();
       if (response.ok) {
         setIsWishlisted(data.isWishlisted);
-        showToast(data.isWishlisted ? 'Item added to Wishlist! 💙' : 'Item removed from Wishlist', 'success');
+        showToast(data.isWishlisted ? 'Saved to your Bag! 👜' : 'Removed from your Bag', 'success');
       }
     } catch (err) {
-      showToast('Error modifying wishlist', 'error');
+      showToast('Error updating Bag', 'error');
     }
   };
 
@@ -433,15 +435,28 @@ export default function ProductDetails() {
 
       {/* ── Sticky Bottom Action Bar ── */}
       <div style={{ position: 'fixed', bottom: 0, left: '0', right: '0', maxWidth: '480px', margin: '0 auto', background: 'var(--bg-nav)', borderTop: '1px solid var(--border-color)', padding: '16px 20px', display: 'flex', gap: '12px', zIndex: 100, boxSizing: 'border-box' }}>
-        <button 
-          onClick={() => showToast('Offer system coming soon! Feel free to Chat the seller.', 'info')} 
-          style={{ 
-            flex: 1, padding: '14px', borderRadius: '10px', border: '1px solid var(--border-color)', 
-            background: 'transparent', color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: '700', cursor: 'pointer' 
-          }}
-        >
-          Make Offer
-        </button>
+        {product && product.status !== 'Sold' && (
+          <button 
+            onClick={() => {
+              if (isInCart(product._id)) {
+                removeFromCart(product._id);
+                showToast('Removed from Bag', 'info');
+              } else {
+                addToCart(product);
+                showToast('Added to Bag! 👜', 'success');
+              }
+            }} 
+            style={{ 
+              flex: 1, padding: '14px', borderRadius: '10px', 
+              border: isInCart(product._id) ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid var(--border-color)', 
+              background: isInCart(product._id) ? 'rgba(239, 68, 68, 0.15)' : 'transparent', 
+              color: isInCart(product._id) ? 'var(--error)' : 'var(--text-primary)', 
+              fontSize: '0.9rem', fontWeight: '700', cursor: 'pointer' 
+            }}
+          >
+            {isInCart(product._id) ? '👜 Remove' : '👜 Add to Bag'}
+          </button>
+        )}
         {product.status === 'Sold' ? (
           <button 
             disabled 

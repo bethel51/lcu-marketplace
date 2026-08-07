@@ -300,7 +300,7 @@ export default function Dashboard() {
     { id: 'overview', icon: '📊', label: 'Overview' },
     { id: 'listings', icon: '📦', label: 'My Listings', badge: myProducts.length },
     { id: 'orders',   icon: '💳', label: 'Transactions', badge: (orders.bought?.length || 0) + (orders.sold?.length || 0) },
-    { id: 'wishlist', icon: '❤️', label: 'Wishlist', badge: wishCount },
+    { id: 'wishlist', icon: '👜', label: 'My Bag', badge: wishCount },
     { id: 'settings', icon: '⚙️', label: 'Settings' },
   ];
 
@@ -444,7 +444,7 @@ export default function Dashboard() {
                 {[
                   { icon: '📦', value: activeCount, label: 'Active Listings' },
                   { icon: '🤝', value: soldCount,   label: 'Items Sold' },
-                  { icon: '❤️', value: wishCount,   label: 'Wishlist Items' },
+                  { icon: '👜', value: wishCount,   label: 'Bag Items' },
                   { icon: '⭐', value: avgRating,   label: 'Seller Rating' },
                 ].map(m => (
                   <div 
@@ -454,7 +454,7 @@ export default function Dashboard() {
                     onClick={() => {
                       if (m.label === 'Active Listings') setActiveTab('listings');
                       else if (m.label === 'Items Sold') setActiveTab('orders');
-                      else if (m.label === 'Wishlist Items') setActiveTab('wishlist');
+                      else if (m.label === 'Bag Items') setActiveTab('wishlist');
                       else if (m.label === 'Seller Rating') showToast('Detailed ratings page coming soon!', 'info');
                     }}
                   >
@@ -868,11 +868,11 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* ══════════ WISHLIST TAB ══════════ */}
+          {/* ══════════ MY BAG TAB ══════════ */}
           {activeTab === 'wishlist' && (
             <>
               <div className="dash-section-header">
-                <h2 className="dash-section-title">❤️ Wishlist <span className="dash-section-count">{wishCount}</span></h2>
+                <h2 className="dash-section-title">👜 My Bag <span className="dash-section-count">{wishCount}</span></h2>
               </div>
               {profileData?.wishlist?.length > 0 ? (
                 <div className="dash-listing-grid">
@@ -904,7 +904,7 @@ export default function Dashboard() {
                                 headers: { 'Authorization': `Bearer ${token}` }
                               });
                               if (res.ok) {
-                                showToast('Removed from Wishlist', 'info');
+                                showToast('Removed from Bag', 'info');
                                 loadDashboard();
                               }
                             } catch {
@@ -913,7 +913,7 @@ export default function Dashboard() {
                           }}
                           className="btn-danger"
                           style={{ padding:'8px 12px', fontSize:'0.78rem' }}
-                          title="Remove from Wishlist"
+                          title="Remove from Bag"
                         >
                           🗑️
                         </button>
@@ -923,9 +923,9 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div className="dash-empty">
-                  <div className="dash-empty-icon">💔</div>
-                  <p className="dash-empty-title">Your wishlist is empty</p>
-                  <p className="dash-empty-sub">Browse the marketplace and save items you love.</p>
+                  <div className="dash-empty-icon">👜</div>
+                  <p className="dash-empty-title">Your bag is empty</p>
+                  <p className="dash-empty-sub">Browse the marketplace and add items to your bag.</p>
                   <Link to="/marketplace" className="btn-secondary">🛍️ Browse Marketplace</Link>
                 </div>
               )}

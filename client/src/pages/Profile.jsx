@@ -224,7 +224,7 @@ export default function Profile() {
                 color: activeTab === 'wishlist' ? 'var(--gold)' : 'var(--text-gray)',
               }}
             >
-              My Wishlist ({profileData?.wishlist?.length || 0})
+              My Bag ({profileData?.wishlist?.length || 0})
             </button>
           </div>
 
@@ -315,7 +315,7 @@ export default function Profile() {
                 </div>
               ) : (
                 <div style={styles.emptyState} className="glass-panel">
-                  <p>Your wishlist is currently empty.</p>
+                  <p>Your bag is currently empty.</p>
                   <Link to="/" className="btn-secondary" style={{ marginTop: '12px' }}>Browse Marketplace</Link>
                 </div>
               )

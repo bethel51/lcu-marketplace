@@ -104,9 +104,9 @@ export default function BuyerDashboard() {
         headers: { Authorization: `Bearer ${token}` }
       });
       setWishlistItems(prev => prev.filter(p => p._id !== productId));
-      showToast('Removed from wishlist', 'info');
+      showToast('Removed from Bag', 'info');
     } catch {
-      showToast('Failed to remove from wishlist', 'error');
+      showToast('Failed to remove from Bag', 'error');
     }
   };
 
@@ -159,7 +159,7 @@ export default function BuyerDashboard() {
   const navTabs = [
     { id: 'overview',  icon: '📊', label: 'Overview' },
     { id: 'purchases', icon: '🛒', label: 'Purchases', badge: purchaseCount },
-    { id: 'wishlist',  icon: '❤️', label: 'Wishlist',  badge: wishCount },
+    { id: 'wishlist',  icon: '👜', label: 'My Bag',    badge: wishCount },
     { id: 'settings',  icon: '⚙️', label: 'Settings' },
   ];
 
@@ -257,7 +257,7 @@ export default function BuyerDashboard() {
               {[
                 { icon: '🛒', label: 'Total Purchases', value: purchaseCount,                    color: 'var(--metric-1-color)', bg: 'var(--metric-1-bg)', border: 'var(--metric-1-border)', tab: 'purchases' },
                 { icon: '💸', label: 'Total Spent',     value: `₦${totalSpent.toLocaleString()}`, color: 'var(--metric-2-color)', bg: 'var(--metric-2-bg)', border: 'var(--metric-2-border)', tab: null },
-                { icon: '❤️', label: 'Wishlist Items',  value: wishCount,                         color: 'var(--metric-3-color)', bg: 'var(--metric-3-bg)', border: 'var(--metric-3-border)', tab: 'wishlist' },
+                { icon: '👜', label: 'Bag Items',      value: wishCount,                         color: 'var(--metric-3-color)', bg: 'var(--metric-3-bg)', border: 'var(--metric-3-border)', tab: 'wishlist' },
                 { icon: '⏳', label: 'Pending Deliveries', value: pendingOrders,                  color: 'var(--metric-4-color)', bg: 'var(--metric-4-bg)', border: 'var(--metric-4-border)', tab: 'purchases' },
               ].map(m => (
                 <div
@@ -359,7 +359,7 @@ export default function BuyerDashboard() {
             {wishlistItems.length > 0 && (
               <>
                 <div className="buyer-dash-section-header" style={{ marginTop: '28px' }}>
-                  <h2 className="buyer-dash-section-title">❤️ Saved Items</h2>
+                  <h2 className="buyer-dash-section-title">👜 Saved Items</h2>
                   <button onClick={() => setActiveTab('wishlist')} className="btn-secondary" style={{ padding: '6px 14px', fontSize: '0.78rem' }}>View All →</button>
                 </div>
                 <div className="buyer-dash-wishlist-grid">
@@ -451,11 +451,11 @@ export default function BuyerDashboard() {
           </div>
         )}
 
-        {/* ══════════════════ TAB: WISHLIST ══════════════════ */}
+        {/* ══════════════════ TAB: MY BAG ══════════════════ */}
         {activeTab === 'wishlist' && (
           <div className="buyer-dash-content animate-fade-in">
             <div className="buyer-dash-section-header">
-              <h2 className="buyer-dash-section-title">❤️ My Wishlist</h2>
+              <h2 className="buyer-dash-section-title">👜 My Bag</h2>
               <span className="buyer-dash-count-badge">{wishCount} item{wishCount !== 1 ? 's' : ''}</span>
             </div>
 
@@ -485,7 +485,7 @@ export default function BuyerDashboard() {
                           onClick={() => handleRemoveWishlist(p._id)}
                           className="btn-secondary"
                           style={{ padding: '8px 12px', fontSize: '0.82rem' }}
-                          title="Remove from wishlist"
+                          title="Remove from Bag"
                         >
                           🗑️
                         </button>
@@ -496,9 +496,9 @@ export default function BuyerDashboard() {
               </div>
             ) : (
               <div className="buyer-dash-empty">
-                <div className="buyer-dash-empty-icon">❤️</div>
-                <p>Your wishlist is empty.</p>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px' }}>Heart any listing to save it here and never miss items you love.</p>
+                <div className="buyer-dash-empty-icon">👜</div>
+                <p>Your bag is empty.</p>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px' }}>Add items from the marketplace to your bag and never miss a deal.</p>
                 <Link to="/marketplace" className="btn-primary" style={{ marginTop: '16px', padding: '12px 28px' }}>Explore Listings</Link>
               </div>
             )}

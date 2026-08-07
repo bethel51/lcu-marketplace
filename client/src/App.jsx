@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import Navbar from './components/Navbar';
 import OfflineOverlay from './components/OfflineOverlay';
+import { CartProvider } from './context/CartContext';
 import './App.css';
 
 // ── Lazy-load all pages (code-split per route) ─────────────────
@@ -248,9 +249,11 @@ function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <ToastProvider>
-        <AppContent />
-      </ToastProvider>
+      <CartProvider>
+        <ToastProvider>
+          <AppContent />
+        </ToastProvider>
+      </CartProvider>
     </AuthProvider>
   );
 }
