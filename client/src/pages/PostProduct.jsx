@@ -143,7 +143,7 @@ export default function PostProduct() {
       const data = await response.json();
       if (response.ok) {
         showToast(
-          isEdit ? 'Listing updated successfully! 🎉' : 'Product listed successfully! 🚀',
+          isEdit ? 'Listing updated successfully! 🎉' : 'Product listed successfully! 🎉',
           'success'
         );
         navigate('/profile');
@@ -362,7 +362,7 @@ export default function PostProduct() {
                     <span className="pp-loading-dot" />
                   </>
                 ) : (
-                  isEdit ? '💾 Save Changes' : '🚀 Publish Listing'
+                  isEdit ? '💾 Save Changes' : 'Publish Listing'
                 )}
               </button>
             </div>
