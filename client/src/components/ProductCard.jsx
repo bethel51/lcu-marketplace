@@ -81,36 +81,31 @@ export function VerifiedBadge({ size = 'sm' }) {
     <span style={{
       display:        'inline-flex',
       alignItems:     'center',
-      gap:            isLg ? '7px' : '5px',
-      padding:        isLg ? '6px 14px' : '4px 10px',
-      borderRadius:   '999px',
-      background:     'linear-gradient(135deg, rgba(12, 35, 64, 0.95) 0%, rgba(29, 78, 216, 0.95) 100%)',
-      border:         '1.5px solid #d4af37', // Gold border
-      boxShadow:      '0 2px 10px rgba(212, 175, 55, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-      fontSize:       isLg ? '0.85rem' : '0.72rem',
+      gap:            isLg ? '6px' : '4px',
+      padding:        isLg ? '5px 12px' : '3px 8px',
+      borderRadius:   '6px',
+      background:     'rgba(59, 130, 246, 0.12)', // Subtle translucent blue
+      border:         '1px solid rgba(59, 130, 246, 0.25)',
+      fontSize:       isLg ? '0.78rem' : '0.66rem',
       fontWeight:     '700',
-      color:          '#f3e5ab', // Soft gold text
+      color:          '#60a5fa', // Crisp clean blue
       whiteSpace:     'nowrap',
-      letterSpacing:  '0.04em',
+      letterSpacing:  '0.02em',
       textTransform:  'uppercase',
-      textShadow:     '0 1px 2px rgba(0,0,0,0.5)',
-      fontFamily:     'var(--font-title)',
     }}
-    title="Verified Lead City University Student"
+    title="Verified LCU Student"
     >
-      {/* Premium Badge Icon */}
       <svg
-        width={isLg ? 15 : 12}
-        height={isLg ? 15 : 12}
+        width={isLg ? 13 : 10}
+        height={isLg ? 13 : 10}
         viewBox="0 0 24 24"
         fill="none"
-        stroke="#d4af37" // Gold icon stroke
-        strokeWidth="3"
+        stroke="#60a5fa"
+        strokeWidth="3.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       >
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-        <polyline points="9 12 11 14 15 10" />
+        <polyline points="20 6 9 17 4 12" />
       </svg>
       LCU Verified
     </span>

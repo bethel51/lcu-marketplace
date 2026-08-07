@@ -37,6 +37,8 @@ export default function Dashboard() {
   const [orders,      setOrders]        = useState({ bought: [], sold: [] });
   const [listingSearch, setListingSearch] = useState('');
   const [showBalance, setShowBalance]     = useState(false);
+  const [subTab, setSubTab]               = useState('active'); // 'active' | 'sold' | 'drafts'
+
 
   // ── Profile-settings state ──────────────────────────────────
   const [editHostel,      setEditHostel]      = useState('Off-Campus');
@@ -604,9 +606,6 @@ export default function Dashboard() {
             // Split listings into Active (Available) and Sold
             const activeListings = myProducts.filter(p => p.status === 'Available');
             const soldListings = myProducts.filter(p => p.status === 'Sold');
-
-            // Render listings depending on sub-tab state (default to active sub-tab)
-            const [subTab, setSubTab] = React.useState('active'); // 'active' | 'sold' | 'drafts'
 
             const displayedProducts = 
               subTab === 'active' ? activeListings :
