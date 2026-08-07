@@ -11,7 +11,7 @@ export const ToastProvider = ({ children }) => {
 
   // ── Fetch notifications from backend ───────────────────────
   const fetchNotifications = useCallback(async () => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('lcu_token');
     if (!token) return;
     try {
       const res = await fetch(`${API_URL}/api/notifications`, {
@@ -36,7 +36,7 @@ export const ToastProvider = ({ children }) => {
 
   // ── Start/stop polling when token is present ───────────────
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('lcu_token');
     if (!token) return;
     // Immediate fetch on mount
     fetchNotifications();
@@ -48,7 +48,7 @@ export const ToastProvider = ({ children }) => {
   // Re-trigger polling if user logs in after mount
   useEffect(() => {
     const handleStorage = (e) => {
-      if (e.key === 'token') {
+      if (e.key === 'lcu_token') {
         clearInterval(pollRef.current);
         if (e.newValue) {
           fetchNotifications();
@@ -111,7 +111,7 @@ export const ToastProvider = ({ children }) => {
   const markAllRead = useCallback(async () => {
     setUnreadCount(0);
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('lcu_token');
     if (!token) return;
     try {
       await fetch(`${API_URL}/api/notifications/read`, {
@@ -125,7 +125,7 @@ export const ToastProvider = ({ children }) => {
   const clearNotifications = useCallback(async () => {
     setNotifications([]);
     setUnreadCount(0);
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('lcu_token');
     if (!token) return;
     try {
       await fetch(`${API_URL}/api/notifications`, {

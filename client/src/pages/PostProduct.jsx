@@ -29,7 +29,7 @@ export default function PostProduct() {
   const [compressing, setCompressing] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
-  const categories = ['Hostel Items', 'Gadgets', 'Textbooks & Handouts', 'Services', 'Others'];
+  const categories = ['Hostel Items', 'Gadgets', 'Clothing & Fashion', 'Textbooks & Handouts', 'Services', 'Others'];
 
   const hostelsList = [
     'Bronze Hostel', 'Silver Hostel', 'Gold Hostel', 'Platinum Hostel',

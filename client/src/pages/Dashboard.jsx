@@ -38,6 +38,12 @@ export default function Dashboard() {
   const [showBalance, setShowBalance]     = useState(false);
   const [subTab, setSubTab]               = useState('active'); // 'active' | 'sold' | 'drafts'
 
+  const [readCounts, setReadCounts] = useState(() => ({
+    listings: parseInt(localStorage.getItem('lcu_read_listings_count') ?? '-1'),
+    orders: parseInt(localStorage.getItem('lcu_read_orders_count') ?? '-1'),
+    wishlist: parseInt(localStorage.getItem('lcu_read_wishlist_count') ?? '-1'),
+  }));
+
 
   // ── Profile-settings state ──────────────────────────────────
   const [editHostel,      setEditHostel]      = useState('Off-Campus');
@@ -126,6 +132,44 @@ export default function Dashboard() {
   };
 
   useEffect(() => { if (token) loadDashboard(); }, [token]);
+
+  // Initialise read counts if they are not set (-1)
+  useEffect(() => {
+    if (myProducts.length > 0 && readCounts.listings === -1) {
+      localStorage.setItem('lcu_read_listings_count', myProducts.length);
+      setReadCounts(prev => ({ ...prev, listings: myProducts.length }));
+    }
+  }, [myProducts, readCounts.listings]);
+
+  useEffect(() => {
+    const totalOrders = (orders.bought?.length || 0) + (orders.sold?.length || 0);
+    if (totalOrders > 0 && readCounts.orders === -1) {
+      localStorage.setItem('lcu_read_orders_count', totalOrders);
+      setReadCounts(prev => ({ ...prev, orders: totalOrders }));
+    }
+  }, [orders, readCounts.orders]);
+
+  useEffect(() => {
+    if (wishCount > 0 && readCounts.wishlist === -1) {
+      localStorage.setItem('lcu_read_wishlist_count', wishCount);
+      setReadCounts(prev => ({ ...prev, wishlist: wishCount }));
+    }
+  }, [wishCount, readCounts.wishlist]);
+
+  // If tab is currently active, keep read counts synced
+  useEffect(() => {
+    if (activeTab === 'listings') {
+      localStorage.setItem('lcu_read_listings_count', myProducts.length);
+      setReadCounts(prev => ({ ...prev, listings: myProducts.length }));
+    } else if (activeTab === 'orders') {
+      const totalOrders = (orders.bought?.length || 0) + (orders.sold?.length || 0);
+      localStorage.setItem('lcu_read_orders_count', totalOrders);
+      setReadCounts(prev => ({ ...prev, orders: totalOrders }));
+    } else if (activeTab === 'wishlist') {
+      localStorage.setItem('lcu_read_wishlist_count', wishCount);
+      setReadCounts(prev => ({ ...prev, wishlist: wishCount }));
+    }
+  }, [activeTab, myProducts.length, orders, wishCount]);
 
   // ── Copy profile share link ──────────────────────────────────
   const handleCopyProfileLink = () => {
@@ -294,9 +338,9 @@ export default function Dashboard() {
 
   const navTabs = [
     { id: 'overview', icon: '📊', label: 'Overview' },
-    { id: 'listings', icon: '📦', label: 'My Listings', badge: myProducts.length },
-    { id: 'orders',   icon: '💳', label: 'Transactions', badge: (orders.bought?.length || 0) + (orders.sold?.length || 0) },
-    { id: 'wishlist', icon: '👜', label: 'My Bag', badge: wishCount },
+    { id: 'listings', icon: '📦', label: 'My Listings', badge: Math.max(0, myProducts.length - (readCounts.listings === -1 ? myProducts.length : readCounts.listings)) },
+    { id: 'orders',   icon: '💳', label: 'Transactions', badge: Math.max(0, ((orders.bought?.length || 0) + (orders.sold?.length || 0)) - (readCounts.orders === -1 ? ((orders.bought?.length || 0) + (orders.sold?.length || 0)) : readCounts.orders)) },
+    { id: 'wishlist', icon: '👜', label: 'My Bag', badge: Math.max(0, wishCount - (readCounts.wishlist === -1 ? wishCount : readCounts.wishlist)) },
     { id: 'settings', icon: '⚙️', label: 'Settings' },
   ];
 

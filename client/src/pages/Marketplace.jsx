@@ -17,7 +17,7 @@ export default function Marketplace() {
   const [maxPrice, setMaxPrice] = useState('');
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const categories = ['All', 'Hostel Items', 'Gadgets', 'Textbooks & Handouts', 'Services', 'Others'];
+  const categories = ['All', 'Hostel Items', 'Gadgets', 'Clothing & Fashion', 'Textbooks & Handouts', 'Services', 'Others'];
 
   const hostelsList = [
     'All',
@@ -46,6 +46,7 @@ export default function Marketplace() {
       case 'All':                   return '🌐';
       case 'Hostel Items':          return '🏠';
       case 'Gadgets':               return '💻';
+      case 'Clothing & Fashion':    return '👗';
       case 'Textbooks & Handouts':  return '📚';
       case 'Services':              return '🛠️';
       case 'Others':                return '📦';

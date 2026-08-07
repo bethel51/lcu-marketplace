@@ -35,6 +35,11 @@ export default function BuyerDashboard() {
   const [orders, setOrders]               = useState({ bought: [], sold: [] });
   const [wishlistItems, setWishlistItems] = useState([]);
 
+  const [readCounts, setReadCounts] = useState(() => ({
+    purchases: parseInt(localStorage.getItem('lcu_read_purchases_count') ?? '-1'),
+    wishlist: parseInt(localStorage.getItem('lcu_read_wishlist_count') ?? '-1'),
+  }));
+
   const [editHostel,   setEditHostel]   = useState('Off-Campus');
   const [editFaculty,  setEditFaculty]  = useState(FACULTIES[0]);
   const [editDept,     setEditDept]     = useState('');
@@ -97,6 +102,32 @@ export default function BuyerDashboard() {
 
   useEffect(() => { if (token) loadDashboard(); }, [token]);
 
+  // Initialise read counts if they are not set (-1)
+  useEffect(() => {
+    if (purchaseCount > 0 && readCounts.purchases === -1) {
+      localStorage.setItem('lcu_read_purchases_count', purchaseCount);
+      setReadCounts(prev => ({ ...prev, purchases: purchaseCount }));
+    }
+  }, [purchaseCount, readCounts.purchases]);
+
+  useEffect(() => {
+    if (wishCount > 0 && readCounts.wishlist === -1) {
+      localStorage.setItem('lcu_read_wishlist_count', wishCount);
+      setReadCounts(prev => ({ ...prev, wishlist: wishCount }));
+    }
+  }, [wishCount, readCounts.wishlist]);
+
+  // Keep read counts synced when tabs are open
+  useEffect(() => {
+    if (activeTab === 'purchases') {
+      localStorage.setItem('lcu_read_purchases_count', purchaseCount);
+      setReadCounts(prev => ({ ...prev, purchases: purchaseCount }));
+    } else if (activeTab === 'wishlist') {
+      localStorage.setItem('lcu_read_wishlist_count', wishCount);
+      setReadCounts(prev => ({ ...prev, wishlist: wishCount }));
+    }
+  }, [activeTab, purchaseCount, wishCount]);
+
   const handleRemoveWishlist = async (productId) => {
     try {
       await fetch(`${API_URL}/api/products/${productId}/wishlist`, {
@@ -158,8 +189,8 @@ export default function BuyerDashboard() {
 
   const navTabs = [
     { id: 'overview',  icon: '📊', label: 'Overview' },
-    { id: 'purchases', icon: '🛒', label: 'Purchases', badge: purchaseCount },
-    { id: 'wishlist',  icon: '👜', label: 'My Bag',    badge: wishCount },
+    { id: 'purchases', icon: '🛒', label: 'Purchases', badge: Math.max(0, purchaseCount - (readCounts.purchases === -1 ? purchaseCount : readCounts.purchases)) },
+    { id: 'wishlist',  icon: '👜', label: 'My Bag',    badge: Math.max(0, wishCount - (readCounts.wishlist === -1 ? wishCount : readCounts.wishlist)) },
     { id: 'settings',  icon: '⚙️', label: 'Settings' },
   ];
 
@@ -217,7 +248,7 @@ export default function BuyerDashboard() {
             <Link to="/marketplace" className="buyer-dash-quick-btn">🏪 Browse Marketplace</Link>
             <Link to="/marketplace?category=Electronics" className="buyer-dash-quick-btn">📱 Electronics</Link>
             <Link to="/marketplace?category=Books" className="buyer-dash-quick-btn">📚 Textbooks</Link>
-            <Link to="/marketplace?category=Fashion" className="buyer-dash-quick-btn">👗 Fashion</Link>
+            <Link to="/marketplace?category=Clothing%20%26%20Fashion" className="buyer-dash-quick-btn">👗 Clothing & Fashion</Link>
           </div>
         </div>
       </aside>
@@ -375,9 +406,16 @@ export default function BuyerDashboard() {
                       </div>
                     </Link>
                   ))}
-                </div>
-              </>
-            )}
+            {/* Quick Access — Mobile only */}
+            <div className="buyer-dash-quick mobile-only-quick" style={{ marginTop: '32px' }}>
+              <p className="buyer-dash-quick-title">⚡ Quick Access</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <Link to="/marketplace" className="buyer-dash-quick-btn" style={{ margin: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px' }}>🏪 Marketplace</Link>
+                <Link to="/marketplace?category=Gadgets" className="buyer-dash-quick-btn" style={{ margin: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px' }}>💻 Gadgets</Link>
+                <Link to="/marketplace?category=Textbooks%20%26%20Handouts" className="buyer-dash-quick-btn" style={{ margin: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px' }}>📚 Textbooks</Link>
+                <Link to="/marketplace?category=Clothing%20%26%20Fashion" className="buyer-dash-quick-btn" style={{ margin: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px' }}>👗 Fashion</Link>
+              </div>
+            </div>
           </div>
         )}
 
