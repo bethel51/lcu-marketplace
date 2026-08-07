@@ -94,7 +94,7 @@ router.post('/register', async (req, res) => {
     
     const userExists = await User.findOne({ email });
     if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ message: 'This email address is already registered. Each email can only be used for one account. Please log in instead.' });
     }
 
     // Validate Matric Number format: lcu/ug/xx/xxxxx (case-insensitive)
@@ -147,10 +147,16 @@ router.post('/register', async (req, res) => {
 // Login
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
     
     const user = await User.findOne({ email });
     if (user && (await user.matchPassword(password))) {
+      // Role validation: Deny access if roles do not match
+      if (role && user.role !== role && !user.isAdmin) {
+        return res.status(403).json({ 
+          message: `Access denied. This account is registered as a ${user.role}. Please log in under the correct account type.` 
+        });
+      }
       if (!user.isEmailVerified) {
         return res.status(400).json({ 
           message: 'Please verify your email address before logging in.', 

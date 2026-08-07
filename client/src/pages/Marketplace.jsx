@@ -108,8 +108,83 @@ export default function Marketplace() {
     setCategory('');
   };
 
+  // ── Pull to refresh state ────────────────────────────────────
+  const [pullStart, setPullStart] = useState(0);
+  const [pullDelta, setPullDelta] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleTouchStart = (e) => {
+    if (window.scrollY === 0) {
+      setPullStart(e.touches[0].clientY);
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (pullStart === 0) return;
+    const currentY = e.touches[0].clientY;
+    const delta = currentY - pullStart;
+    if (delta > 0) {
+      setPullDelta(Math.min(delta * 0.4, 80)); // scale down pull resistance
+    }
+  };
+
+  const handleTouchEnd = async () => {
+    if (pullDelta > 50) {
+      setRefreshing(true);
+      setPullDelta(50);
+      try {
+        await fetchProducts();
+      } finally {
+        setTimeout(() => {
+          setRefreshing(false);
+          setPullDelta(0);
+        }, 600);
+      }
+    } else {
+      setPullDelta(0);
+    }
+    setPullStart(0);
+  };
+
   return (
-    <div className="marketplace-page container animate-fade-in">
+    <div 
+      className="marketplace-page container animate-fade-in"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      style={{ position: 'relative', transition: pullDelta === 0 ? 'transform 0.2s ease-out' : 'none' }}
+    >
+      {/* Pull to refresh indicator */}
+      {(pullDelta > 0 || refreshing) && (
+        <div style={{
+          position: 'absolute',
+          top: `${-40 + pullDelta}px`,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 10,
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border-color)',
+          borderRadius: '50%',
+          width: '40px',
+          height: '40px',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+          transition: refreshing ? 'none' : 'top 0.15s ease-out',
+        }}>
+          <div className={refreshing ? "page-loader-spinner" : ""} style={{
+            width: '20px',
+            height: '20px',
+            border: '2px solid rgba(255,255,255,0.1)',
+            borderTopColor: 'var(--gold)',
+            borderRadius: '50%',
+            transform: `rotate(${pullDelta * 6}deg)`,
+            animation: refreshing ? 'spin 0.8s linear infinite' : 'none'
+          }} />
+        </div>
+      )}
+
 
       {/* ─── Page Header ──────────────────────────────────────── */}
       <header className="mkt-header">

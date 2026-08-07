@@ -70,7 +70,7 @@ export default function Auth() {
         navigate(from, { replace: true });
       } else if (view === 'login') {
         try {
-          await login(email, password);
+          await login(email, password, role);
           navigate(from, { replace: true });
         } catch (loginErr) {
           if (loginErr.message.includes('verify your email') || loginErr.message.includes('verification')) {
@@ -258,6 +258,26 @@ export default function Auth() {
         ══════════════════════════════════════════════════ */}
         {view === 'login' && (
           <form onSubmit={handleSubmit} style={styles.form}>
+            {/* Account Type Selection for Login */}
+            <div style={styles.field}>
+              <label style={styles.label}>Log in as a…</label>
+              <div style={styles.roleToggle}>
+                <button
+                  type="button"
+                  onClick={() => setRole('Buyer')}
+                  style={{ ...styles.roleBtn, ...(role === 'Buyer' ? styles.roleBtnActive : {}) }}
+                >
+                  🛍️ Buyer
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRole('Seller')}
+                  style={{ ...styles.roleBtn, ...(role === 'Seller' ? styles.roleBtnActive : {}) }}
+                >
+                  🏪 Seller
+                </button>
+              </div>
+            </div>
             <div style={styles.field}>
               <label style={styles.label}>Student Email Address</label>
               <input type="email" required placeholder="e.g. yourname@lcu.edu.ng"

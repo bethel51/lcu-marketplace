@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import Navbar from './components/Navbar';
+import OfflineOverlay from './components/OfflineOverlay';
 import './App.css';
 
 // ── Lazy-load all pages (code-split per route) ─────────────────
@@ -115,6 +116,22 @@ function PrivateRoute({ children }) {
   return children;
 }
 
+// Restrict access to Sellers only
+function SellerRoute({ children }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/auth" replace />;
+  if (user.role === 'Buyer') return <Navigate to="/profile" replace />;
+  return children;
+}
+
+// Restrict access to Buyers only
+function BuyerRoute({ children }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/auth" replace />;
+  if (user.role !== 'Buyer') return <Navigate to="/profile" replace />;
+  return children;
+}
+
 // ── Route guards ───────────────────────────────────────────────
 function AdminRoute({ children }) {
   const { user } = useAuth();
@@ -187,6 +204,7 @@ function AppContent() {
       {showSplash && <SplashScreen fadeOut={fadeOut} />}
       {!initializing && (
         <Router>
+          <OfflineOverlay />
           <TopProgressBar />
           <ScrollToTop />
           <div style={styles.app}>
@@ -203,10 +221,10 @@ function AppContent() {
                   {/* Protected student routes */}
                   <Route path="/marketplace" element={<PrivateRoute><Marketplace /></PrivateRoute>} />
                   <Route path="/product/:id" element={<PrivateRoute><ProductDetails /></PrivateRoute>} />
-                  <Route path="/post"        element={<PrivateRoute><PostProduct /></PrivateRoute>} />
-                  <Route path="/edit/:id"    element={<PrivateRoute><PostProduct /></PrivateRoute>} />
+                  <Route path="/post"        element={<PrivateRoute><SellerRoute><PostProduct /></SellerRoute></PrivateRoute>} />
+                  <Route path="/edit/:id"    element={<PrivateRoute><SellerRoute><PostProduct /></SellerRoute></PrivateRoute>} />
                   <Route path="/profile"     element={<PrivateRoute><RoleBasedDashboard /></PrivateRoute>} />
-                  <Route path="/withdraw"    element={<PrivateRoute><Withdraw /></PrivateRoute>} />
+                  <Route path="/withdraw"    element={<PrivateRoute><SellerRoute><Withdraw /></SellerRoute></PrivateRoute>} />
 
                   {/* Admin */}
                   <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />

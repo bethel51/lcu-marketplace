@@ -74,9 +74,33 @@ export const ToastProvider = ({ children }) => {
     setNotifications(prev => [entry, ...prev].slice(0, 50));
     setUnreadCount(c => c + 1);
 
+    // Native Browser Push Notification
+    if ('Notification' in window) {
+      if (Notification.permission === 'granted') {
+        try {
+          new Notification('🔔 LCU Student Marketplace', {
+            body: message,
+            icon: '/favicon.svg',
+            badge: '/favicon.svg'
+          });
+        } catch (e) {
+          console.warn('Native notification failed to show:', e);
+        }
+      } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission();
+      }
+    }
+
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
     }, 4000);
+  }, []);
+
+  // Request Notification permission on mount
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
   }, []);
 
   const removeToast = useCallback(id => {

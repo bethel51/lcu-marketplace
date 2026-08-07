@@ -265,6 +265,25 @@ export default function Dashboard() {
     }
   };
 
+  // ── Delete account ────────────────────────────────────────────
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm(
+      '⚠️ Are you sure you want to permanently delete your account?\n\nThis will remove all your listings, orders, and profile data and cannot be undone.'
+    );
+    if (!confirmed) return;
+    setDeleteSaving(true);
+    try {
+      await deleteAccount();
+      showToast('Account deleted permanently. Goodbye! 👋', 'info');
+      navigate('/auth');
+    } catch (err) {
+      showToast(err.message || 'Failed to delete account', 'error');
+    } finally {
+      setDeleteSaving(false);
+    }
+  };
+
+
   // ── Derived stats ─────────────────────────────────────────────
   const activeCount  = myProducts.filter(p => p.status === 'Available').length;
   const soldCount    = myProducts.filter(p => p.status === 'Sold').length;
@@ -600,79 +619,186 @@ export default function Dashboard() {
           )}
 
           {/* ══════════ LISTINGS TAB ══════════ */}
-          {activeTab === 'listings' && (
-            <>
-              <div className="dash-section-header">
-                <h2 className="dash-section-title">📦 My Listings <span className="dash-section-count">{myProducts.length}</span></h2>
-                <Link to="/post" className="btn-primary" style={{ padding:'8px 18px', fontSize:'0.82rem' }}>+ New Listing</Link>
-              </div>
+          {activeTab === 'listings' && (() => {
+            // Split listings into Active (Available) and Sold
+            const activeListings = myProducts.filter(p => p.status === 'Available');
+            const soldListings = myProducts.filter(p => p.status === 'Sold');
 
-              {/* Listings Search */}
-              <div className="mkt-search-wrap" style={{ marginBottom: '16px' }}>
-                <span className="mkt-search-icon">🔍</span>
-                <input
-                  type="text"
-                  placeholder="Filter your listings by title, category, or location..."
-                  value={listingSearch}
-                  onChange={e => setListingSearch(e.target.value)}
-                  className="glass-input mkt-search-input"
-                />
-                {listingSearch && (
-                  <button onClick={() => setListingSearch('')} className="mkt-search-clear">✕</button>
-                )}
-              </div>
+            // Render listings depending on sub-tab state (default to active sub-tab)
+            const [subTab, setSubTab] = React.useState('active'); // 'active' | 'sold' | 'drafts'
 
-              {filteredMyProducts.length > 0 ? (
-                <div className="dash-listing-grid">
-                  {filteredMyProducts.map(p => (
-                    <div key={p._id} className="dash-listing-card">
-                      {p.image
-                        ? <img src={p.image} alt={p.name} className="dash-listing-img" />
-                        : <div className="dash-listing-placeholder">🖼️</div>
-                      }
-                      <div className="dash-listing-info">
-                        <h4 className="dash-listing-name">{p.name}</h4>
-                        <span className="dash-listing-price">₦{p.price.toLocaleString()}</span>
-                        <div className="dash-listing-meta">
-                          <span>📍 {p.hostelLocation}</span>
-                          <span className={`dash-status-badge ${p.status === 'Sold' ? 'sold' : 'available'}`}>{p.status}</span>
-                          {p.isBoosted ? (
-                            <span className="dash-boosted-badge">🚀 Boosted</span>
-                          ) : (
-                            p.status !== 'Sold' && (
-                              <button onClick={() => handleBoostListing(p._id)} className="dash-boost-link">🚀 Boost (₦500)</button>
-                            )
-                          )}
-                        </div>
-                      </div>
-                      <div className="dash-listing-actions">
-                        <button
-                          onClick={() => handleToggleSold(p._id, p.status)}
-                          className="btn-secondary"
+            const displayedProducts = 
+              subTab === 'active' ? activeListings :
+              subTab === 'sold' ? soldListings : [];
+
+            return (
+              <div style={{ maxWidth: '480px', margin: '0 auto', padding: '10px 0 20px' }}>
+                {/* Mockup Title */}
+                <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '20px' }}>
+                  My Listings
+                </h2>
+
+                {/* Sub-tabs header */}
+                <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+                  <button 
+                    onClick={() => setSubTab('active')}
+                    style={{
+                      background: subTab === 'active' ? 'rgba(59, 130, 246, 0.12)' : 'transparent',
+                      color: subTab === 'active' ? 'var(--gold)' : 'var(--text-secondary)',
+                      border: 'none',
+                      borderRadius: '20px',
+                      padding: '6px 16px',
+                      fontSize: '0.85rem',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    Active ({activeListings.length})
+                  </button>
+                  <button 
+                    onClick={() => setSubTab('sold')}
+                    style={{
+                      background: subTab === 'sold' ? 'rgba(59, 130, 246, 0.12)' : 'transparent',
+                      color: subTab === 'sold' ? 'var(--gold)' : 'var(--text-secondary)',
+                      border: 'none',
+                      borderRadius: '20px',
+                      padding: '6px 16px',
+                      fontSize: '0.85rem',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    Sold ({soldListings.length})
+                  </button>
+                  <button 
+                    onClick={() => setSubTab('drafts')}
+                    style={{
+                      background: subTab === 'drafts' ? 'rgba(59, 130, 246, 0.12)' : 'transparent',
+                      color: subTab === 'drafts' ? 'var(--gold)' : 'var(--text-secondary)',
+                      border: 'none',
+                      borderRadius: '20px',
+                      padding: '6px 16px',
+                      fontSize: '0.85rem',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    Drafts (0)
+                  </button>
+                </div>
+
+                {/* Product List */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
+                  {displayedProducts.length > 0 ? (
+                    displayedProducts.map(p => {
+                      // Generate semi-random mock views based on ID if not present in schema
+                      const mockViews = p._id ? (p._id.toString().charCodeAt(10) % 50) + 10 : 15;
+
+                      return (
+                        <div 
+                          key={p._id} 
                           style={{
-                            padding:'8px 14px', fontSize:'0.78rem', whiteSpace:'nowrap',
-                            color: p.status === 'Sold' ? 'var(--success)' : 'var(--text-secondary)',
-                            borderColor: p.status === 'Sold' ? 'rgba(16,185,129,0.4)' : 'var(--border-color)'
+                            display: 'flex',
+                            gap: '16px',
+                            padding: '16px',
+                            background: 'var(--glass-bg)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '16px',
+                            alignItems: 'center',
+                            position: 'relative'
                           }}
                         >
-                          {p.status === 'Sold' ? '↩ Relist' : '✓ Mark Sold'}
-                        </button>
-                        <Link to={`/edit/${p._id}`} className="btn-secondary" style={{ padding:'8px 14px', fontSize:'0.78rem' }}>✏️ Edit</Link>
-                        <button onClick={() => handleDelete(p._id)} className="btn-danger" style={{ padding:'8px 14px' }}>🗑</button>
-                      </div>
+                          {p.image ? (
+                            <img 
+                              src={p.image} 
+                              alt={p.name} 
+                              style={{ width: '80px', height: '80px', borderRadius: '12px', objectFit: 'cover', border: '1px solid var(--border-color)' }} 
+                            />
+                          ) : (
+                            <div style={{ width: '80px', height: '80px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem' }}>
+                              🖼️
+                            </div>
+                          )}
+
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <h4 style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--text-primary)', margin: '0 0 6px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {p.name}
+                            </h4>
+                            <div style={{ fontSize: '0.98rem', fontWeight: '800', color: 'var(--gold)', marginBottom: '8px' }}>
+                              ₦{p.price.toLocaleString()}
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                                Views: {mockViews}
+                              </span>
+                              <span style={{
+                                fontSize: '0.72rem',
+                                fontWeight: '700',
+                                color: p.status === 'Available' ? 'var(--success)' : 'var(--text-muted)',
+                                background: p.status === 'Available' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255, 255, 255, 0.05)',
+                                padding: '3px 10px',
+                                borderRadius: '12px',
+                                textTransform: 'capitalize'
+                              }}>
+                                {p.status === 'Available' ? 'Active' : p.status}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Quick Edit Overlay or Actions */}
+                          <div style={{ display: 'flex', gap: '8px', marginLeft: '8px', flexDirection: 'column' }}>
+                            <Link to={`/edit/${p._id}`} style={{ textDecoration: 'none', fontSize: '0.8rem', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', padding: '4px 8px', borderRadius: '6px', textAlign: 'center' }}>
+                              ✏️ Edit
+                            </Link>
+                            <button 
+                              onClick={() => handleToggleSold(p._id, p.status)} 
+                              style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '0.75rem', color: 'var(--gold)', textDecoration: 'underline', padding: 0 }}
+                            >
+                              {p.status === 'Sold' ? 'Relist' : 'Mark Sold'}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-secondary)' }}>
+                      No listings in this tab.
                     </div>
-                  ))}
+                  )}
                 </div>
-              ) : (
-                <div className="dash-empty">
-                  <div className="dash-empty-icon">📭</div>
-                  <p className="dash-empty-title">No matching listings</p>
-                  <p className="dash-empty-sub">Start selling by posting your first product on the marketplace.</p>
-                  <Link to="/post" className="btn-primary">+ Post a Listing</Link>
-                </div>
-              )}
-            </>
-          )}
+
+                {/* List New Item Button */}
+                <Link 
+                  to="/post" 
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    width: '100%',
+                    padding: '14px 20px',
+                    background: 'var(--gold)',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '12px',
+                    fontSize: '0.95rem',
+                    fontWeight: '700',
+                    textDecoration: 'none',
+                    textAlign: 'center',
+                    boxShadow: '0 4px 16px rgba(59, 130, 246, 0.25)',
+                    transition: 'all 0.2s ease',
+                    boxSizing: 'border-box'
+                  }}
+                  className="list-new-item-btn"
+                >
+                  + List New Item
+                </Link>
+              </div>
+            );
+          })()}
 
           {/* ══════════ ORDERS TAB ══════════ */}
           {activeTab === 'orders' && (

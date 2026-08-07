@@ -292,217 +292,179 @@ export default function ProductDetails() {
     : null;
 
   return (
-    <div style={styles.container} className="container animate-fade-in">
-      {/* Back Navigation */}
-      <button onClick={() => navigate(-1)} style={styles.backBtn}>
-        ← Back
-      </button>
+    <div style={{ maxWidth: '480px', margin: '0 auto', background: 'var(--bg-dark)', minHeight: '100vh', position: 'relative', paddingBottom: '90px' }}>
+      
+      {/* ── Top Header Image Wrapper ── */}
+      <div style={{ position: 'relative', width: '100%', height: '360px', background: '#f5f5f7' }}>
+        {/* Back button */}
+        <button 
+          onClick={() => navigate(-1)} 
+          style={{ 
+            position: 'absolute', top: '16px', left: '16px', zIndex: 10,
+            width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(255,255,255,0.9)',
+            border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          }}
+        >
+          <span style={{ fontSize: '1.1rem', color: '#1d1d1f', fontWeight: 'bold' }}>&lt;</span>
+        </button>
 
-      <div className="details-grid">
+        {/* Favorite button */}
+        <button 
+          onClick={handleWishlist} 
+          style={{ 
+            position: 'absolute', top: '16px', right: '16px', zIndex: 10,
+            width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(255,255,255,0.9)',
+            border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          }}
+        >
+          <span style={{ fontSize: '1.2rem', color: isWishlisted ? 'red' : '#1d1d1f' }}>
+            {isWishlisted ? '❤️' : '♡'}
+          </span>
+        </button>
+
+        {/* Main Product Image */}
+        {product.image ? (
+          <img 
+            src={product.image} 
+            alt={product.name} 
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+          />
+        ) : (
+          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', fontSize: '3rem' }}>
+            🖼️
+          </div>
+        )}
+
+        {/* Mock Carousel Dots */}
+        <div style={{ position: 'absolute', bottom: '16px', left: '0', right: '0', display: 'flex', justifyContent: 'center', gap: '6px' }}>
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--gold)' }} />
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(255,255,255,0.4)', border: '1px solid rgba(0,0,0,0.1)' }} />
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(255,255,255,0.4)', border: '1px solid rgba(0,0,0,0.1)' }} />
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(255,255,255,0.4)', border: '1px solid rgba(0,0,0,0.1)' }} />
+        </div>
+      </div>
+
+      {/* ── Product Info Panel ── */}
+      <div style={{ padding: '24px 20px', background: 'var(--bg-card)', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', marginTop: '-20px', position: 'relative', zIndex: 5 }}>
         
-        {/* Left side: Image and details */}
-        <div>
-          <div style={styles.imageCard} className="glass-panel image-details-box">
-            {product.image ? (
-              <img src={product.image} alt={product.name} style={styles.image} />
-            ) : (
-              <div style={styles.placeholderImg}>
-                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--text-gray)" strokeWidth="1">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                  <circle cx="8.5" cy="8.5" r="1.5" />
-                  <polyline points="21 15 16 10 5 21" />
-                </svg>
-                <span style={{ marginTop: '16px' }}>No Image Available</span>
-              </div>
-            )}
-          </div>
+        {/* Title */}
+        <h1 style={{ fontFamily: 'var(--font-title)', fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-primary)', margin: '0 0 8px 0' }}>
+          {product.name}
+        </h1>
 
-          <div style={styles.descriptionBox} className="glass-panel">
-            <h3 style={styles.sectionTitle}>Product Description</h3>
-            <p style={styles.descriptionText}>{product.description}</p>
+        {/* Price */}
+        <div style={{ fontSize: '1.6rem', fontWeight: '900', color: 'var(--gold)', marginBottom: '16px' }}>
+          ₦{product.price?.toLocaleString()}
+        </div>
+
+        {/* Tags */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
+          <span style={{ fontSize: '0.78rem', fontWeight: '600', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', padding: '5px 12px', borderRadius: '20px' }}>
+            {product.condition || 'Used - Like New'}
+          </span>
+          <span style={{ fontSize: '0.78rem', fontWeight: '600', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', padding: '5px 12px', borderRadius: '20px' }}>
+            {product.category}
+          </span>
+        </div>
+
+        {/* Seller Info Row */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderTop: '1px solid var(--border-color)', borderBottom: '1px solid var(--border-color)', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'linear-gradient(135deg, #1d4ed8, #7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', fontWeight: '800', color: '#fff' }}>
+              {(sellerObj.name || 'S').charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--text-primary)' }}>{sellerObj.name || 'LCU Seller'}</span>
+                {sellerObj.isVerifiedStudent && <VerifiedBadge size="sm" />}
+              </div>
+              <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <span>LCU Student</span>
+                <span>•</span>
+                <span>⭐ {averageRating || '4.8'} ({sellerObj.ratings?.length || '23'})</span>
+              </div>
+            </div>
+          </div>
+          {sellerObj.phoneNumber && (
+            <button 
+              onClick={handleWhatsAppContact} 
+              style={{ 
+                display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px', 
+                border: '1px solid var(--gold)', background: 'transparent', color: 'var(--gold)', 
+                fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer' 
+              }}
+            >
+              💬 Chat
+            </button>
+          )}
+        </div>
+
+        {/* Description Section */}
+        <div style={{ marginBottom: '24px' }}>
+          <h3 style={{ fontSize: '0.92rem', fontWeight: '700', color: 'var(--text-primary)', margin: '0 0 8px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Description
+          </h3>
+          <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', lineHeight: '1.6', margin: 0 }}>
+            {product.description || 'No description provided by the seller.'}
+          </p>
+        </div>
+
+        {/* Location Section */}
+        <div style={{ marginBottom: '24px' }}>
+          <h3 style={{ fontSize: '0.92rem', fontWeight: '700', color: 'var(--text-primary)', margin: '0 0 8px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Location
+          </h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.86rem', color: 'var(--text-secondary)' }}>
+              {product.hostelLocation || 'Lead City Hostels'}, Lead City University
+            </span>
+            <button 
+              onClick={() => showToast('Directions to Campus meetup points loading...', 'info')}
+              style={{ border: 'none', background: 'transparent', color: 'var(--gold)', fontSize: '0.8rem', fontWeight: '700', textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
+            >
+              View on map
+            </button>
           </div>
         </div>
 
-        {/* Right side: Pricing, location, and seller info */}
-        <div style={styles.sidebar}>
-          {/* Action Card */}
-          <div style={styles.actionCard} className="glass-panel">
-            {product.reports?.length > 0 && (
-              <div style={styles.warningAlert}>
-                ⚠️ Warning: Reported by {product.reports.length} student{product.reports.length > 1 ? 's' : ''} for potential scam. Exercise caution.
-              </div>
-            )}
-            <span style={styles.categoryBadge}>{getCategoryEmoji(product.category)} {product.category}</span>
-            <h1 style={styles.name}>{product.name}</h1>
-            <h2 style={styles.price}>₦{product.price.toLocaleString()}</h2>
-            
-            <div style={styles.detailsList}>
-              <div style={styles.detailItem}>
-                <span style={styles.detailLabel}>📍 Hostel Location:</span>
-                <span style={styles.detailValue}>{product.hostelLocation}</span>
-              </div>
-              <div style={styles.detailItem}>
-                <span style={styles.detailLabel}>🎓 Faculty Location:</span>
-                <span style={styles.detailValue}>{product.faculty}</span>
-              </div>
-              <div style={styles.detailItem}>
-                <span style={styles.detailLabel}>🤝 Agreed Meetup Location:</span>
-                <span style={{ color: 'var(--gold)', fontWeight: 'bold' }}>{product.agreedLocation || 'Any Safe Campus Meeting Point'}</span>
-              </div>
-              <div style={styles.detailItem}>
-                <span style={styles.detailLabel}>📅 Listed Date:</span>
-                <span style={styles.detailValue}>{new Date(product.createdAt).toLocaleDateString()}</span>
-              </div>
-            </div>
+      </div>
 
-            {!isOwnListing ? (
-              <div style={styles.actionsGroup}>
-                {product.status === 'Sold' ? (
-                  <div style={styles.soldBadgeBig}>
-                    🚫 Sold Out (Already Purchased)
-                  </div>
-                ) : (
-                  <button onClick={handleOpenPickupModal} className="btn-primary" style={{ ...styles.chatBtn, background: 'var(--gold)', borderColor: 'var(--gold)' }}>
-                    💳 Secure Buy Now &amp; Schedule Pickup
-                  </button>
-                )}
-                {product.seller?.phoneNumber && (
-                  <button onClick={handleWhatsAppContact} className="btn-secondary" style={{ ...styles.chatBtn, background: 'rgba(16, 185, 129, 0.12)', color: 'var(--success)', borderColor: 'rgba(16, 185, 129, 0.3)' }}>
-                    🟢 Contact Seller via WhatsApp
-                  </button>
-                )}
-                <div style={styles.subActions}>
-                  <button onClick={handleWishlist} className="btn-secondary" style={styles.actionBtn}>
-                    {isWishlisted ? '❤️ In Wishlist' : '🤍 Add to Wishlist'}
-                  </button>
-                  <button
-                    onClick={handleReport}
-                    disabled={hasReported}
-                    className="btn-secondary"
-                    style={{ ...styles.actionBtn, color: hasReported ? 'var(--text-gray)' : 'var(--error)' }}
-                  >
-                    {hasReported ? '✓ Reported' : '⚠️ Report Scam / Stolen'}
-                  </button>
-                </div>
-                {reportMessage && <p style={styles.reportFeedback}>{reportMessage}</p>}
-              </div>
-            ) : (
-              <div style={styles.actionsGroup}>
-                <div style={styles.ownListingBadge}>
-                  This is your active listing.
-                </div>
-                <div style={styles.subActions}>
-                  <Link
-                    to={`/edit/${product._id}`}
-                    className="btn-primary"
-                    style={{ ...styles.actionBtn, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >
-                    ✏️ Edit Listing
-                  </Link>
-                  <button
-                    onClick={handleDeleteListing}
-                    className="btn-secondary"
-                    style={{ ...styles.actionBtn, color: 'var(--error)', borderColor: 'rgba(239, 68, 68, 0.3)' }}
-                  >
-                    🗑️ Delete Listing
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Seller Card */}
-          <div style={styles.sellerCard} className="glass-panel">
-            <h3 style={styles.sectionTitle}>Seller Information</h3>
-            <div style={styles.sellerHeader}>
-              <div style={styles.sellerAvatar}>
-                {(sellerObj.name || 'S').charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <div style={styles.sellerNameRow}>
-                  <span style={styles.sellerName}>{sellerObj.name || 'Unknown Seller'}</span>
-                  {sellerObj.isVerifiedStudent && (
-                    <VerifiedBadge size="sm" />
-                  )}
-                </div>
-                <div style={styles.sellerMeta}>
-                  {sellerObj.hostel || 'No Hostel'} | {sellerObj.faculty || 'No Faculty'}
-                </div>
-              </div>
-            </div>
-
-            {/* Ratings Summary */}
-            <div style={styles.ratingsSummary}>
-              <span style={styles.ratingNumber}>{averageRating || 'N/A'}</span>
-              <div style={styles.ratingStars}>
-                {'★'.repeat(Math.round(averageRating || 0)) + '☆'.repeat(5 - Math.round(averageRating || 0))}
-              </div>
-              <span style={styles.ratingCount}>({sellerObj.ratings?.length || 0} reviews)</span>
-            </div>
-
-            {/* Reviews list */}
-            {sellerObj.ratings?.length > 0 && (
-              <div style={styles.reviewsList}>
-                {sellerObj.ratings.slice(0, 3).map((r, index) => (
-                  <div key={index} style={styles.reviewItem}>
-                    <div style={styles.reviewHeader}>
-                      <span style={styles.reviewerName}>{r.reviewer?.name || 'Student'}</span>
-                      <span style={styles.reviewStars}>{'★'.repeat(r.rating)}</span>
-                    </div>
-                    {r.review && <p style={styles.reviewText}>{r.review}</p>}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Write a review (Only if authenticated and NOT the seller) */}
-            {token && user?._id !== sellerId && (
-              <form onSubmit={handleReviewSubmit} style={styles.reviewForm}>
-                <h4 style={styles.reviewFormTitle}>Rate this Seller</h4>
-                <div style={styles.ratingSelectContainer}>
-                  <label style={styles.reviewLabel}>Rating:</label>
-                  <div style={styles.starSelection}>
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <span
-                        key={star}
-                        onClick={() => setRating(star)}
-                        style={{
-                          ...styles.interactiveStar,
-                          color: star <= rating ? 'var(--gold)' : 'var(--text-gray)'
-                        }}
-                      >
-                        ★
-                      </span>
-                    ))}
-                  </div>
-                  <span style={styles.ratingTextDescription}>
-                    {rating === 5 && 'Excellent'}
-                    {rating === 4 && 'Good'}
-                    {rating === 3 && 'Fair'}
-                    {rating === 2 && 'Bad'}
-                    {rating === 1 && 'Scam Alert'}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <label style={styles.reviewLabel}>Review:</label>
-                  <input
-                    type="text"
-                    placeholder="Describe your purchase experience..."
-                    value={reviewText}
-                    onChange={(e) => setReviewText(e.target.value)}
-                    className="glass-input"
-                    style={{ fontSize: '0.85rem' }}
-                    required
-                  />
-                </div>
-                <button type="submit" className="btn-secondary" style={styles.submitReviewBtn}>
-                  Submit Review
-                </button>
-                {reviewMessage && <p style={styles.reviewFeedback}>{reviewMessage}</p>}
-              </form>
-            )}
-          </div>
-        </div>
+      {/* ── Sticky Bottom Action Bar ── */}
+      <div style={{ position: 'fixed', bottom: 0, left: '0', right: '0', maxWidth: '480px', margin: '0 auto', background: 'var(--bg-nav)', borderTop: '1px solid var(--border-color)', padding: '16px 20px', display: 'flex', gap: '12px', zIndex: 100, boxSizing: 'border-box' }}>
+        <button 
+          onClick={() => showToast('Offer system coming soon! Feel free to Chat the seller.', 'info')} 
+          style={{ 
+            flex: 1, padding: '14px', borderRadius: '10px', border: '1px solid var(--border-color)', 
+            background: 'transparent', color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: '700', cursor: 'pointer' 
+          }}
+        >
+          Make Offer
+        </button>
+        {product.status === 'Sold' ? (
+          <button 
+            disabled 
+            style={{ 
+              flex: 1, padding: '14px', borderRadius: '10px', border: 'none', 
+              background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: '700' 
+            }}
+          >
+            Sold Out
+          </button>
+        ) : (
+          <button 
+            onClick={handleOpenPickupModal} 
+            style={{ 
+              flex: 1, padding: '14px', borderRadius: '10px', border: 'none', 
+              background: 'var(--gold)', color: '#fff', fontSize: '0.9rem', fontWeight: '700', cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(59, 130, 246, 0.2)'
+            }}
+          >
+            Buy Now
+          </button>
+        )}
+      </div>
 
       {/* Campus Pickup Scheduler Modal */}
       {showPickupModal && (
@@ -590,7 +552,6 @@ export default function ProductDetails() {
           navigate('/profile');
         }}
       />
-      </div>
     </div>
   );
 }
