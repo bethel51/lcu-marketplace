@@ -3326,7 +3326,7 @@ body.light-theme .splash-title {
   font-weight: 700;
   font-size: 0.92rem;
   color: var(--text-primary);
-  truncate: ellipsis;
+  text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
 }
@@ -3484,7 +3484,6 @@ body.light-theme .splash-title {
 }
 
 /* ── Content Area ────────────────────────────────────────── */
-.buyer-dash-content { }
 
 /* Greeting */
 .buyer-dash-greeting {
