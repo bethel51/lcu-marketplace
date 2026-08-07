@@ -38,6 +38,7 @@ export default function Auth() {
   const [matricNumber, setMatricNumber] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [requestVerification, setRequestVerification] = useState(true);
+  const [role, setRole] = useState('Buyer'); // 'Buyer' | 'Seller'
 
   // ── OTP (email verify) ────────────────────────────────────
   const [otpCode, setOtpCode] = useState('');
@@ -90,7 +91,7 @@ export default function Auth() {
           setError('Phone number must be 11 digits (e.g. 08012345678)');
           return;
         }
-        const res = await register(name, email, password, hostel, faculty, department, matricNumber, phoneNumber, requestVerification);
+        const res = await register(name, email, password, hostel, faculty, department, matricNumber, phoneNumber, requestVerification, role);
         setSuccessMsg(res.message || 'OTP verification code has been sent to your email.');
         setView('verifyOtp');
       }
@@ -290,6 +291,30 @@ export default function Auth() {
         ══════════════════════════════════════════════════ */}
         {view === 'register' && (
           <form onSubmit={handleSubmit} style={styles.form}>
+            {/* ── Account Type Toggle ─── */}
+            <div style={styles.field}>
+              <label style={styles.label}>I want to…</label>
+              <div style={styles.roleToggle}>
+                <button
+                  type="button"
+                  id="role-buyer"
+                  onClick={() => setRole('Buyer')}
+                  style={{ ...styles.roleBtn, ...(role === 'Buyer' ? styles.roleBtnActive : {}) }}
+                >
+                  🛍️ Buy Items
+                  <span style={styles.roleDesc}>Browse & purchase from students</span>
+                </button>
+                <button
+                  type="button"
+                  id="role-seller"
+                  onClick={() => setRole('Seller')}
+                  style={{ ...styles.roleBtn, ...(role === 'Seller' ? styles.roleBtnActive : {}) }}
+                >
+                  🏪 Sell Items
+                  <span style={styles.roleDesc}>List & sell your items</span>
+                </button>
+              </div>
+            </div>
             <div style={styles.field}>
               <label style={styles.label}>Full Name</label>
               <input type="text" required placeholder="e.g. John Doe"
@@ -589,5 +614,37 @@ const styles = {
     cursor: 'pointer',
     padding: '0',
     fontSize: '0.88rem',
+  },
+  roleToggle: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '10px',
+  },
+  roleBtn: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '4px',
+    padding: '14px 10px',
+    borderRadius: '12px',
+    border: '2px solid var(--border-color)',
+    background: 'var(--bg-input)',
+    color: 'var(--text-primary)',
+    cursor: 'pointer',
+    fontSize: '1rem',
+    fontWeight: '700',
+    fontFamily: "'Outfit', sans-serif",
+    transition: 'all 0.25s ease',
+  },
+  roleBtnActive: {
+    border: '2px solid var(--gold)',
+    background: 'rgba(59,130,246,0.12)',
+    boxShadow: '0 0 16px rgba(59,130,246,0.2)',
+  },
+  roleDesc: {
+    fontSize: '0.72rem',
+    fontWeight: '400',
+    color: 'var(--text-secondary)',
+    fontFamily: "'Inter', sans-serif",
   },
 };

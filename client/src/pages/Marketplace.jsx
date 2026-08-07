@@ -114,6 +114,9 @@ export default function Marketplace() {
       {/* ─── Page Header ──────────────────────────────────────── */}
       <header className="mkt-header">
         <div className="mkt-header-text">
+          <div style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '8px', color: 'var(--gold)' }}>
+            Good morning, {user?.name?.split(' ')[0] || 'Student'} 👋
+          </div>
           <h1 className="mkt-title">
             Student <span style={{ color: 'var(--gold)' }}>Marketplace</span>
           </h1>

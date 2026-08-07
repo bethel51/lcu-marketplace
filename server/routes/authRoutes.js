@@ -128,6 +128,7 @@ router.post('/register', async (req, res) => {
       isEmailVerified: false,
       otpCode: otp,
       otpExpires,
+      role: req.body.role || 'Seller',
       isAdmin: email.toLowerCase() === 'beatsnitro101@gmail.com'
     });
 
@@ -168,6 +169,7 @@ router.post('/login', async (req, res) => {
         phoneNumber: user.phoneNumber,
         isVerifiedStudent: user.isVerifiedStudent,
         isAdmin: user.isAdmin,
+        role: user.role || 'Seller',
         token: generateToken(user._id)
       });
     } else {
@@ -218,6 +220,7 @@ router.post('/verify-otp', async (req, res) => {
       phoneNumber: user.phoneNumber,
       isVerifiedStudent: user.isVerifiedStudent,
       isAdmin: user.isAdmin,
+      role: user.role || 'Seller',
       token: generateToken(user._id)
     });
   } catch (error) {

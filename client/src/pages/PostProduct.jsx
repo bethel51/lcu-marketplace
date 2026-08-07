@@ -23,6 +23,7 @@ export default function PostProduct() {
   const [facultyLocation, setFacultyLocation] = useState(
     user?.faculty || 'Information Technology & Applied Sciences'
   );
+  const [agreedLocation, setAgreedLocation] = useState('Any Safe Campus Meeting Point');
   const [image, setImage] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [compressing, setCompressing] = useState(false);
@@ -65,6 +66,7 @@ export default function PostProduct() {
             setFacultyLocation(
               data.facultyLocation || 'Information Technology & Applied Sciences'
             );
+            setAgreedLocation(data.agreedLocation || 'Any Safe Campus Meeting Point');
             setImage(data.image || '');
           }
         })
@@ -133,6 +135,7 @@ export default function PostProduct() {
           category,
           hostelLocation,
           faculty: facultyLocation,
+          agreedLocation,
           image,
         }),
       });
@@ -259,6 +262,28 @@ export default function PostProduct() {
                   ))}
                 </select>
               </div>
+            </div>
+
+            <div className="pp-field">
+              <label className="pp-label">Agreed Meeting Location *</label>
+              <select
+                className="pp-input"
+                value={agreedLocation}
+                onChange={e => setAgreedLocation(e.target.value)}
+              >
+                <option value="Any Safe Campus Meeting Point">Any Safe Campus Meeting Point</option>
+                <option value="LCU Senate Building Car Park">LCU Senate Building Car Park</option>
+                <option value="LCU Student Center / Cafeteria">LCU Student Center / Cafeteria</option>
+                <option value="Bronze Hostel Security Gate">Bronze Hostel Security Gate</option>
+                <option value="Silver Hostel Security Gate">Silver Hostel Security Gate</option>
+                <option value="Gold Hostel Security Gate">Gold Hostel Security Gate</option>
+                <option value="Platinum Hostel Lounge">Platinum Hostel Lounge</option>
+                <option value="Jasper Hall Security Post">Jasper Hall Security Post</option>
+                <option value="Emerald Hall Common Area">Emerald Hall Common Area</option>
+                <option value="Pearl Hall Main Entrance">Pearl Hall Main Entrance</option>
+                <option value="Sapphire Hall Gate">Sapphire Hall Gate</option>
+                <option value="Off-Campus Location">Off-Campus Location</option>
+              </select>
             </div>
 
             {/* ── Description ── */}

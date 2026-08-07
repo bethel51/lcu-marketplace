@@ -81,6 +81,11 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Product'
   }],
+  role: {
+    type: String,
+    enum: ['Seller', 'Buyer'],
+    default: 'Seller'
+  },
   ratings: [{
     reviewer: {
       type: mongoose.Schema.Types.ObjectId,

@@ -470,28 +470,28 @@ export default function Dashboard() {
                   {showVerifyForm ? (
                     <form onSubmit={handleVerifySubmit} style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
                       <input
-                        type="text" required placeholder="Your matric number"
+                        type="text" required placeholder="Your Student Matric Number"
                         value={matricInput} onChange={e => setMatricInput(e.target.value)}
                         className="glass-input" style={{ maxWidth:'300px' }}
                       />
                       <div style={{ display:'flex', gap:'8px', alignItems:'center', flexWrap:'wrap' }}>
                         <label htmlFor="id-upload-dash" className="btn-secondary" style={{ padding:'8px 14px', fontSize:'0.82rem', cursor:'pointer' }}>
-                          {idCardLabel || '📎 Upload ID Card'}
+                          {idCardLabel || '📎 Upload Student ID / Matric Card'}
                         </label>
                         <input id="id-upload-dash" type="file" accept="image/*" style={{ display:'none' }}
                           onChange={e => { setIdCardFile(e.target.files[0]); setIdCardLabel(e.target.files[0]?.name || ''); }}
                         />
-                        <button type="submit" className="btn-primary" style={{ padding:'8px 16px', fontSize:'0.82rem' }}>Submit</button>
+                        <button type="submit" className="btn-primary" style={{ padding:'8px 16px', fontSize:'0.82rem' }}>Submit Matric Details</button>
                         <button type="button" onClick={() => setShowVerifyForm(false)} className="btn-secondary" style={{ padding:'8px 14px', fontSize:'0.82rem' }}>Cancel</button>
                       </div>
                     </form>
                   ) : (
                     <div className="dash-verify-actions">
-                      <button onClick={() => setShowVerifyForm(true)} className="btn-secondary" style={{ padding:'8px 16px', fontSize:'0.82rem' }}>📎 Submit ID Form</button>
-                      <button onClick={handlePayVerificationFee} className="btn-primary" style={{ padding:'10px 22px', fontSize:'0.85rem' }}>🎓 Get Instant Verified (₦1,000)</button>
+                      <button onClick={() => setShowVerifyForm(true)} className="btn-secondary" style={{ padding:'8px 16px', fontSize:'0.82rem' }}>📎 Submit Matric Verification</button>
+                      <button onClick={handlePayVerificationFee} className="btn-primary" style={{ padding:'10px 22px', fontSize:'0.85rem' }}>🎓 Instant Verification (₦1,000)</button>
                     </div>
                   )}
-                  <p className="dash-verify-hint">Upload your student ID to get a verified badge and build trust with buyers.</p>
+                  <p className="dash-verify-hint">Upload your Student ID or Matric Card to get verified and build campus trust.</p>
                 </div>
               ) : (
                 <div style={{ marginBottom:'24px' }}>

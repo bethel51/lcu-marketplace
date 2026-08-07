@@ -14,8 +14,9 @@ const PostProduct    = lazy(() => import('./pages/PostProduct'));
 const Withdraw       = lazy(() => import('./pages/Withdraw'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const AdminLogin     = lazy(() => import('./pages/AdminLogin'));
+const BuyerDashboard = lazy(() => import('./pages/BuyerDashboard'));
 
-// ── Eagerly import Dashboard (most visited by logged-in users) ──
+// ── Eagerly import Dashboard (Seller dashboard — most visited by logged-in sellers) ──
 import Dashboard from './pages/Dashboard';
 
 // ── Dismiss the pre-React HTML shell once React boots ──────────
@@ -120,6 +121,14 @@ function AdminRoute({ children }) {
   return user && user.isAdmin ? children : <Navigate to="/admin-login" replace />;
 }
 
+// ── Role-based dashboard ─────────────────────────────────────────
+function RoleBasedDashboard() {
+  const { user } = useAuth();
+  // Buyers get the Buyer Dashboard; Sellers (and legacy accounts with no role) get the Seller Dashboard
+  if (user?.role === 'Buyer') return <BuyerDashboard />;
+  return <Dashboard />;
+}
+
 // ── SplashScreen Component ──────────────────────────────────────
 function SplashScreen({ fadeOut }) {
   return (
@@ -196,7 +205,7 @@ function AppContent() {
                   <Route path="/product/:id" element={<PrivateRoute><ProductDetails /></PrivateRoute>} />
                   <Route path="/post"        element={<PrivateRoute><PostProduct /></PrivateRoute>} />
                   <Route path="/edit/:id"    element={<PrivateRoute><PostProduct /></PrivateRoute>} />
-                  <Route path="/profile"     element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+                  <Route path="/profile"     element={<PrivateRoute><RoleBasedDashboard /></PrivateRoute>} />
                   <Route path="/withdraw"    element={<PrivateRoute><Withdraw /></PrivateRoute>} />
 
                   {/* Admin */}

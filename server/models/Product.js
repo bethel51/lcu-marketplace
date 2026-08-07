@@ -35,6 +35,10 @@ const productSchema = new mongoose.Schema({
     type: String,
     default: 'None'
   },
+  agreedLocation: {
+    type: String,
+    default: 'Any Safe Campus Meeting Point'
+  },
   status: {
     type: String,
     enum: ['Available', 'Sold'],

@@ -346,6 +346,10 @@ export default function ProductDetails() {
                 <span style={styles.detailValue}>{product.faculty}</span>
               </div>
               <div style={styles.detailItem}>
+                <span style={styles.detailLabel}>🤝 Agreed Meetup Location:</span>
+                <span style={{ color: 'var(--gold)', fontWeight: 'bold' }}>{product.agreedLocation || 'Any Safe Campus Meeting Point'}</span>
+              </div>
+              <div style={styles.detailItem}>
                 <span style={styles.detailLabel}>📅 Listed Date:</span>
                 <span style={styles.detailValue}>{new Date(product.createdAt).toLocaleDateString()}</span>
               </div>

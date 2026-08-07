@@ -154,7 +154,7 @@ const handleUpload = (req, res, next) => {
 // Create product
 router.post('/', protect, handleUpload, async (req, res) => {
   try {
-    const { name, price, description, category, hostelLocation, faculty } = req.body;
+    const { name, price, description, category, hostelLocation, faculty, agreedLocation } = req.body;
     
     let imagePath = '';
     if (req.file) {
@@ -172,7 +172,8 @@ router.post('/', protect, handleUpload, async (req, res) => {
       image: imagePath,
       category,
       hostelLocation,
-      faculty: faculty || 'None'
+      faculty: faculty || 'None',
+      agreedLocation: agreedLocation || 'Any Safe Campus Meeting Point'
     });
     
     res.status(201).json(product);
@@ -191,7 +192,7 @@ router.post('/', protect, handleUpload, async (req, res) => {
 // Edit product
 router.put('/:id', protect, handleUpload, async (req, res) => {
   try {
-    const { name, price, description, category, hostelLocation, faculty, status } = req.body;
+    const { name, price, description, category, hostelLocation, faculty, status, agreedLocation } = req.body;
     
     const product = await Product.findById(req.params.id);
     if (!product) {
@@ -218,6 +219,7 @@ router.put('/:id', protect, handleUpload, async (req, res) => {
     product.hostelLocation = hostelLocation || product.hostelLocation;
     product.faculty = faculty || product.faculty;
     product.status = status || product.status;
+    product.agreedLocation = agreedLocation || product.agreedLocation;
     
     const updatedProduct = await product.save();
     res.json(updatedProduct);

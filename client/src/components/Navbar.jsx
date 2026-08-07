@@ -207,7 +207,9 @@ export default function Navbar() {
               <div className="nav-desktop-links">
                 <Link to="/marketplace" className={`nav-link${isActive('/marketplace') ? ' active' : ''}`}>Marketplace</Link>
                 <Link to="/profile" className={`nav-link${isActive('/profile') ? ' active' : ''}`}>Dashboard</Link>
-                <Link to="/post" className="btn-primary nav-post-btn">+ Post Item</Link>
+                {user.role !== 'Buyer' && (
+                  <Link to="/post" className="btn-primary nav-post-btn">+ Post Item</Link>
+                )}
               </div>
             ) : (
               <div className="nav-desktop-links">
@@ -274,7 +276,9 @@ export default function Navbar() {
                       <div className="nav-dropdown-header">Hi, {user.name.split(' ')[0]} 👋</div>
                       <button onClick={() => { setDropdownOpen(false); navigate('/profile'); }} className="nav-profile-dropdown-item">👤 My Dashboard</button>
                       <button onClick={() => { setDropdownOpen(false); setModalOpen(true); }} className="nav-profile-dropdown-item">✏️ Edit Profile</button>
-                      <button onClick={() => { setDropdownOpen(false); navigate('/post'); }} className="nav-profile-dropdown-item">📦 Post Item</button>
+                      {user.role !== 'Buyer' && (
+                        <button onClick={() => { setDropdownOpen(false); navigate('/post'); }} className="nav-profile-dropdown-item">📦 Post Item</button>
+                      )}
                       <div className="nav-profile-dropdown-divider" />
                       <button onClick={handleLogout} className="nav-profile-dropdown-item" style={{ color: 'var(--error)' }}>🚪 Logout</button>
                     </div>
@@ -324,12 +328,14 @@ export default function Navbar() {
             <span className="btab-label">Alerts</span>
           </button>
 
-          {/* 3. Center FAB */}
-          <Link to="/post" className="btab-fab" aria-label="Post Item">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-          </Link>
+          {/* 3. Center FAB — Sellers only */}
+          {user.role !== 'Buyer' && (
+            <Link to="/post" className="btab-fab" aria-label="Post Item">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </Link>
+          )}
 
           {/* 4. Dashboard */}
           <Link to="/profile" className={`btab-item${isActive('/profile') ? ' btab-active' : ''}`} aria-label="Dashboard">

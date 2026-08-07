@@ -35,6 +35,21 @@ export default function Landing() {
     });
   }, []);
 
+  const onboardingSlides = [
+    { title: "Buy from students", desc: "Browse pre-loved items, gadgets, textbook materials, and services from verified peers on campus.", icon: "🛍️" },
+    { title: "Sell what you no longer need", desc: "Quickly post your items, negotiate direct transaction locations, and cash out safely.", icon: "💰" },
+    { title: "Swap within campus", desc: "Easily swap hostel accessories or study materials directly inside Lead City grounds.", icon: "🔄" }
+  ];
+
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveSlide(prev => (prev + 1) % onboardingSlides.length);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, []);
+
   const features = [
     {
       icon: '🔒',
@@ -55,9 +70,9 @@ export default function Landing() {
       color: '#f59e0b',
     },
     {
-      icon: '💬',
-      title: 'In-App Messaging (Coming Soon)',
-      desc: 'Chat directly with sellers and buyers inside the platform — no need to share personal numbers.',
+      icon: '🤝',
+      title: 'Campus Meetups',
+      desc: 'Set an agreed location within campus grounds to check and trade products securely face-to-face.',
       color: '#8b5cf6',
     },
     {
@@ -77,7 +92,7 @@ export default function Landing() {
   const steps = [
     { num: '01', title: 'Create Your Account', desc: 'Sign up with your LCU email. It only takes 60 seconds.' },
     { num: '02', title: 'Browse or List', desc: 'Search thousands of student listings or post your own item for free.' },
-    { num: '03', title: 'Connect & Trade', desc: 'Message the seller directly and arrange a safe campus meet-up.' },
+    { num: '03', title: 'Connect & Trade', desc: 'Agree on a location and exchange items safely on campus.' },
   ];
 
   const categories = [
@@ -86,6 +101,7 @@ export default function Landing() {
     { icon: '📚', name: 'Textbooks', desc: 'Course books, handouts, notes…' },
     { icon: '🛠️', name: 'Services', desc: 'Tutoring, printing, repairs…' },
   ];
+
 
   return (
     <div className="landing-page">
@@ -151,6 +167,40 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      {/* Onboarding Slider / Carousel */}
+      <section className="landing-onboarding container" style={{ marginTop: '40px', marginBottom: '40px', textAlign: 'center' }}>
+        <div className="glass-panel" style={{ padding: '40px 20px', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '16px' }}>
+            {onboardingSlides[activeSlide].icon}
+          </div>
+          <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '12px', color: 'var(--text-primary)' }}>
+            {onboardingSlides[activeSlide].title}
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', maxWidth: '600px', margin: '0 auto 24px auto', fontSize: '1.05rem', lineHeight: '1.6' }}>
+            {onboardingSlides[activeSlide].desc}
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
+            {onboardingSlides.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setActiveSlide(idx)}
+                style={{
+                  width: idx === activeSlide ? '24px' : '8px',
+                  height: '8px',
+                  borderRadius: '4px',
+                  border: 'none',
+                  backgroundColor: idx === activeSlide ? 'var(--gold)' : 'var(--text-muted)',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+                aria-label={`Slide ${idx + 1}`}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
 
       {/* ─── CATEGORY PILLS ───────────────────────────────────── */}
       <section
