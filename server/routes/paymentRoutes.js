@@ -24,6 +24,9 @@ router.post('/initialize', protect, async (req, res) => {
     let sellerId = null;
 
     if (orderType === 'escrow') {
+      if (req.user.role !== 'Buyer') {
+        return res.status(400).json({ message: 'Only Buyer accounts can purchase products.' });
+      }
       if (!productId) {
         return res.status(400).json({ message: 'Product ID is required for escrow checkout' });
       }

@@ -445,56 +445,64 @@ export default function ProductDetails() {
 
       {/* ── Sticky Bottom Action Bar ── */}
       <div style={{ position: 'sticky', bottom: 0, width: '100%', background: 'var(--bg-nav)', borderTop: '1px solid var(--border-color)', padding: '16px 20px', display: 'flex', gap: '12px', zIndex: 100, boxSizing: 'border-box', marginTop: '30px' }}>
-        {product && product.status !== 'Sold' && (
-          <button 
-            onClick={() => {
-              if (isInCart(product._id)) {
-                removeFromCart(product._id);
-                showToast('Removed from Bag', 'info');
-              } else {
-                addToCart(product);
-                showToast('Added to Bag!', 'success');
-              }
-            }} 
-            style={{ 
-              flex: 1, padding: '14px', borderRadius: '10px', 
-              border: isInCart(product._id) ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid var(--border-color)', 
-              background: isInCart(product._id) ? 'rgba(239, 68, 68, 0.15)' : 'transparent', 
-              color: isInCart(product._id) ? 'var(--error)' : 'var(--text-primary)', 
-              fontSize: '0.9rem', fontWeight: '700', cursor: 'pointer' 
-            }}
-          >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', justifyContent: 'center', width: '100%' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <path d="M16 10a4 4 0 0 1-8 0" />
-              </svg>
-              {isInCart(product._id) ? 'Remove' : 'Add to Bag'}
-            </span>
-          </button>
-        )}
-        {product.status === 'Sold' ? (
-          <button 
-            disabled 
-            style={{ 
-              flex: 1, padding: '14px', borderRadius: '10px', border: 'none', 
-              background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: '700' 
-            }}
-          >
-            Sold Out
-          </button>
+        {user?.role !== 'Buyer' ? (
+          <div style={{ width: '100%', color: 'var(--gold)', fontSize: '0.86rem', fontWeight: '600', padding: '8px 0', textAlign: 'center' }}>
+            🔒 Seller accounts cannot purchase or add products to bag.
+          </div>
         ) : (
-          <button 
-            onClick={handleOpenPickupModal} 
-            style={{ 
-              flex: 1, padding: '14px', borderRadius: '10px', border: 'none', 
-              background: 'var(--gold)', color: '#fff', fontSize: '0.9rem', fontWeight: '700', cursor: 'pointer',
-              boxShadow: '0 4px 16px rgba(59, 130, 246, 0.2)'
-            }}
-          >
-            Buy Now
-          </button>
+          <>
+            {product && product.status !== 'Sold' && (
+              <button 
+                onClick={() => {
+                  if (isInCart(product._id)) {
+                    removeFromCart(product._id);
+                    showToast('Removed from Bag', 'info');
+                  } else {
+                    addToCart(product);
+                    showToast('Added to Bag!', 'success');
+                  }
+                }} 
+                style={{ 
+                  flex: 1, padding: '14px', borderRadius: '10px', 
+                  border: isInCart(product._id) ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid var(--border-color)', 
+                  background: isInCart(product._id) ? 'rgba(239, 68, 68, 0.15)' : 'transparent', 
+                  color: isInCart(product._id) ? 'var(--error)' : 'var(--text-primary)', 
+                  fontSize: '0.9rem', fontWeight: '700', cursor: 'pointer' 
+                }}
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', justifyContent: 'center', width: '100%' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <path d="M16 10a4 4 0 0 1-8 0" />
+                  </svg>
+                  {isInCart(product._id) ? 'Remove' : 'Add to Bag'}
+                </span>
+              </button>
+            )}
+            {product.status === 'Sold' ? (
+              <button 
+                disabled 
+                style={{ 
+                  flex: 1, padding: '14px', borderRadius: '10px', border: 'none', 
+                  background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: '700' 
+                }}
+              >
+                Sold Out
+              </button>
+            ) : (
+              <button 
+                onClick={handleOpenPickupModal} 
+                style={{ 
+                  flex: 1, padding: '14px', borderRadius: '10px', border: 'none', 
+                  background: 'var(--gold)', color: '#fff', fontSize: '0.9rem', fontWeight: '700', cursor: 'pointer',
+                  boxShadow: '0 4px 16px rgba(59, 130, 246, 0.2)'
+                }}
+              >
+                Buy Now
+              </button>
+            )}
+          </>
         )}
       </div>
 

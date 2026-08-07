@@ -576,8 +576,7 @@ export default function BuyerDashboard() {
               <button
                 onClick={handleDeleteAccount}
                 disabled={deleteSaving}
-                className="btn-secondary"
-                style={{ color: 'var(--error)', borderColor: 'var(--error)' }}
+                className="btn-danger"
               >
                 {deleteSaving ? 'Deleting…' : '🗑️ Delete My Account'}
               </button>

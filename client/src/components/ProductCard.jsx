@@ -90,7 +90,7 @@ const ProductCard = React.memo(function ProductCard({ product }) {
             >
               Details
             </button>
-            {status !== 'Sold' && (
+            {status !== 'Sold' && (!user || user.role === 'Buyer') && (
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
