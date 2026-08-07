@@ -17,6 +17,7 @@ const Withdraw       = lazy(() => import('./pages/Withdraw'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const AdminLogin     = lazy(() => import('./pages/AdminLogin'));
 const BuyerDashboard = lazy(() => import('./pages/BuyerDashboard'));
+const Checkout       = lazy(() => import('./pages/Checkout'));
 
 // ── Eagerly import Dashboard (Seller dashboard — most visited by logged-in sellers) ──
 import Dashboard from './pages/Dashboard';
@@ -226,6 +227,7 @@ function AppContent() {
                   <Route path="/edit/:id"    element={<PrivateRoute><SellerRoute><PostProduct /></SellerRoute></PrivateRoute>} />
                   <Route path="/profile"     element={<PrivateRoute><RoleBasedDashboard /></PrivateRoute>} />
                   <Route path="/withdraw"    element={<PrivateRoute><SellerRoute><Withdraw /></SellerRoute></PrivateRoute>} />
+                  <Route path="/checkout/:orderId" element={<PrivateRoute><Checkout /></PrivateRoute>} />
 
                   {/* Admin */}
                   <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />

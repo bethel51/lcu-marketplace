@@ -5,7 +5,6 @@ import { useToast } from '../context/ToastContext';
 import { useCart } from '../context/CartContext';
 import { API_URL } from '../config';
 import { VerifiedBadge } from '../components/ProductCard';
-import CheckoutModal from '../components/CheckoutModal';
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -256,9 +255,8 @@ export default function ProductDetails() {
       }
       
       const { order, amount } = resData;
-      setCheckoutOrderId(order._id);
-      setCheckoutAmount(amount);
-      setShowCheckoutModal(true);
+      setShowPickupModal(false);
+      navigate(`/checkout/${order._id}?amount=${amount}&type=buy`);
       
     } catch {
       showToast('Error preparing payment checkout', 'error');
@@ -443,7 +441,7 @@ export default function ProductDetails() {
                 showToast('Removed from Bag', 'info');
               } else {
                 addToCart(product);
-                showToast('Added to Bag! 👜', 'success');
+                showToast('Added to Bag!', 'success');
               }
             }} 
             style={{ 
@@ -454,7 +452,14 @@ export default function ProductDetails() {
               fontSize: '0.9rem', fontWeight: '700', cursor: 'pointer' 
             }}
           >
-            {isInCart(product._id) ? '👜 Remove' : '👜 Add to Bag'}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', justifyContent: 'center', width: '100%' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <path d="M16 10a4 4 0 0 1-8 0" />
+              </svg>
+              {isInCart(product._id) ? 'Remove' : 'Add to Bag'}
+            </span>
           </button>
         )}
         {product.status === 'Sold' ? (
@@ -556,17 +561,7 @@ export default function ProductDetails() {
         </div>
       )}
 
-      <CheckoutModal
-        isOpen={showCheckoutModal}
-        onClose={() => setShowCheckoutModal(false)}
-        orderId={checkoutOrderId}
-        amount={checkoutAmount}
-        onSuccess={() => {
-          showToast('Escrow Payment & Campus Pickup Scheduled! 🤝', 'success');
-          fetchProduct();
-          navigate('/profile');
-        }}
-      />
+
     </div>
   );
 }

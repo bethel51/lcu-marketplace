@@ -4,7 +4,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 import { API_URL } from '../config';
 import { VerifiedBadge } from '../components/ProductCard';
-import CheckoutModal from '../components/CheckoutModal';
 
 const HOSTELS = [
   'Bronze Hostel','Silver Hostel','Gold Hostel','Platinum Hostel',
@@ -231,10 +230,7 @@ export default function Dashboard() {
         return;
       }
       const { order, amount } = resData;
-      setCheckoutOrderId(order._id);
-      setCheckoutAmount(amount);
-      setCheckoutType('boost');
-      setShowCheckoutModal(true);
+      navigate(`/checkout/${order._id}?amount=${amount}&type=boost`);
     } catch {
       showToast('Error initializing boost payment', 'error');
     }
@@ -258,10 +254,7 @@ export default function Dashboard() {
         return;
       }
       const { order, amount } = resData;
-      setCheckoutOrderId(order._id);
-      setCheckoutAmount(amount);
-      setCheckoutType('verification');
-      setShowCheckoutModal(true);
+      navigate(`/checkout/${order._id}?amount=${amount}&type=verification`);
     } catch {
       showToast('Error initializing verification payment', 'error');
     }
@@ -275,6 +268,9 @@ export default function Dashboard() {
   const avgRating    = ratings.length > 0
     ? (ratings.reduce((a,c) => a + c.rating, 0) / ratings.length).toFixed(1)
     : '—';
+
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
   const filteredMyProducts = useMemo(() => {
     if (!listingSearch.trim()) return myProducts;
@@ -372,7 +368,7 @@ export default function Dashboard() {
           {/* ── Welcome Banner ──────────────────────────────── */}
           <div className="dash-banner">
             <div>
-              <h1 className="dash-banner-title">Hey, {user?.name?.split(' ')[0]}! 👋</h1>
+              <h1 className="dash-banner-title">{greeting}, {user?.name?.split(' ')[0]} 👋</h1>
               <p className="dash-banner-sub">Welcome to your Lead City student dashboard</p>
               <div className="dash-banner-chips">
                 <span className="dash-banner-chip">📧 {user?.email}</span>
@@ -1089,20 +1085,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <CheckoutModal
-        isOpen={showCheckoutModal}
-        onClose={() => setShowCheckoutModal(false)}
-        orderId={checkoutOrderId}
-        amount={checkoutAmount}
-        onSuccess={() => {
-          if (checkoutType === 'boost') {
-            showToast('Listing boosted successfully! 🚀', 'success');
-          } else {
-            showToast('Verification fee paid and account verified! 🎓', 'success');
-          }
-          loadDashboard();
-        }}
-      />
+
     </>
   );
 }

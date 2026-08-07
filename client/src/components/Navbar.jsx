@@ -228,15 +228,26 @@ export default function Navbar() {
               <>
                 {/* Shopping Bag Icon */}
                 <div ref={cartRef} style={{ position: 'relative' }}>
-                  <button className="nav-icon-btn" onClick={() => setCartOpen(o => !o)} aria-label="Shopping Bag" style={{ position: 'relative' }}>
-                    <span style={{ fontSize: '1.15rem' }}>👜</span>
+                  <button className="nav-icon-btn" onClick={() => setCartOpen(o => !o)} aria-label="Shopping Bag" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                      <line x1="3" y1="6" x2="21" y2="6" />
+                      <path d="M16 10a4 4 0 0 1-8 0" />
+                    </svg>
                     {cartItems.length > 0 && <span className="notif-badge">{cartItems.length > 9 ? '9+' : cartItems.length}</span>}
                   </button>
 
                   {cartOpen && (
                     <div className="notif-panel" style={{ minWidth: '300px' }}>
                       <div className="notif-panel-header">
-                        <span className="notif-panel-title">👜 My Bag ({cartItems.length})</span>
+                        <span className="notif-panel-title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                            <line x1="3" y1="6" x2="21" y2="6" />
+                            <path d="M16 10a4 4 0 0 1-8 0" />
+                          </svg>
+                          My Bag ({cartItems.length})
+                        </span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                           {cartItems.length > 0 && (
                             <button className="notif-clear-btn" onClick={clearCart}>Clear all</button>
