@@ -25,7 +25,7 @@ const productSchema = new mongoose.Schema({
   category: {
     type: String,
     required: true,
-    enum: ['Hostel Items', 'Gadgets', 'Textbooks & Handouts', 'Services', 'Others']
+    enum: ['Hostel Items', 'Gadgets', 'Clothing & Fashion', 'Textbooks & Handouts', 'Services', 'Others']
   },
   hostelLocation: {
     type: String,
