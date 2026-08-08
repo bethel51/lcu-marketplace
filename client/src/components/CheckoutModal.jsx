@@ -299,7 +299,7 @@ export default function CheckoutModal({ isOpen, onClose, orderId, amount, onSucc
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 20px;
+          padding: calc(20px + env(safe-area-inset-top, 0px)) 20px calc(20px + env(safe-area-inset-bottom, 0px)) 20px;
           animation: fadeIn 0.3s ease-out;
         }
         .custom-checkout-container {

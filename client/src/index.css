@@ -400,6 +400,8 @@ button, input, select, textarea { font-family: inherit; outline: none; }
     animation: slideFromLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
     z-index: 10000 !important;
     background: rgba(9, 15, 29, 0.98) !important;
+    padding-top: env(safe-area-inset-top, 0px) !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
   }
 }
 
@@ -596,6 +598,7 @@ body.light-theme .toast-item {
   border-radius: 0;
   border-width: 0 0 1px 0;
   background-color: var(--bg-nav);
+  padding-top: env(safe-area-inset-top, 0px);
 }
 .top-nav-container {
   max-width: 1200px;
@@ -851,11 +854,11 @@ body.light-theme .btab-fab { border-color: #f0f4f8; }
 
 /* ── PWA standalone mode ─────────────────────────────────── */
 @media (display-mode: standalone) {
-  .top-nav { position: fixed; top: 0; left: 0; right: 0; }
+  .top-nav { position: fixed; top: 0; left: 0; right: 0; padding-top: env(safe-area-inset-top, 0px); }
   html, body { overflow-y: auto !important; }
-  body { padding-top: 64px; }
+  body { padding-top: calc(64px + env(safe-area-inset-top, 0px)); }
   @media (max-width: 768px) {
-    body { padding-top: 56px; }
+    body { padding-top: calc(56px + env(safe-area-inset-top, 0px)); }
   }
 }
 
@@ -2842,7 +2845,7 @@ body.light-theme .hero-orb {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: calc(20px + env(safe-area-inset-top, 0px)) 20px calc(20px + env(safe-area-inset-bottom, 0px)) 20px;
   animation: fadeIn 0.25s ease forwards;
 }
 

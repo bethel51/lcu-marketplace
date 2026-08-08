@@ -307,12 +307,12 @@ export default function ProductDetails() {
     <div style={{ maxWidth: '480px', margin: '0 auto', background: 'var(--bg-dark)', minHeight: '100vh', position: 'relative', paddingBottom: '90px' }}>
       
       {/* ── Top Header Image Wrapper ── */}
-      <div style={{ position: 'relative', width: '100%', height: '360px', background: '#f5f5f7' }}>
+      <div style={{ position: 'relative', width: '100%', height: 'calc(360px + env(safe-area-inset-top, 0px))', background: '#f5f5f7' }}>
         {/* Back button */}
         <button 
           onClick={() => navigate(-1)} 
           style={{ 
-            position: 'absolute', top: '16px', left: '16px', zIndex: 10,
+            position: 'absolute', top: 'calc(16px + env(safe-area-inset-top, 0px))', left: '16px', zIndex: 10,
             width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(255,255,255,0.9)',
             border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
@@ -325,7 +325,7 @@ export default function ProductDetails() {
         <button 
           onClick={handleWishlist} 
           style={{ 
-            position: 'absolute', top: '16px', right: '16px', zIndex: 10,
+            position: 'absolute', top: 'calc(16px + env(safe-area-inset-top, 0px))', right: '16px', zIndex: 10,
             width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(255,255,255,0.9)',
             border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
@@ -444,7 +444,7 @@ export default function ProductDetails() {
       </div>
 
       {/* ── Sticky Bottom Action Bar ── */}
-      <div style={{ position: 'sticky', bottom: 0, width: '100%', background: 'var(--bg-nav)', borderTop: '1px solid var(--border-color)', padding: '16px 20px', display: 'flex', gap: '12px', zIndex: 100, boxSizing: 'border-box', marginTop: '30px' }}>
+      <div style={{ position: 'sticky', bottom: 0, width: '100%', background: 'var(--bg-nav)', borderTop: '1px solid var(--border-color)', padding: '16px 20px calc(16px + env(safe-area-inset-bottom, 0px)) 20px', display: 'flex', gap: '12px', zIndex: 100, boxSizing: 'border-box', marginTop: '30px' }}>
         {user?.role !== 'Buyer' ? (
           <div style={{ width: '100%', color: 'var(--gold)', fontSize: '0.86rem', fontWeight: '600', padding: '8px 0', textAlign: 'center' }}>
             🔒 Seller accounts cannot purchase or add products to bag.
