@@ -98,8 +98,9 @@ export const AuthProvider = ({ children }) => {
       });
       const data = await response.json();
       if (response.ok) {
-        // Sync user state with fresh DB data
-        const updatedUser = { ...user, ...data };
+        // Always use fresh server data as the source of truth.
+        // Keep the token since the profile endpoint doesn't return it.
+        const updatedUser = { ...data, token: activeToken };
         setUser(updatedUser);
         localStorage.setItem('lcu_user', JSON.stringify(updatedUser));
         return data;

@@ -142,13 +142,25 @@ function AdminRoute({ children }) {
   return user && user.isAdmin ? children : <Navigate to="/admin-login" replace />;
 }
 
+// ── Route guards ───────────────────────────────────────────────
+// Locks /pro-dashboard to active PRO sellers only.
+// Non-PRO sellers are sent back to /profile (standard dashboard).
+function ProRoute({ children }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/auth" replace />;
+  if (user.role === 'Buyer') return <Navigate to="/profile" replace />;
+  if (!user.isPro) return <Navigate to="/profile" replace />;
+  return children;
+}
+
 // ── Role-based dashboard ─────────────────────────────────────────
+// /profile always checks isPro and hard-redirects to the right dashboard.
+// This means PRO sellers can never accidentally land on the standard UI.
 function RoleBasedDashboard() {
   const { user } = useAuth();
-  // Buyers get the Buyer Dashboard
   if (user?.role === 'Buyer') return <BuyerDashboard />;
-  // Paid PRO sellers go to their Pro Dashboard automatically, standard sellers go to standard Dashboard
-  if (user?.isPro) return <ProDashboard />;
+  // PRO sellers are redirected to the dedicated PRO route (clean URL separation)
+  if (user?.isPro) return <Navigate to="/pro-dashboard" replace />;
   return <Dashboard />;
 }
 
@@ -230,7 +242,8 @@ function AppContent() {
                   <Route path="/post"        element={<PrivateRoute><SellerRoute><PostProduct /></SellerRoute></PrivateRoute>} />
                   <Route path="/edit/:id"    element={<PrivateRoute><SellerRoute><PostProduct /></SellerRoute></PrivateRoute>} />
                   <Route path="/profile"     element={<PrivateRoute><RoleBasedDashboard /></PrivateRoute>} />
-                  <Route path="/pro-dashboard" element={<PrivateRoute><SellerRoute><ProDashboard /></SellerRoute></PrivateRoute>} />
+                  {/* /pro-dashboard is strictly for active PRO sellers — ProRoute enforces this */}
+                  <Route path="/pro-dashboard" element={<ProRoute><ProDashboard /></ProRoute>} />
                   <Route path="/store/:userId" element={<PrivateRoute><ProStorefront /></PrivateRoute>} />
                   <Route path="/withdraw"    element={<PrivateRoute><SellerRoute><Withdraw /></SellerRoute></PrivateRoute>} />
                   <Route path="/checkout/:orderId" element={<PrivateRoute><Checkout /></PrivateRoute>} />
