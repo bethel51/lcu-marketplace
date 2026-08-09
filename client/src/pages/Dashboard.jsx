@@ -113,20 +113,21 @@ export default function Dashboard() {
       const activeUserId = profile?._id || profile?.id || user?._id || user?.id;
 
       if (activeUserId) {
-        // Fetch THIS user's products using seller filter + auth token
-        const res = await fetch(`${API_URL}/api/products?seller=${activeUserId}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
+        // Fetch products and orders IN PARALLEL — much faster
+        const [productsRes, ordersRes] = await Promise.all([
+          fetch(`${API_URL}/api/products?seller=${activeUserId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          }),
+          fetch(`${API_URL}/api/payments/my-orders`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+        ]);
+
+        if (productsRes.ok) {
+          const data = await productsRes.json();
           const all = Array.isArray(data) ? data : (data.products || []);
           setMyProducts(all);
         }
-
-        // Fetch user orders/transactions
-        const ordersRes = await fetch(`${API_URL}/api/payments/my-orders`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
         if (ordersRes.ok) {
           const ordersData = await ordersRes.json();
           setOrders(ordersData);
@@ -548,7 +549,7 @@ export default function Dashboard() {
                       </h3>
                     </div>
                     <p style={{ color: 'var(--text-gray)', fontSize: '0.85rem', lineHeight: '1.5', margin: 0 }}>
-                      Unlock private performance analytics, dual listings (post 2 items at once), 5 photos per product, and custom discount pricing banners. Up to 20 active listings. Only <strong>₦2,000 / month</strong>.
+                      Unlock private performance analytics, dual listings (post 2 items at once), <strong>5 photos</strong> per product (vs 2 standard), and custom discount pricing banners. Up to 20 active listings. Only <strong>₦2,000 / month</strong>.
                     </p>
                   </div>
                   <button onClick={handleUpgradeToPro} className="pro-storefront-link" style={{ border: 'none', cursor: 'pointer' }}>

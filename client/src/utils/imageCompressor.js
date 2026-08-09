@@ -1,13 +1,13 @@
 /**
- * Compresses an image file on the client using HTML5 Canvas
- * Resizes max dimension to 1200px and converts to WebP/JPEG at 0.82 quality.
- * Shrinks 5-10MB mobile phone photos to ~100-200KB in milliseconds.
+ * Compresses an image file on the client using HTML5 Canvas.
+ * Resizes max dimension to 900px and converts to WebP at 0.75 quality.
+ * Shrinks 5-10MB mobile photos to ~60-120KB very quickly.
  */
-export async function compressImage(file, maxDimension = 1200, quality = 0.82) {
+export async function compressImage(file, maxDimension = 900, quality = 0.75) {
   if (!file || !file.type.startsWith('image/')) return file;
   
   // Return small images as-is
-  if (file.size < 200 * 1024) return file;
+  if (file.size < 150 * 1024) return file;
 
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -34,12 +34,12 @@ export async function compressImage(file, maxDimension = 1200, quality = 0.82) {
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         
-        // Smooth scaling
+        // Medium quality for fast processing
         ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
+        ctx.imageSmoothingQuality = 'medium';
         ctx.drawImage(img, 0, 0, width, height);
 
-        const mimeType = file.type === 'image/png' ? 'image/png' : 'image/webp';
+        const mimeType = 'image/webp';
         canvas.toBlob(
           (blob) => {
             if (!blob) {

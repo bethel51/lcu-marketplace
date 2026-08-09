@@ -8,7 +8,7 @@ export default function Checkout() {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { token, user } = useAuth();
+  const { token, user, fetchProfile } = useAuth();
   const { showToast } = useToast();
 
   const searchParams = new URLSearchParams(location.search);
@@ -212,10 +212,12 @@ export default function Checkout() {
       });
       const data = await res.json();
       if (res.ok) {
-        showToast('Payment verified successfully!', 'success');
+        showToast(type === 'pro_upgrade' ? '⭐ Welcome to PRO! Redirecting to your new dashboard...' : 'Payment verified successfully!', 'success');
         setStep('success');
+        // Refresh profile so AuthContext picks up isPro = true
+        await fetchProfile();
         setTimeout(() => {
-          navigate('/profile');
+          navigate(type === 'pro_upgrade' ? '/pro-dashboard' : '/profile');
         }, 2000);
       } else {
         showToast(data.message || 'OTP verification failed', 'error');
@@ -243,10 +245,11 @@ export default function Checkout() {
       });
       const data = await res.json();
       if (res.ok) {
-        showToast('Transfer payment verified successfully!', 'success');
+        showToast(type === 'pro_upgrade' ? '⭐ Welcome to PRO! Redirecting to your new dashboard...' : 'Transfer payment verified successfully!', 'success');
         setStep('success');
+        await fetchProfile();
         setTimeout(() => {
-          navigate('/profile');
+          navigate(type === 'pro_upgrade' ? '/pro-dashboard' : '/profile');
         }, 2000);
       } else {
         showToast(data.message || 'Payment verification failed', 'error');
@@ -274,10 +277,11 @@ export default function Checkout() {
       });
       const data = await res.json();
       if (res.ok) {
-        showToast('USSD payment verified successfully!', 'success');
+        showToast(type === 'pro_upgrade' ? '⭐ Welcome to PRO! Redirecting to your new dashboard...' : 'USSD payment verified successfully!', 'success');
         setStep('success');
+        await fetchProfile();
         setTimeout(() => {
-          navigate('/profile');
+          navigate(type === 'pro_upgrade' ? '/pro-dashboard' : '/profile');
         }, 2000);
       } else {
         showToast(data.message || 'USSD verification failed', 'error');

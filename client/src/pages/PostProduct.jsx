@@ -53,7 +53,7 @@ function calcDiscountPct(price, orig) {
 function ProductForm({ form, onChange, isPro, slotLabel = '' }) {
   const [compressing, setCompressing] = useState(false);
   const [dragOver, setDragOver]       = useState(false);
-  const maxPhotos = isPro ? 5 : 3;
+  const maxPhotos = isPro ? 5 : 2;
   const discountPct = calcDiscountPct(form.price, form.originalPrice);
 
   const processFile = async (file) => {
@@ -474,7 +474,7 @@ export default function PostProduct() {
                 ? 'Make changes to your listing and save below.'
                 : isPro
                   ? 'PRO seller — up to 20 active listings, 5 photos, discount pricing & more.'
-                  : 'Sell, swap, or offer services to fellow LCU students.'}
+                  : 'Sell, swap, or offer services to fellow LCU students. Up to 2 photos per listing.'}
             </p>
           </div>
 

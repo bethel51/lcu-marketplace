@@ -176,6 +176,9 @@ router.post('/login', async (req, res) => {
         isVerifiedStudent: user.isVerifiedStudent,
         isAdmin: user.isAdmin,
         role: user.role || 'Seller',
+        isPro: user.isPro || false,
+        proSince: user.proSince || null,
+        proExpiresAt: user.proExpiresAt || null,
         token: generateToken(user._id)
       });
     } else {
@@ -227,6 +230,9 @@ router.post('/verify-otp', async (req, res) => {
       isVerifiedStudent: user.isVerifiedStudent,
       isAdmin: user.isAdmin,
       role: user.role || 'Seller',
+      isPro: user.isPro || false,
+      proSince: user.proSince || null,
+      proExpiresAt: user.proExpiresAt || null,
       token: generateToken(user._id)
     });
   } catch (error) {
