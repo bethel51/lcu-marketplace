@@ -270,10 +270,46 @@ router.post('/resend-otp', async (req, res) => {
 router.get('/profile', protect, async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select('-password').populate('wishlist');
+    
     // Auto-expire PRO status if subscription has lapsed
-    if (user.isPro && user.proExpiresAt && new Date() > new Date(user.proExpiresAt)) {
-      user.isPro = false;
-      await user.save();
+    if (user.isPro && user.proExpiresAt) {
+      const now = new Date();
+      const expiresAt = new Date(user.proExpiresAt);
+      
+      if (now > expiresAt) {
+        user.isPro = false;
+        await user.save();
+        
+        await Notification.create({
+          recipient: user._id,
+          message: '⚠️ Your PRO Seller subscription has expired. Upgrade again to restore your storefront & listings!',
+          type: 'info'
+        });
+      } else {
+        // Calculate remaining time in milliseconds and convert to days
+        const timeLeft = expiresAt.getTime() - now.getTime();
+        const daysLeft = timeLeft / (1000 * 60 * 60 * 24);
+        
+        // If 2 days (48 hours) or less remain, send a renewal warning reminder notification
+        if (daysLeft <= 2) {
+          const hoursLeft = Math.round(timeLeft / (1000 * 60 * 60));
+          
+          // Check if we already notified them recently to avoid spamming on every refresh
+          const existingNotification = await Notification.findOne({
+            recipient: user._id,
+            message: { $regex: 'expires soon|expires in' },
+            createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } // within last 24h
+          });
+          
+          if (!existingNotification) {
+            await Notification.create({
+              recipient: user._id,
+              message: `⏰ Your PRO Seller subscription expires in ${hoursLeft > 24 ? '2 days' : hoursLeft + ' hours'}. Renew your plan to avoid interruption.`,
+              type: 'info'
+            });
+          }
+        }
+      }
     }
     res.json(user);
   } catch (error) {
