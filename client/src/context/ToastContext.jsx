@@ -1,142 +1,25 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
-import { API_URL } from '../config';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 
 const ToastContext = createContext(null);
 
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const pollRef = useRef(null);
-
-  // ── Fetch notifications from backend ───────────────────────
-  const fetchNotifications = useCallback(async () => {
-    const token = localStorage.getItem('lcu_token');
-    if (!token) return;
-    try {
-      const res = await fetch(`${API_URL}/api/notifications`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) return;
-      const data = await res.json();
-      // Normalise fields: backend uses _id and createdAt
-      const mapped = data.map(n => ({
-        id: n._id,
-        message: n.message,
-        type: n.type || 'info',
-        time: n.createdAt,
-        read: n.read,
-      }));
-      setNotifications(mapped);
-      setUnreadCount(mapped.filter(n => !n.read).length);
-    } catch {
-      // silent fail — don't block UI if network is offline
-    }
-  }, []);
-
-  // ── Start/stop polling when token is present ───────────────
-  useEffect(() => {
-    const token = localStorage.getItem('lcu_token');
-    if (!token) return;
-    // Immediate fetch on mount
-    fetchNotifications();
-    // Poll every 30 seconds for new notifications
-    pollRef.current = setInterval(fetchNotifications, 30_000);
-    return () => clearInterval(pollRef.current);
-  }, [fetchNotifications]);
-
-  // Re-trigger polling if user logs in after mount
-  useEffect(() => {
-    const handleStorage = (e) => {
-      if (e.key === 'lcu_token') {
-        clearInterval(pollRef.current);
-        if (e.newValue) {
-          fetchNotifications();
-          pollRef.current = setInterval(fetchNotifications, 30_000);
-        } else {
-          setNotifications([]);
-          setUnreadCount(0);
-        }
-      }
-    };
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
-  }, [fetchNotifications]);
 
   // ── Show a local toast (transient, client-only) ────────────
   const showToast = useCallback((message, type = 'success') => {
     const id = Date.now() + Math.random().toString(36).substr(2, 9);
-    const entry = { id, message, type, time: new Date(), read: false };
-
-    setToasts(prev => [...prev.slice(-4), entry]);
-
-    // Also add to notification list locally so it's visible immediately
-    setNotifications(prev => [entry, ...prev].slice(0, 50));
-    setUnreadCount(c => c + 1);
-
-    // Native Browser Push Notification
-    if ('Notification' in window) {
-      if (Notification.permission === 'granted') {
-        try {
-          new Notification('🔔 LCU Student Marketplace', {
-            body: message,
-            icon: '/favicon.svg',
-            badge: '/favicon.svg'
-          });
-        } catch (e) {
-          console.warn('Native notification failed to show:', e);
-        }
-      } else if (Notification.permission !== 'denied') {
-        Notification.requestPermission();
-      }
-    }
-
+    setToasts(prev => [...prev.slice(-4), { id, message, type }]);
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
     }, 4000);
-  }, []);
-
-  // Request Notification permission on mount
-  useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
   }, []);
 
   const removeToast = useCallback(id => {
     setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
 
-  // Mark all as read — local state + backend
-  const markAllRead = useCallback(async () => {
-    setUnreadCount(0);
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    const token = localStorage.getItem('lcu_token');
-    if (!token) return;
-    try {
-      await fetch(`${API_URL}/api/notifications/read`, {
-        method: 'PUT',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-    } catch {}
-  }, []);
-
-  // Clear all — local state + backend
-  const clearNotifications = useCallback(async () => {
-    setNotifications([]);
-    setUnreadCount(0);
-    const token = localStorage.getItem('lcu_token');
-    if (!token) return;
-    try {
-      await fetch(`${API_URL}/api/notifications`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-    } catch {}
-  }, []);
-
   return (
-    <ToastContext.Provider value={{ showToast, notifications, unreadCount, markAllRead, clearNotifications, fetchNotifications }}>
+    <ToastContext.Provider value={{ showToast }}>
       {children}
 
       {/* ── Premium Toast Container ─────────────────────────── */}

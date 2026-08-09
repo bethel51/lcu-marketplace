@@ -19,10 +19,6 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDocUser, setSelectedDocUser] = useState(null);
 
-  // Broadcast notification state
-  const [broadcastMsg, setBroadcastMsg] = useState('');
-  const [broadcastType, setBroadcastType] = useState('info');
-  const [broadcastSending, setBroadcastSending] = useState(false);
 
   // Guard non-admins
   useEffect(() => {
@@ -123,21 +119,7 @@ export default function AdminDashboard() {
     else showToast((await res.json()).message, 'error');
   };
 
-  const handleBroadcast = async () => {
-    if (!broadcastMsg.trim()) return showToast('Enter a message first', 'error');
-    setBroadcastSending(true);
-    try {
-      const res = await fetch(`${API_URL}/api/auth/admin/broadcast`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: broadcastMsg.trim(), type: broadcastType })
-      });
-      const data = await res.json();
-      if (res.ok) { showToast(data.message, 'success'); setBroadcastMsg(''); }
-      else showToast(data.message, 'error');
-    } catch { showToast('Error sending notification', 'error'); }
-    finally { setBroadcastSending(false); }
-  };
+
 
   // ── Computed ──────────────────────────────────────────────────
 
@@ -182,7 +164,6 @@ export default function AdminDashboard() {
     { id: 'users',        icon: '👥', label: 'Users',    badge: users.length },
     { id: 'verification', icon: '🎓', label: 'Verify',   badge: pendingVerifications.length },
     { id: 'orders',       icon: '💳', label: 'Orders',   badge: 0 },
-    { id: 'notify',       icon: '📢', label: 'Notify',   badge: 0 },
   ];
 
   if (loading) {
@@ -483,48 +464,6 @@ export default function AdminDashboard() {
           </>
         )}
 
-        {/* ══ BROADCAST NOTIFICATION TAB ══ */}
-        {activeTab === 'notify' && (
-          <>
-            <div className="dash-section-header">
-              <h2 className="dash-section-title">📢 Send a Message to All Users</h2>
-            </div>
-            <div className="glass-panel" style={{ padding: '28px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '18px', maxWidth: '600px' }}>
-              <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: 0 }}>
-                This sends a notification to every student on the platform. Good for announcements, downtime warnings, or updates.
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: '600' }}>Type</label>
-                <select value={broadcastType} onChange={e => setBroadcastType(e.target.value)} className="glass-input" style={{ maxWidth: '200px' }}>
-                  <option value="info" style={{ background: 'var(--bg-input)' }}>ℹ️ Info</option>
-                  <option value="success" style={{ background: 'var(--bg-input)' }}>✅ Good News</option>
-                  <option value="warning" style={{ background: 'var(--bg-input)' }}>⚠️ Warning</option>
-                  <option value="error" style={{ background: 'var(--bg-input)' }}>🚨 Alert</option>
-                </select>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: '600' }}>Message</label>
-                <textarea
-                  value={broadcastMsg}
-                  onChange={e => setBroadcastMsg(e.target.value)}
-                  placeholder="e.g. The marketplace will be down for maintenance at 2pm today."
-                  className="glass-input"
-                  rows={4}
-                  style={{ resize: 'vertical', fontFamily: 'inherit' }}
-                />
-                <span style={{ fontSize: '0.73rem', color: 'var(--text-muted)', textAlign: 'right' }}>{broadcastMsg.length} chars</span>
-              </div>
-              <button
-                onClick={handleBroadcast}
-                disabled={broadcastSending || !broadcastMsg.trim()}
-                className="btn-primary"
-                style={{ padding: '12px 24px', fontSize: '0.9rem', alignSelf: 'flex-start' }}
-              >
-                {broadcastSending ? '⏳ Sending…' : `📢 Send to ${users.length} Users`}
-              </button>
-            </div>
-          </>
-        )}
 
       </main>
 

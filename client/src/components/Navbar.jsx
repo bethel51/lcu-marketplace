@@ -117,16 +117,14 @@ function EditProfileModal({ isOpen, onClose }) {
 /* ─── Main Navbar ────────────────────────────────────────────── */
 export default function Navbar() {
   const { user, logout } = useAuth();
-  const { notifications, unreadCount, markAllRead, clearNotifications } = useToast();
+  const { showToast: _showToast } = useToast(); // keep context alive
   const navigate = useNavigate();
   const location = useLocation();
 
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
   const [modalOpen, setModalOpen] = React.useState(false);
-  const [notifOpen, setNotifOpen] = React.useState(false);
   const [cartOpen, setCartOpen] = React.useState(false);
   const dropdownRef = React.useRef(null);
-  const notifRef = React.useRef(null);
   const cartRef = React.useRef(null);
   const { cartItems, removeFromCart, clearCart } = useCart();
   const [theme, setTheme] = React.useState(() => localStorage.getItem('theme') || 'light');
@@ -139,17 +137,12 @@ export default function Navbar() {
   React.useEffect(() => {
     const handler = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setDropdownOpen(false);
-      if (notifRef.current && !notifRef.current.contains(e.target)) setNotifOpen(false);
       if (cartRef.current && !cartRef.current.contains(e.target)) setCartOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const handleNotifOpen = () => {
-    setNotifOpen(prev => !prev);
-    if (!notifOpen) markAllRead();
-  };
 
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
@@ -292,44 +285,7 @@ export default function Navbar() {
                   )}
                 </div>
 
-                <div ref={notifRef} style={{ position: 'relative' }}>
-                  <button className="nav-icon-btn notif-bell-btn" onClick={handleNotifOpen} aria-label="Notifications">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                    </svg>
-                    {unreadCount > 0 && <span className="notif-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>}
-                  </button>
 
-                  {notifOpen && (
-                    <div className="notif-panel">
-                      <div className="notif-panel-header">
-                        <span className="notif-panel-title">🔔 Notifications</span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          {notifications.length > 0 && (
-                            <button className="notif-clear-btn" onClick={clearNotifications}>Clear all</button>
-                          )}
-                          <button onClick={() => setNotifOpen(false)} style={{ background:'none',border:'none',color:'var(--text-muted)',fontSize:'1.1rem',cursor:'pointer' }} aria-label="Close">✕</button>
-                        </div>
-                      </div>
-                      <div className="notif-list">
-                        {notifications.length === 0 ? (
-                          <div className="notif-empty">🎉 You're all caught up!</div>
-                        ) : (
-                          notifications.map(n => (
-                            <div key={n.id} className="notif-item">
-                              <span className={`notif-dot notif-dot-${n.type}`} />
-                              <div style={{ flex: 1 }}>
-                                <div className="notif-item-msg">{n.message}</div>
-                                <div className="notif-item-time">{n.time ? new Date(n.time).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : ''}</div>
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
 
                 {/* Avatar / profile dropdown */}
                 <div style={{ position: 'relative' }} ref={dropdownRef}>
@@ -383,21 +339,7 @@ export default function Navbar() {
             {isActive('/marketplace') && <span className="btab-dot" />}
           </Link>
 
-          {/* 2. Alerts */}
-          <button
-            onClick={handleNotifOpen}
-            className={`btab-item${notifOpen ? ' btab-active' : ''}`}
-            aria-label="Notifications"
-          >
-            <span className="btab-icon" style={{ position: 'relative' }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-              </svg>
-              {unreadCount > 0 && <span className="btab-notif-dot">{unreadCount > 9 ? '9+' : unreadCount}</span>}
-            </span>
-            <span className="btab-label">Alerts</span>
-          </button>
+
 
           {/* 3. Center FAB — Sellers only */}
           {user.role !== 'Buyer' && (

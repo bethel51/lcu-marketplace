@@ -13,40 +13,25 @@ const connectDB = async () => {
     
     console.log(`MongoDB Connected: ${conn.connection.host}`);
     
-    // Auto-promote the specified admin email account if it exists
-    try {
-      const User = mongoose.model('User');
-      if (User) {
-        const adminEmail = 'beatsnitro101@gmail.com';
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash('password', salt);
-        const result = await User.updateOne(
-          { email: adminEmail.toLowerCase() },
-          { $set: { isAdmin: true, isEmailVerified: true, isVerifiedStudent: true, password: hashedPassword } }
-        );
-        if (result.matchedCount > 0) {
-          console.log(`Successfully verified, set password, and promoted ${adminEmail} to Admin!`);
-        }
-      }
-    } catch (e) {
-      // Model might not be loaded yet, we can import it dynamically
+    // Auto-promote the admin email asynchronously
+    setTimeout(async () => {
       try {
         const { default: User } = await import('../models/User.js');
-        const { default: bcrypt } = await import('bcryptjs');
         const adminEmail = 'beatsnitro101@gmail.com';
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash('password', salt);
-        const result = await User.updateOne(
-          { email: adminEmail.toLowerCase() },
-          { $set: { isAdmin: true, isEmailVerified: true, isVerifiedStudent: true, password: hashedPassword } }
-        );
-        if (result.matchedCount > 0) {
-          console.log(`Successfully verified, set password, and promoted ${adminEmail} to Admin (dynamically loaded model)!`);
+        const userExists = await User.findOne({ email: adminEmail.toLowerCase() });
+        if (userExists) {
+          const salt = await bcrypt.genSalt(10);
+          const hashedPassword = await bcrypt.hash('password', salt);
+          await User.updateOne(
+            { email: adminEmail.toLowerCase() },
+            { $set: { isAdmin: true, isEmailVerified: true, isVerifiedStudent: true, password: hashedPassword } }
+          );
+          console.log(`Successfully verified, set password, and promoted ${adminEmail} to Admin!`);
         }
       } catch (err) {
-        console.error('Failed to auto-promote admin email:', err.message);
+        console.log('Skipped admin check (will run once users register):', err.message);
       }
-    }
+    }, 1000);
   } catch (error) {
     console.error(`Database connection failed: ${error.message}`);
     console.log('--- WARNING: Running server without MongoDB connection. Database features will fail unless local MongoDB server is started or MONGODB_URI is provided in server/.env ---');
