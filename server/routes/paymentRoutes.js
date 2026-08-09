@@ -57,6 +57,12 @@ router.post('/initialize', protect, async (req, res) => {
       amount = 500; // ₦500 flat fee for boosting
     } else if (orderType === 'verification') {
       amount = 1000; // ₦1,000 flat fee for LCU Student Verification badge
+    } else if (orderType === 'pro_upgrade') {
+      // PRO Seller subscription — ₦2,000 / month
+      if (req.user.isPro) {
+        return res.status(400).json({ message: 'You are already a PRO seller.' });
+      }
+      amount = 2000;
     } else {
       return res.status(400).json({ message: 'Invalid order type' });
     }
@@ -182,6 +188,20 @@ router.post('/verify', protect, async (req, res) => {
           user.isVerificationFeePaid = true;
           await user.save();
         }
+      } else if (order.orderType === 'pro_upgrade') {
+        // Activate PRO seller status for 30 days
+        const user = await User.findById(order.buyer);
+        if (user) {
+          user.isPro = true;
+          user.proSince = new Date();
+          user.proExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+          await user.save();
+        }
+        await createNotification(
+          order.buyer,
+          '⭐ Welcome to PRO! Your PRO Seller account is now active for 30 days.',
+          'success'
+        );
       }
 
       await order.save();

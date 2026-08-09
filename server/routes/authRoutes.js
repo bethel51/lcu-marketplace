@@ -264,6 +264,11 @@ router.post('/resend-otp', async (req, res) => {
 router.get('/profile', protect, async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select('-password').populate('wishlist');
+    // Auto-expire PRO status if subscription has lapsed
+    if (user.isPro && user.proExpiresAt && new Date() > new Date(user.proExpiresAt)) {
+      user.isPro = false;
+      await user.save();
+    }
     res.json(user);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -528,6 +533,44 @@ router.delete('/delete-account', protect, async (req, res) => {
     await User.findByIdAndDelete(userId);
 
     res.json({ message: 'Account and all associated data deleted permanently.' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ── Admin: Toggle PRO seller status ───────────────────────────
+router.put('/users/:id/toggle-pro', protect, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ message: 'Admin access denied' });
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    user.isPro    = !user.isPro;
+    user.proSince = user.isPro ? new Date() : null;
+    await user.save();
+
+    res.json({
+      message: user.isPro
+        ? `${user.name} is now a PRO Seller ⭐`
+        : `${user.name}'s PRO status removed`,
+      isPro: user.isPro,
+      proSince: user.proSince
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ── Public: Get seller storefront profile ──────────────────────
+router.get('/storefront/:userId', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId)
+      .select('name isPro proSince storefrontBio ratings isVerifiedStudent');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

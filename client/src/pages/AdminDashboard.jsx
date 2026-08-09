@@ -325,6 +325,7 @@ export default function AdminDashboard() {
                         <td style={{ padding: '12px 16px' }}>
                           <div style={{ fontWeight: '700', color: 'var(--text-primary)', display: 'flex', gap: '6px', alignItems: 'center' }}>
                             {u.name}
+                            {u.isPro && <span style={{ background: 'rgba(234,179,8,0.15)', color: '#eab308', border: '1px solid rgba(234,179,8,0.3)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: '800' }}>⭐ PRO</span>}
                             {u.isAdmin && <span className="dash-boosted-badge" style={{ background: 'rgba(239,68,68,0.15)', color: '#f87171', border: '1px solid rgba(239,68,68,0.3)' }}>Admin</span>}
                           </div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{u.email}</div>
@@ -347,6 +348,29 @@ export default function AdminDashboard() {
                               style={{ padding: '5px 10px', fontSize: '0.73rem', color: u.isVerifiedStudent ? 'var(--warning)' : 'var(--success)', borderColor: u.isVerifiedStudent ? 'rgba(245,158,11,0.4)' : 'rgba(16,185,129,0.4)' }}
                             >
                               {u.isVerifiedStudent ? 'Revoke' : '✓ Verify'}
+                            </button>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const res = await fetch(`${API_URL}/api/auth/users/${u._id}/toggle-pro`, {
+                                    method: 'PUT',
+                                    headers: { 'Authorization': `Bearer ${token}` }
+                                  });
+                                  const data = await res.json();
+                                  if (res.ok) {
+                                    showToast(data.message, 'success');
+                                    loadAdminData(true);
+                                  } else {
+                                    showToast(data.message, 'error');
+                                  }
+                                } catch {
+                                  showToast('Failed to toggle PRO status', 'error');
+                                }
+                              }}
+                              className="btn-secondary"
+                              style={{ padding: '5px 10px', fontSize: '0.73rem', color: u.isPro ? '#f59e0b' : '#9ca3af', borderColor: u.isPro ? 'rgba(245,158,11,0.4)' : 'var(--border-color)' }}
+                            >
+                              {u.isPro ? '⭐ PRO' : '☆ Make PRO'}
                             </button>
                             {!u.isAdmin && (
                               <button onClick={() => handleDeleteUser(u._id, u.name)} className="btn-danger" style={{ padding: '5px 10px', fontSize: '0.73rem' }}>🚫 Ban</button>

@@ -105,7 +105,24 @@ const userSchema = new mongoose.Schema({
       type: Date,
       default: Date.now
     }
-  }]
+  }],
+  // PRO Seller fields
+  isPro: {
+    type: Boolean,
+    default: false
+  },
+  proSince: {
+    type: Date,
+    default: null
+  },
+  storefrontBio: {
+    type: String,
+    default: ''
+  },
+  proExpiresAt: {
+    type: Date,
+    default: null
+  }
 }, {
   timestamps: true
 });

@@ -14,13 +14,24 @@ const productSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  // PRO: Original price before discount (optional)
+  originalPrice: {
+    type: Number,
+    default: null
+  },
   description: {
     type: String,
     required: true
   },
+  // Legacy single image (kept for backwards compatibility)
   image: {
-    type: String, // Base64 data URI or image URL
+    type: String,
     default: ''
+  },
+  // PRO: Multiple images array (up to 8 for PRO, 4 for standard)
+  images: {
+    type: [String],
+    default: []
   },
   category: {
     type: String,
@@ -39,10 +50,27 @@ const productSchema = new mongoose.Schema({
     type: String,
     default: 'Any Safe Campus Meeting Point'
   },
+  // PRO: condition of the item
+  condition: {
+    type: String,
+    enum: ['New', 'Like New', 'Good', 'Fair'],
+    default: 'Good'
+  },
   status: {
     type: String,
     enum: ['Available', 'Sold'],
     default: 'Available'
+  },
+  // PRO: Extended product status (Available/Reserved/Sold)
+  productStatus: {
+    type: String,
+    enum: ['Available', 'Reserved', 'Sold'],
+    default: 'Available'
+  },
+  // PRO: Featured product flag (appears in Featured section)
+  isFeatured: {
+    type: Boolean,
+    default: false
   },
   isBoosted: {
     type: Boolean,
@@ -51,6 +79,19 @@ const productSchema = new mongoose.Schema({
   boostExpiry: {
     type: Date,
     default: null
+  },
+  // PRO Analytics
+  views: {
+    type: Number,
+    default: 0
+  },
+  saves: {
+    type: Number,
+    default: 0
+  },
+  enquiries: {
+    type: Number,
+    default: 0
   },
   reports: [{
     type: mongoose.Schema.Types.ObjectId,

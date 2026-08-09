@@ -6,6 +6,7 @@ import { API_URL } from '../config';
 export default function Marketplace() {
   const { token, user } = useAuth();
   const [allProducts, setAllProducts] = useState([]);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Search & Filter state
@@ -57,6 +58,12 @@ export default function Marketplace() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
+      // Fetch featured products
+      const featRes = await fetch(`${API_URL}/api/products/featured`);
+      if (featRes.ok) {
+        setFeaturedProducts(await featRes.json());
+      }
+
       let url = `${API_URL}/api/products?status=Available`;
       if (search)  url += `&search=${encodeURIComponent(search)}`;
       if (hostel  && hostel  !== 'All') url += `&hostel=${encodeURIComponent(hostel)}`;
@@ -304,12 +311,19 @@ export default function Marketplace() {
         })}
       </div>
 
-      {/* ─── Results Row ──────────────────────────────────────── */}
-      <div className="mkt-results-row">
-        <span className="mkt-results-count">
-          {loading ? 'Loading…' : `${sortedProducts.length} listing${sortedProducts.length !== 1 ? 's' : ''} found`}
-        </span>
-      </div>
+      {/* ─── Featured Products (PRO) ───────────────────────────── */}
+      {featuredProducts.length > 0 && !category && !search && (
+        <section className="mkt-featured-section animate-fade-in">
+          <h2 className="mkt-featured-title">⭐ Featured Listings</h2>
+          <div className="mkt-featured-scroll">
+            {featuredProducts.map(product => (
+              <div key={product._id} className="mkt-featured-item">
+                <ProductCard product={product} />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ─── Product Grid ─────────────────────────────────────── */}
       <main className="mkt-grid-area">

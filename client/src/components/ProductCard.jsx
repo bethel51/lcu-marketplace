@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 
 const ProductCard = React.memo(function ProductCard({ product }) {
-  const { _id, name, price, image, category, hostelLocation, seller, status } = product;
+  const { _id, name, price, originalPrice, image, images, category, hostelLocation, seller, status, productStatus, isBoosted, isFeatured, condition } = product;
   const { user } = useAuth();
   const { addToCart, removeFromCart, isInCart } = useCart();
   const navigate = useNavigate();
@@ -24,38 +24,54 @@ const ProductCard = React.memo(function ProductCard({ product }) {
   };
 
   const handleCardClick = (e) => {
-    // If user clicks a button or interactive element, do not trigger card navigation
     if (e.target.closest('button') || e.target.closest('a')) {
       return;
     }
     navigate(`/product/${_id}`);
   };
 
+  // Calculate discount
+  const showDiscount = originalPrice && originalPrice > price;
+  const discountPct = showDiscount ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
+  
+  const pStatus = productStatus || status || 'Available';
+  const displayImage = images && images.length > 0 ? images[0] : image;
+
   return (
     <div 
-      className="premium-card animate-fade-in" 
+      className={`premium-card animate-fade-in${isBoosted ? ' boosted-card' : ''}`} 
       onClick={handleCardClick}
-      style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', height: '100%' }}
+      style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}
     >
       {/* Floating Badges */}
       <div style={styles.badgeContainer}>
         <span style={styles.categoryBadge}>{getCategoryEmoji(category)} {category}</span>
         {isSameHostel && <span style={styles.hostelBadge}>🏠 Same Hostel</span>}
-        {status === 'Sold' && <span style={styles.soldBadge}>SOLD</span>}
+        {pStatus === 'Sold' && <span style={styles.soldBadge}>SOLD</span>}
+        {pStatus === 'Reserved' && <span style={styles.reservedBadge}>RESERVED</span>}
+        {isBoosted && <span className="boost-badge">🔥 BOOSTED</span>}
+        {seller?.isPro && <span className="pro-seller-badge-card">⭐ PRO SELLER</span>}
       </div>
 
       {/* Image Container with Gradient Overlay */}
       <div className="premium-card-img-container">
-        {image ? (
+        {displayImage ? (
           <>
             <img
-              src={image}
+              src={displayImage}
               alt={name}
               className="premium-card-img"
               decoding="async"
               loading="lazy"
             />
             <div className="premium-card-img-overlay" />
+            {images && images.length > 1 && (
+              <div className="card-images-indicator">
+                {images.map((_, i) => (
+                  <span key={i} className={`indicator-dot${i === 0 ? ' active' : ''}`} />
+                ))}
+              </div>
+            )}
           </>
         ) : (
           <div style={styles.placeholderImg}>
@@ -72,11 +88,27 @@ const ProductCard = React.memo(function ProductCard({ product }) {
       {/* Card Info */}
       <div className="premium-card-info" style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
         <div className="premium-card-price-row">
-          <span className="premium-card-price">₦{price.toLocaleString()}</span>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {showDiscount ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <span className="premium-card-price main-sale-price">₦{price.toLocaleString()}</span>
+                <span className="premium-card-original-strike">₦{originalPrice.toLocaleString()}</span>
+                <span className="discount-pct-badge">{discountPct}% OFF</span>
+              </div>
+            ) : (
+              <span className="premium-card-price">₦{price.toLocaleString()}</span>
+            )}
+          </div>
           {seller?.isVerifiedStudent && <VerifiedBadge />}
         </div>
 
         <h3 className="premium-card-title" title={name}>{name}</h3>
+        {condition && (
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-gray)', marginBottom: '8px', display: 'flex', gap: '6px', alignItems: 'center' }}>
+            <span>Condition:</span>
+            <span className={`condition-tag condition-${condition.toLowerCase().replace(' ', '-')}`}>{condition}</span>
+          </div>
+        )}
 
         <div style={{ marginTop: 'auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
@@ -196,6 +228,16 @@ const styles = {
   },
   soldBadge: {
     background:   'rgba(239, 68, 68, 0.9)',
+    backdropFilter: 'blur(8px)',
+    color:        '#fff',
+    fontSize:     '0.68rem',
+    fontWeight:   '800',
+    padding:      '4px 9px',
+    borderRadius: '999px',
+    letterSpacing:'0.05em',
+  },
+  reservedBadge: {
+    background:   'rgba(245, 158, 11, 0.9)',
     backdropFilter: 'blur(8px)',
     color:        '#fff',
     fontSize:     '0.68rem',

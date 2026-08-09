@@ -29,6 +29,13 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { showToast } = useToast();
 
+  // Redirect PRO sellers to their specialized dashboard
+  useEffect(() => {
+    if (user?.isPro) {
+      navigate('/pro-dashboard', { replace: true });
+    }
+  }, [user, navigate]);
+
   const [profileData, setProfileData]   = useState(null);
   const wishCount                       = profileData?.wishlist?.length || 0;
   const [myProducts,  setMyProducts]    = useState([]);
@@ -305,6 +312,30 @@ export default function Dashboard() {
     }
   };
 
+  const handleUpgradeToPro = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/payments/initialize`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          orderType: 'pro_upgrade'
+        })
+      });
+      const resData = await response.json();
+      if (!response.ok) {
+        showToast(resData.message || 'PRO upgrade initialization failed', 'error');
+        return;
+      }
+      const { order, amount } = resData;
+      navigate(`/checkout/${order._id}?amount=${amount}&type=pro_upgrade`);
+    } catch {
+      showToast('Error initializing PRO upgrade payment', 'error');
+    }
+  };
+
   // ── Derived stats ─────────────────────────────────────────────
   const activeCount  = myProducts.filter(p => p.status === 'Available').length;
   const soldCount    = myProducts.filter(p => p.status === 'Sold').length;
@@ -479,6 +510,39 @@ export default function Dashboard() {
           {/* ══════════ OVERVIEW TAB ══════════ */}
           {activeTab === 'overview' && (
             <>
+              {/* PRO Seller Upgrade Banner */}
+              {!user?.isPro && (
+                <div className="buyer-become-seller-card animate-fade-in" style={{
+                  background: 'linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%)',
+                  border: '1.5px solid rgba(245,158,11,0.25)',
+                  boxShadow: '0 8px 32px rgba(245,158,11,0.1)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '24px',
+                  borderRadius: '16px',
+                  padding: '24px',
+                  gap: '20px',
+                  width: '100%',
+                  boxSizing: 'border-box'
+                }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '1.4rem' }}>👑</span>
+                      <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '800', background: 'linear-gradient(90deg, #f59e0b, #fef08a)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                        Upgrade to PRO Seller
+                      </h3>
+                    </div>
+                    <p style={{ color: 'var(--text-gray)', fontSize: '0.85rem', lineHeight: '1.5', margin: 0 }}>
+                      Unlock private performance analytics, dual listings (post 2 items at once), 5 photos per product, and custom discount pricing banners. Up to 20 active listings. Only <strong>₦2,000 / month</strong>.
+                    </p>
+                  </div>
+                  <button onClick={handleUpgradeToPro} className="pro-storefront-link" style={{ border: 'none', cursor: 'pointer' }}>
+                    🚀 Go PRO Now
+                  </button>
+                </div>
+              )}
+
               {/* Metrics */}
               <div className="dash-metrics">
                 {[

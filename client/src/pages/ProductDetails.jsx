@@ -53,6 +53,9 @@ export default function ProductDetails() {
       if (response.ok) {
         setProduct(data);
         
+        // Track view count for analytics
+        fetch(`${API_URL}/api/products/${id}/view`, { method: 'POST' }).catch(err => console.error(err));
+
         // Check if current user reported
         if (user && data.reports?.includes(user._id)) {
           setHasReported(true);
@@ -279,6 +282,13 @@ export default function ProductDetails() {
     if (!sellerObj.phoneNumber) {
       showToast('Seller phone number is not available', 'error');
       return;
+    }
+    // Track enquiry for analytics
+    if (token) {
+      fetch(`${API_URL}/api/products/${id}/enquiry`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      }).catch(err => console.error(err));
     }
     let rawPhone = sellerObj.phoneNumber.trim().replace(/\D/g, '');
     if (rawPhone.startsWith('0')) rawPhone = '234' + rawPhone.slice(1);
