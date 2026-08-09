@@ -10,3 +10,14 @@ client/dist/
 .DS_Store
 uploads/
 server/uploads/
+
+# Android / Gradle
+client/android/
+android/
+*.gradle
+.gradle/
+**/.gradle/
+**/build/
+**/.idea/
+**/.artifacts/
+local.properties
