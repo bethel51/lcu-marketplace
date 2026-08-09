@@ -3,6 +3,24 @@ import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 import { API_URL } from '../config';
+import {
+  CrownIcon,
+  StarIcon,
+  StoreIcon,
+  EyeIcon,
+  BookmarkIcon,
+  SendIcon,
+  PackageIcon,
+  PlusIcon,
+  ChartIcon,
+  HomeIcon,
+  TrashIcon,
+  EditIcon,
+  ZapIcon,
+  CheckCircleIcon,
+  RefreshIcon,
+  ImageIcon
+} from '../components/Icons';
 
 // ── Discount calculator helper ─────────────────────────────────
 export function calcDiscount(price, originalPrice) {
@@ -19,8 +37,11 @@ export function ProBadge({ size = 'sm' }) {
     <span className="pro-badge" style={{
       fontSize: isLg ? '0.78rem' : '0.64rem',
       padding: isLg ? '5px 12px' : '3px 8px',
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '4px'
     }}>
-      ⭐ PRO
+      <StarIcon size={isLg ? 14 : 11} style={{ fill: 'currentColor' }} /> PRO
     </span>
   );
 }
@@ -28,12 +49,12 @@ export function ProBadge({ size = 'sm' }) {
 // ── Status pill ────────────────────────────────────────────────
 function StatusPill({ status }) {
   const map = {
-    Available: { icon: '🟢', label: 'Available', cls: 'status-available' },
-    Reserved:  { icon: '🟡', label: 'Reserved',  cls: 'status-reserved'  },
-    Sold:      { icon: '🔴', label: 'Sold',       cls: 'status-sold'      },
+    Available: { label: 'Available', cls: 'status-available' },
+    Reserved:  { label: 'Reserved',  cls: 'status-reserved'  },
+    Sold:      { label: 'Sold',       cls: 'status-sold'      },
   };
   const s = map[status] || map['Available'];
-  return <span className={`product-status-pill ${s.cls}`}>{s.icon} {s.label}</span>;
+  return <span className={`product-status-pill ${s.cls}`}>{s.label}</span>;
 }
 
 // ── Mini Stat Card ─────────────────────────────────────────────
@@ -215,20 +236,24 @@ export default function ProDashboard() {
         </div>
         <div className="pro-hero-content">
           <div className="pro-hero-left">
-            <div className="pro-hero-crown">👑</div>
+            <div className="pro-hero-crown" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <CrownIcon size={32} style={{ color: '#fbbf24', fill: 'rgba(251,191,36,0.2)' }} />
+            </div>
             <div>
               <div className="pro-hero-title">LCU MARKETPLACE PRO</div>
               <div className="pro-hero-sub">
                 <ProBadge size="lg" /> You're a Pro Seller
               </div>
               {avgRating && (
-                <div className="pro-hero-rating">⭐ {avgRating} rating • {profileData?.ratings?.length} reviews</div>
+                <div className="pro-hero-rating" style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
+                  <StarIcon size={14} style={{ fill: 'currentColor' }} /> {avgRating} rating • {profileData?.ratings?.length} reviews
+                </div>
               )}
             </div>
           </div>
           <div className="pro-hero-right">
-            <Link to={`/store/${user?._id}`} className="pro-storefront-link">
-              🏪 View My Storefront
+            <Link to={`/store/${user?._id}`} className="pro-storefront-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <StoreIcon size={16} /> View My Storefront
             </Link>
           </div>
         </div>
@@ -236,31 +261,31 @@ export default function ProDashboard() {
 
       {/* ── Stats Row ────────────────────────────────────────── */}
       <div className="pro-stats-row">
-        <StatCard icon="👁️" label="Total Views"    value={analytics?.totalViews}     color="#3b82f6" />
-        <StatCard icon="❤️" label="Total Saves"    value={analytics?.totalSaves}     color="#ec4899" />
-        <StatCard icon="💬" label="Enquiries"      value={analytics?.totalEnquiries} color="#a78bfa" />
-        <StatCard icon="📦" label="Active Listings" value={analytics?.activeCount}   color="#10b981" />
+        <StatCard icon={<EyeIcon size={20} />} label="Total Views"    value={analytics?.totalViews}     color="#3b82f6" />
+        <StatCard icon={<BookmarkIcon size={20} />} label="Total Saves"    value={analytics?.totalSaves}     color="#ec4899" />
+        <StatCard icon={<SendIcon size={20} />} label="Enquiries"      value={analytics?.totalEnquiries} color="#a78bfa" />
+        <StatCard icon={<PackageIcon size={20} />} label="Active Listings" value={analytics?.activeCount}   color="#10b981" />
       </div>
 
       {/* ── Quick Actions ─────────────────────────────────────── */}
       <div className="pro-quick-actions">
         <button className="pro-action-btn pro-action-primary" onClick={() => navigate('/post')}>
-          <span className="pro-action-icon">➕</span>
+          <span className="pro-action-icon"><PlusIcon size={16} /></span>
           <span>Add Products</span>
         </button>
         <button
           className="pro-action-btn"
           onClick={() => setActiveTab('analytics')}
         >
-          <span className="pro-action-icon">📊</span>
+          <span className="pro-action-icon"><ChartIcon size={16} /></span>
           <span>Analytics</span>
         </button>
         <Link to={`/store/${user?._id}`} className="pro-action-btn">
-          <span className="pro-action-icon">🏪</span>
+          <span className="pro-action-icon"><StoreIcon size={16} /></span>
           <span>Storefront</span>
         </Link>
         <button className="pro-action-btn" onClick={() => setActiveTab('listings')}>
-          <span className="pro-action-icon">📋</span>
+          <span className="pro-action-icon"><PackageIcon size={16} /></span>
           <span>My Listings</span>
         </button>
       </div>
@@ -268,15 +293,17 @@ export default function ProDashboard() {
       {/* ── Tabs ─────────────────────────────────────────────── */}
       <div className="pro-tabs">
         {[
-          { key: 'overview',   label: '🏠 Overview'   },
-          { key: 'listings',   label: '📦 My Products' },
-          { key: 'analytics',  label: '📈 Analytics'  },
+          { key: 'overview',   label: 'Overview', icon: <HomeIcon size={14} style={{ marginRight: 6 }} />   },
+          { key: 'listings',   label: 'My Products', icon: <PackageIcon size={14} style={{ marginRight: 6 }} /> },
+          { key: 'analytics',  label: 'Analytics', icon: <ChartIcon size={14} style={{ marginRight: 6 }} />  },
         ].map(t => (
           <button
             key={t.key}
             className={`pro-tab-btn${activeTab === t.key ? ' pro-tab-btn--active' : ''}`}
             onClick={() => setActiveTab(t.key)}
+            style={{ display: 'inline-flex', alignItems: 'center' }}
           >
+            {t.icon}
             {t.label}
           </button>
         ))}
@@ -297,7 +324,9 @@ export default function ProDashboard() {
             {/* Most Viewed */}
             {analytics?.mostViewed && (
               <div className="pro-insight-card">
-                <div className="pro-insight-label">👁️ Most Viewed</div>
+                <div className="pro-insight-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <EyeIcon size={14} /> Most Viewed
+                </div>
                 <div className="pro-insight-name">{analytics.mostViewed.name}</div>
                 <div className="pro-insight-stat">{analytics.mostViewed.views} views</div>
               </div>
@@ -305,7 +334,9 @@ export default function ProDashboard() {
             {/* Most Saved */}
             {analytics?.mostSaved && (
               <div className="pro-insight-card">
-                <div className="pro-insight-label">❤️ Most Saved</div>
+                <div className="pro-insight-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <BookmarkIcon size={14} /> Most Saved
+                </div>
                 <div className="pro-insight-name">{analytics.mostSaved.name}</div>
                 <div className="pro-insight-stat">{analytics.mostSaved.saves} saves</div>
               </div>
@@ -322,10 +353,10 @@ export default function ProDashboard() {
 
           {myProducts.length === 0 ? (
             <div className="pro-empty-state">
-              <div style={{ fontSize: '3rem', marginBottom: 12 }}>📦</div>
+              <div style={{ marginBottom: 12, color: 'var(--text-gray)' }}><PackageIcon size={48} /></div>
               <p>You have no listings yet.</p>
-              <button className="btn-primary" onClick={() => navigate('/post')} style={{ marginTop: 12 }}>
-                ➕ Post Your First Product
+              <button className="btn-primary" onClick={() => navigate('/post')} style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <PlusIcon size={16} /> Post Your First Product
               </button>
             </div>
           ) : (
@@ -366,16 +397,16 @@ export default function ProDashboard() {
                   onClick={() => setStatusFilter(s)}
                   className={`pro-status-filter-btn${statusFilter === s ? ' active' : ''}`}
                 >
-                  {s === 'Available' ? '🟢' : s === 'Reserved' ? '🟡' : s === 'Sold' ? '🔴' : '🔵'} {s}
+                  {s}
                 </button>
               ))}
             </div>
           </div>
 
           <div className="pro-listings-summary">
-            <span>📦 {activeProducts.length} active</span>
-            <span>🟡 {myProducts.filter(p => p.productStatus === 'Reserved').length} reserved</span>
-            <span>🔴 {soldProducts.length} sold</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><PackageIcon size={14} /> {activeProducts.length} active</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><StarIcon size={14} /> {myProducts.filter(p => p.productStatus === 'Reserved').length} reserved</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><CheckCircleIcon size={14} /> {soldProducts.length} sold</span>
           </div>
 
           {filteredProducts.length === 0 ? (
@@ -398,8 +429,8 @@ export default function ProDashboard() {
             </div>
           )}
 
-          <button className="btn-primary" onClick={() => navigate('/post')} style={{ marginTop: 24, width: '100%' }}>
-            ➕ Post New Product
+          <button className="btn-primary" onClick={() => navigate('/post')} style={{ marginTop: 24, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+            <PlusIcon size={16} /> Post New Product
           </button>
         </div>
       )}
@@ -409,25 +440,25 @@ export default function ProDashboard() {
       {/* ═══════════════════════════════════════════════════════ */}
       {activeTab === 'analytics' && (
         <div className="pro-tab-content animate-fade-in">
-          <h2 className="pro-section-title" style={{ marginBottom: 20 }}>📈 Listing Performance</h2>
+          <h2 className="pro-section-title" style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: '8px' }}><ChartIcon size={20} /> Listing Performance</h2>
 
           <div className="pro-analytics-cards">
             <div className="pro-analytics-metric">
-              <div className="pro-analytics-metric-icon" style={{ background: 'rgba(59,130,246,0.15)', color: '#60a5fa' }}>👁️</div>
+              <div className="pro-analytics-metric-icon" style={{ background: 'rgba(59,130,246,0.15)', color: '#60a5fa' }}><EyeIcon size={16} /></div>
               <div>
                 <div className="pro-analytics-metric-value">{analytics?.totalViews ?? 0}</div>
                 <div className="pro-analytics-metric-label">Total Views</div>
               </div>
             </div>
             <div className="pro-analytics-metric">
-              <div className="pro-analytics-metric-icon" style={{ background: 'rgba(236,72,153,0.15)', color: '#f472b6' }}>❤️</div>
+              <div className="pro-analytics-metric-icon" style={{ background: 'rgba(236,72,153,0.15)', color: '#f472b6' }}><BookmarkIcon size={16} /></div>
               <div>
                 <div className="pro-analytics-metric-value">{analytics?.totalSaves ?? 0}</div>
                 <div className="pro-analytics-metric-label">Total Saves</div>
               </div>
             </div>
             <div className="pro-analytics-metric">
-              <div className="pro-analytics-metric-icon" style={{ background: 'rgba(167,139,250,0.15)', color: '#c4b5fd' }}>💬</div>
+              <div className="pro-analytics-metric-icon" style={{ background: 'rgba(167,139,250,0.15)', color: '#c4b5fd' }}><SendIcon size={16} /></div>
               <div>
                 <div className="pro-analytics-metric-value">{analytics?.totalEnquiries ?? 0}</div>
                 <div className="pro-analytics-metric-label">Enquiries</div>
@@ -446,9 +477,9 @@ export default function ProDashboard() {
             <div className="pro-analytics-table">
               <div className="pro-analytics-table-header">
                 <span>Product</span>
-                <span>👁️ Views</span>
-                <span>❤️ Saves</span>
-                <span>💬 Enquiries</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><EyeIcon size={12} /> Views</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><BookmarkIcon size={12} /> Saves</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><SendIcon size={12} /> Enquiries</span>
               </div>
               {(analytics?.products || []).map(p => (
                 <div key={p._id} className="pro-analytics-table-row">
@@ -485,13 +516,13 @@ function ProProductRow({ product, onStatusChange, onDelete, onBoost, onFeature, 
         {imgSrc ? (
           <img src={imgSrc} alt={product.name} className="pro-product-thumb-img" />
         ) : (
-          <div className="pro-product-thumb-placeholder">📷</div>
+          <div className="pro-product-thumb-placeholder"><ImageIcon size={20} /></div>
         )}
         {product.isBoosted && (
-          <div className="pro-product-boost-badge">🔥 Boosted</div>
+          <div className="pro-product-boost-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}><ZapIcon size={10} style={{ fill: 'currentColor' }} /> Boosted</div>
         )}
         {product.isFeatured && (
-          <div className="pro-product-featured-badge">⭐ Featured</div>
+          <div className="pro-product-featured-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}><StarIcon size={10} style={{ fill: 'currentColor' }} /> Featured</div>
         )}
       </div>
 
@@ -505,7 +536,7 @@ function ProProductRow({ product, onStatusChange, onDelete, onBoost, onFeature, 
           {discount && (
             <>
               <span className="pro-product-original-price">₦{product.originalPrice?.toLocaleString()}</span>
-              <span className="pro-product-discount-badge">🔥 {discount.pct}% OFF</span>
+              <span className="pro-product-discount-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}><ZapIcon size={10} style={{ fill: 'currentColor' }} /> {discount.pct}% OFF</span>
             </>
           )}
         </div>
@@ -513,8 +544,8 @@ function ProProductRow({ product, onStatusChange, onDelete, onBoost, onFeature, 
         {/* Status pill + analytics */}
         <div className="pro-product-meta">
           <StatusPill status={status} />
-          <span className="pro-product-analytics-mini">
-            👁️ {product.views ?? 0} · ❤️ {product.saves ?? 0} · 💬 {product.enquiries ?? 0}
+          <span className="pro-product-analytics-mini" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <EyeIcon size={12} /> {product.views ?? 0} · <BookmarkIcon size={12} /> {product.saves ?? 0} · <SendIcon size={12} /> {product.enquiries ?? 0}
           </span>
         </div>
       </div>
@@ -528,9 +559,9 @@ function ProProductRow({ product, onStatusChange, onDelete, onBoost, onFeature, 
           className="pro-status-select"
           disabled={boostingId === product._id}
         >
-          <option value="Available">🟢 Available</option>
-          <option value="Reserved">🟡 Reserved</option>
-          <option value="Sold">🔴 Sold</option>
+          <option value="Available">Available</option>
+          <option value="Reserved">Reserved</option>
+          <option value="Sold">Sold</option>
         </select>
 
         <div className="pro-product-btns">
@@ -538,13 +569,17 @@ function ProProductRow({ product, onStatusChange, onDelete, onBoost, onFeature, 
             className="pro-btn-icon"
             title="Edit"
             onClick={() => navigate(`/edit/${product._id}`)}
-          >✏️</button>
+          >
+            <EditIcon size={14} />
+          </button>
 
           <button
             className={`pro-btn-icon${product.isFeatured ? ' active' : ''}`}
             title={product.isFeatured ? 'Unfeature' : 'Feature this listing'}
             onClick={() => onFeature(product._id)}
-          >⭐</button>
+          >
+            <StarIcon size={14} style={product.isFeatured ? { fill: 'currentColor' } : {}} />
+          </button>
 
           <button
             className="pro-btn-icon"
@@ -552,14 +587,16 @@ function ProProductRow({ product, onStatusChange, onDelete, onBoost, onFeature, 
             onClick={() => onBoost(product._id, product.name)}
             disabled={product.isBoosted || boostingId === product._id}
           >
-            {boostingId === product._id ? '⏳' : '🚀'}
+            {boostingId === product._id ? <RefreshIcon size={14} className="animate-spin" /> : <ZapIcon size={14} />}
           </button>
 
           <button
             className="pro-btn-icon pro-btn-danger"
             title="Delete"
             onClick={() => onDelete(product._id)}
-          >🗑️</button>
+          >
+            <TrashIcon size={14} />
+          </button>
         </div>
       </div>
     </div>
