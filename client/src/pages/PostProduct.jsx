@@ -64,7 +64,7 @@ export default function PostProduct() {
             setCategory(data.category || 'Hostel Items');
             setHostelLocation(data.hostelLocation || 'Off-Campus');
             setFacultyLocation(
-              data.facultyLocation || 'Information Technology & Applied Sciences'
+              data.faculty || 'Information Technology & Applied Sciences'
             );
             setAgreedLocation(data.agreedLocation || 'Any Safe Campus Meeting Point');
             setImage(data.image || '');
