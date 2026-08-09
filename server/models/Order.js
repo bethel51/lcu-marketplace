@@ -16,7 +16,7 @@ const orderSchema = new mongoose.Schema({
   },
   orderType: {
     type: String,
-    enum: ['escrow', 'boost', 'verification'],
+    enum: ['escrow', 'boost', 'verification', 'pro_upgrade'],
     default: 'escrow'
   },
   amount: {

@@ -417,6 +417,20 @@ export default function Dashboard() {
 
           {/* Quick Actions */}
           <div className="dash-sidebar-actions">
+            {!user?.isPro && (
+              <button 
+                onClick={handleUpgradeToPro} 
+                className="dash-action-btn"
+                style={{ 
+                  background: 'linear-gradient(135deg, rgba(245,158,11,0.15) 0%, rgba(202,138,4,0.15) 100%)', 
+                  border: '1px solid #f59e0b', 
+                  color: '#fef08a',
+                  fontWeight: '800'
+                }}
+              >
+                👑 Become a PRO
+              </button>
+            )}
             <Link to="/post" className="dash-action-btn primary">＋ Post New Listing</Link>
             <button onClick={handleCopyProfileLink} className="dash-action-btn">🔗 Copy Store Link</button>
             <Link to="/marketplace" className="dash-action-btn">🛍️ Browse Marketplace</Link>
@@ -498,7 +512,30 @@ export default function Dashboard() {
           </div>
 
           {/* Quick Actions for Mobile */}
-          <div className="dash-mobile-quick-actions">
+          <div className="dash-mobile-quick-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
+            {!user?.isPro && (
+              <button 
+                onClick={handleUpgradeToPro} 
+                className="btn-secondary" 
+                style={{ 
+                  flex: '1 1 100%', 
+                  padding: '12px', 
+                  fontSize: '0.82rem', 
+                  borderRadius: '12px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  gap: '8px', 
+                  cursor: 'pointer', 
+                  background: 'linear-gradient(135deg, rgba(245,158,11,0.15) 0%, rgba(202,138,4,0.15) 100%)', 
+                  border: '1px solid #f59e0b', 
+                  color: '#fef08a', 
+                  fontWeight: '800' 
+                }}
+              >
+                👑 Become a PRO
+              </button>
+            )}
             <button onClick={handleCopyProfileLink} className="btn-secondary" style={{ flex: 1, padding: '12px', fontSize: '0.82rem', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', border: '1px solid var(--border-color)' }}>
               🔗 Copy Store Link
             </button>
