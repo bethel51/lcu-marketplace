@@ -204,7 +204,13 @@ export default function Navbar() {
             {user ? (
               <div className="nav-desktop-links">
                 <Link to="/marketplace" className={`nav-link${isActive('/marketplace') ? ' active' : ''}`}>Marketplace</Link>
-                <Link to="/profile" className={`nav-link${isActive('/profile') ? ' active' : ''}`}>Dashboard</Link>
+                {/* PRO sellers go to /pro-dashboard, standard sellers/buyers go to /profile */}
+                <Link
+                  to={user.isPro ? '/pro-dashboard' : '/profile'}
+                  className={`nav-link${(isActive('/profile') || isActive('/pro-dashboard')) ? ' active' : ''}`}
+                >
+                  {user.isPro ? '⭐ PRO Dashboard' : 'Dashboard'}
+                </Link>
                 {user.role !== 'Buyer' && (
                   <Link to="/post" className="btn-primary nav-post-btn">+ Post Item</Link>
                 )}
@@ -350,14 +356,19 @@ export default function Navbar() {
             </Link>
           )}
 
-          {/* 4. Dashboard */}
-          <Link to="/profile" className={`btab-item${isActive('/profile') ? ' btab-active' : ''}`} aria-label="Dashboard">
+          {/* 4. Dashboard — PRO sellers go to /pro-dashboard */}
+          <Link
+            to={user.isPro ? '/pro-dashboard' : '/profile'}
+            className={`btab-item${(isActive('/profile') || isActive('/pro-dashboard')) ? ' btab-active' : ''}`}
+            aria-label="Dashboard"
+          >
             <span className="btab-icon btab-avatar">
               {user.name.charAt(0).toUpperCase()}
               {user.isVerifiedStudent && <span className="btab-verified-dot" />}
+              {user.isPro && <span className="btab-pro-dot" style={{ position:'absolute', bottom:0, right:0, width:8, height:8, borderRadius:'50%', background:'linear-gradient(135deg,#f59e0b,#fbbf24)', border:'1.5px solid var(--bg-card)' }} />}
             </span>
-            <span className="btab-label">Dashboard</span>
-            {isActive('/profile') && <span className="btab-dot" />}
+            <span className="btab-label">{user.isPro ? 'PRO' : 'Dashboard'}</span>
+            {(isActive('/profile') || isActive('/pro-dashboard')) && <span className="btab-dot" />}
           </Link>
         </nav>
       )}
