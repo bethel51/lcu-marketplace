@@ -189,17 +189,17 @@ router.post('/verify', protect, async (req, res) => {
           await user.save();
         }
       } else if (order.orderType === 'pro_upgrade') {
-        // Activate PRO seller status for 30 days
+        // Activate PRO seller status for 45 days
         const user = await User.findById(order.buyer);
         if (user) {
           user.isPro = true;
           user.proSince = new Date();
-          user.proExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+          user.proExpiresAt = new Date(Date.now() + 45 * 24 * 60 * 60 * 1000);
           await user.save();
         }
         await createNotification(
           order.buyer,
-          '⭐ Welcome to PRO! Your PRO Seller account is now active for 30 days.',
+          '⭐ Welcome to PRO! Your PRO Seller account is now active for 45 days.',
           'success'
         );
       }

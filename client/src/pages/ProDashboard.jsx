@@ -119,20 +119,23 @@ export default function ProDashboard() {
       const userId = profile?._id || profile?.id || user?._id;
       if (!userId) return;
 
-      // Load products
-      const pRes = await fetch(`${API_URL}/api/products?seller=${userId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      // Parallelize fetching of products and analytics
+      const [pRes, aRes] = await Promise.all([
+        fetch(`${API_URL}/api/products?seller=${userId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${API_URL}/api/products/analytics/seller`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ]);
+
       if (pRes.ok) {
         const data = await pRes.json();
         setMyProducts(Array.isArray(data) ? data : (data.products || []));
       }
-
-      // Load analytics
-      const aRes = await fetch(`${API_URL}/api/products/analytics/seller`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (aRes.ok) setAnalytics(await aRes.json());
+      if (aRes.ok) {
+        setAnalytics(await aRes.json());
+      }
 
     } catch {
       showToast('Failed to load PRO dashboard', 'error');

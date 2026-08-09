@@ -145,8 +145,10 @@ function AdminRoute({ children }) {
 // ── Role-based dashboard ─────────────────────────────────────────
 function RoleBasedDashboard() {
   const { user } = useAuth();
-  // Buyers get the Buyer Dashboard; Sellers (and legacy accounts with no role) get the Seller Dashboard
+  // Buyers get the Buyer Dashboard
   if (user?.role === 'Buyer') return <BuyerDashboard />;
+  // Paid PRO sellers go to their Pro Dashboard automatically, standard sellers go to standard Dashboard
+  if (user?.isPro) return <ProDashboard />;
   return <Dashboard />;
 }
 
