@@ -116,7 +116,7 @@ function EditProfileModal({ isOpen, onClose }) {
 
 /* ─── Main Navbar ────────────────────────────────────────────── */
 export default function Navbar() {
-  const { user, logout } = useAuth();
+  const { user, token, logout } = useAuth();
   const { showToast: _showToast } = useToast(); // keep context alive
   const navigate = useNavigate();
   const location = useLocation();
@@ -124,10 +124,68 @@ export default function Navbar() {
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
   const [modalOpen, setModalOpen] = React.useState(false);
   const [cartOpen, setCartOpen] = React.useState(false);
+  const [notifOpen, setNotifOpen] = React.useState(false);
+  
+  const [notifications, setNotifications] = React.useState([]);
+  
   const dropdownRef = React.useRef(null);
   const cartRef = React.useRef(null);
+  const notifRef = React.useRef(null);
+  
   const { cartItems, removeFromCart, clearCart } = useCart();
   const [theme, setTheme] = React.useState(() => localStorage.getItem('theme') || 'light');
+
+  const unreadCount = React.useMemo(() => {
+    return notifications.filter(n => !n.read).length;
+  }, [notifications]);
+
+  // Fetch Notifications
+  const fetchNotifications = React.useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/notifications`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setNotifications(data);
+      }
+    } catch (err) {
+      console.error('Error fetching notifications:', err);
+    }
+  }, [token]);
+
+  // Mark all as read
+  const handleMarkAsRead = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/notifications/read`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      }
+    } catch (err) {
+      console.error('Error marking notifications as read:', err);
+    }
+  };
+
+  // Clear all notifications
+  const handleClearNotifications = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/notifications`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setNotifications([]);
+      }
+    } catch (err) {
+      console.error('Error clearing notifications:', err);
+    }
+  };
 
   React.useEffect(() => {
     document.body.classList.toggle('light-theme', theme === 'light');
@@ -135,14 +193,23 @@ export default function Navbar() {
   }, [theme]);
 
   React.useEffect(() => {
+    if (token) {
+      fetchNotifications();
+      // Poll every 30 seconds for live updates
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [token, fetchNotifications]);
+
+  React.useEffect(() => {
     const handler = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setDropdownOpen(false);
       if (cartRef.current && !cartRef.current.contains(e.target)) setCartOpen(false);
+      if (notifRef.current && !notifRef.current.contains(e.target)) setNotifOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
-
 
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
@@ -287,6 +354,60 @@ export default function Navbar() {
                           <button onClick={() => { setCartOpen(false); navigate('/marketplace'); }} className="btn-primary" style={{ padding: '6px 14px', fontSize: '0.78rem' }}>Browse More</button>
                         </div>
                       )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Notification Bell */}
+                <div ref={notifRef} style={{ position: 'relative' }}>
+                  <button 
+                    className="nav-icon-btn" 
+                    onClick={() => {
+                      setNotifOpen(o => !o);
+                      if (!notifOpen) {
+                        handleMarkAsRead();
+                      }
+                    }} 
+                    aria-label="Notifications" 
+                    style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                    </svg>
+                    {unreadCount > 0 && <span className="notif-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>}
+                  </button>
+
+                  {notifOpen && (
+                    <div className="notif-panel">
+                      <div className="notif-panel-header">
+                        <span className="notif-panel-title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          🔔 Notifications
+                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          {notifications.length > 0 && (
+                            <button className="notif-clear-btn" onClick={handleClearNotifications}>Clear all</button>
+                          )}
+                          <button onClick={() => setNotifOpen(false)} style={{ background:'none',border:'none',color:'var(--text-muted)',fontSize:'1.1rem',cursor:'pointer' }} aria-label="Close">✕</button>
+                        </div>
+                      </div>
+                      <div className="notif-list">
+                        {notifications.length === 0 ? (
+                          <div className="notif-empty">No new notifications 🔔</div>
+                        ) : (
+                          notifications.map(n => (
+                            <div key={n._id} className="notif-item">
+                              <span className={`notif-dot notif-dot-${n.type || 'info'}`} />
+                              <div className="notif-item-msg">
+                                {n.message}
+                                <div className="notif-item-time">
+                                  {new Date(n.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

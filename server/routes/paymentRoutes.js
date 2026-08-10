@@ -4,7 +4,7 @@ import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import User from '../models/User.js';
 import { createNotification } from './notificationRoutes.js';
-import { sendOrderReceiptEmail } from '../utils/email.js';
+import { sendOrderReceiptEmail, sendSellerNotificationEmail } from '../utils/email.js';
 
 const router = express.Router();
 
@@ -172,6 +172,51 @@ router.post('/verify', protect, async (req, res) => {
             `✅ Payment confirmed for "${product.name}"! Meet up with the seller to collect your item.`,
             'info'
           );
+
+          // Send emails
+          try {
+            const buyer = await User.findById(order.buyer);
+            const seller = await User.findById(order.seller);
+            if (buyer && seller) {
+              // Email buyer
+              await sendOrderReceiptEmail({
+                email: buyer.email,
+                name: buyer.name,
+                order: {
+                  _id: order._id,
+                  amount: order.amount,
+                  meetingPoint: order.meetingPoint || product.agreedLocation || 'To be arranged',
+                  pickupDate: order.pickupDate || 'To be arranged',
+                  pickupTime: order.pickupTime || 'To be arranged',
+                },
+                product: {
+                  name: product.name,
+                  category: product.category || 'General',
+                },
+                seller: {
+                  name: seller.name,
+                },
+              });
+
+              // Email seller
+              await sendSellerNotificationEmail({
+                email: seller.email,
+                name: seller.name,
+                buyerName: buyer.name,
+                order: {
+                  amount: order.amount,
+                  meetingPoint: order.meetingPoint || product.agreedLocation || 'To be arranged',
+                  pickupDate: order.pickupDate || 'To be arranged',
+                  pickupTime: order.pickupTime || 'To be arranged',
+                },
+                product: {
+                  name: product.name,
+                }
+              });
+            }
+          } catch (emailErr) {
+            console.error('Verify route order email notifications failed (non-blocking):', emailErr.message);
+          }
         }
       } else if (order.orderType === 'boost') {
         const product = await Product.findById(order.product);
@@ -508,7 +553,7 @@ router.post('/verify-custom-charge', protect, async (req, res) => {
         await product.save();
       }
 
-      // Send order receipt email to buyer
+      // Send order receipt email to buyer & seller
       try {
         const buyer = await User.findById(order.buyer);
         const seller = await User.findById(order.seller);
@@ -530,6 +575,22 @@ router.post('/verify-custom-charge', protect, async (req, res) => {
             seller: {
               name: seller?.name || 'LCU Seller',
             },
+          });
+        }
+        if (buyer && seller && product) {
+          await sendSellerNotificationEmail({
+            email: seller.email,
+            name: seller.name,
+            buyerName: buyer.name,
+            order: {
+              amount: order.amount,
+              meetingPoint: order.meetingPoint || product.agreedLocation || 'To be arranged',
+              pickupDate: order.pickupDate || 'To be arranged',
+              pickupTime: order.pickupTime || 'To be arranged',
+            },
+            product: {
+              name: product.name,
+            }
           });
         }
       } catch (emailErr) {

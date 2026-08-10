@@ -325,11 +325,97 @@ export const sendOrderReceiptEmail = async ({ email, name, order, product, selle
       })
     });
 
+  } catch (error) {
+    console.error('Failed to send order receipt email via Brevo:', error.message);
+  }
+};
+
+export const sendSellerNotificationEmail = async ({ email, name, buyerName, order, product }) => {
+  const apiKey = process.env.BREVO_API_KEY;
+  const senderEmail = process.env.BREVO_SENDER_EMAIL || 'no-reply@lcumarketplace.com';
+  const amountFormatted = `₦${Number(order.amount).toLocaleString()}`;
+
+  if (!apiKey) {
+    console.log('\n======================================================');
+    console.log(`[Fallback] Seller email notification sent to: ${name} (${email})`);
+    console.log(`Buyer: ${buyerName}`);
+    console.log(`Item: ${product.name}`);
+    console.log(`Amount: ${amountFormatted}`);
+    console.log(`Meeting Point: ${order.meetingPoint}`);
+    console.log('======================================================\n');
+    return;
+  }
+
+  try {
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': apiKey,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        sender: { name: "LCU Student Marketplace", email: senderEmail },
+        to: [{ email, name }],
+        subject: `🎉 Your item has been purchased! — ${product.name}`,
+        htmlContent: `
+          <html>
+            <body style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #060c1a; color: #ffffff; padding: 30px; margin: 0;">
+              <div style="max-width: 560px; margin: 0 auto; background: #0e1628; padding: 40px; border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.55);">
+                <div style="text-align: center; margin-bottom: 30px;">
+                  <h2 style="color: #10b981; font-weight: 800; margin: 0;">Item Purchased! 🎉</h2>
+                  <p style="color: #94a3b8; font-size: 0.9rem; margin: 4px 0 0 0;">LCU Student Marketplace</p>
+                </div>
+                
+                <p style="font-size: 1.05rem; color: #f8fafc; line-height: 1.5; margin-bottom: 16px;">Hello <b>${name}</b>,</p>
+                <p style="color: #94a3b8; line-height: 1.6; margin-bottom: 24px;">Congratulations! <b>${buyerName}</b> has purchased your item "<b>${product.name}</b>" for <b>${amountFormatted}</b>.</p>
+                
+                <!-- 🤝 Escrow Status Notification -->
+                <div style="background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 10px; padding: 20px; margin-bottom: 24px;">
+                  <p style="margin: 0 0 12px 0; color: #10b981; font-weight: 700; font-size: 1rem;">💰 Escrow Protection Active</p>
+                  <p style="margin: 0; font-size: 0.88rem; color: #e2e8f0; line-height: 1.5;">
+                    The buyer's funds are now held securely in escrow. Please arrange a meeting with the buyer to deliver the item. Once the buyer confirms delivery on their dashboard, the funds will immediately land in your wallet balance!
+                  </p>
+                </div>
+
+                <!-- 🤝 Pickup Schedule Card -->
+                <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 10px; padding: 20px; margin-bottom: 24px;">
+                  <p style="margin: 0 0 12px 0; color: #f8fafc; font-weight: 700; font-size: 1rem;">📍 Agreed Delivery Details</p>
+                  <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem; color: #e2e8f0; line-height: 1.6;">
+                    <tr>
+                      <td style="padding: 4px 0; color: #94a3b8; width: 40%;">📍 Meeting Point:</td>
+                      <td style="padding: 4px 0; font-weight: 600;">${order.meetingPoint || 'To be arranged'}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 4px 0; color: #94a3b8;">📅 Expected Date:</td>
+                      <td style="padding: 4px 0; font-weight: 600;">${order.pickupDate || 'Flexible'}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 4px 0; color: #94a3b8;">⏰ Expected Time:</td>
+                      <td style="padding: 4px 0; font-weight: 600;">${order.pickupTime || 'Flexible'}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 4px 0; color: #94a3b8;">👤 Buyer Name:</td>
+                      <td style="padding: 4px 0; font-weight: 600;">${buyerName}</td>
+                    </tr>
+                  </table>
+                </div>
+                
+                <p style="font-size: 0.85rem; color: #64748b; line-height: 1.5; border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 20px; text-align: center;">
+                  Thank you for selling on LCU Student Marketplace! Need help? Open internal chats to converse directly with your buyer.
+                </p>
+              </div>
+            </body>
+          </html>
+        `
+      })
+    });
+
     if (!response.ok) {
       const err = await response.json();
       throw new Error(`Brevo Response Error: ${err.message || JSON.stringify(err)}`);
     }
   } catch (error) {
-    console.error('Failed to send order receipt email via Brevo:', error.message);
+    console.error('Failed to send seller notification email via Brevo:', error.message);
   }
 };
