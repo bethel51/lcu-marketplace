@@ -398,14 +398,39 @@ export default function ProductDetails() {
               {(sellerObj.name || 'S').charAt(0).toUpperCase()}
             </div>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--text-primary)' }}>{sellerObj.name || 'LCU Seller'}</span>
                 {sellerObj.isVerifiedStudent && <VerifiedBadge size="sm" />}
+                {sellerObj.isPro && (
+                  <span style={{
+                    fontSize: '0.64rem',
+                    fontWeight: '800',
+                    background: 'linear-gradient(135deg, #f59e0b, #fbbf24)',
+                    color: '#090f1d',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    marginLeft: '4px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '2px',
+                    boxShadow: '0 2px 5px rgba(245,158,11,0.2)'
+                  }}>
+                    ⭐ PRO
+                  </span>
+                )}
               </div>
               <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', display: 'flex', gap: '6px', alignItems: 'center' }}>
                 <span>LCU Student</span>
                 <span>•</span>
                 <span>⭐ {averageRating || '4.8'} ({sellerObj.ratings?.length || '23'})</span>
+                {sellerObj.isPro && (
+                  <>
+                    <span>•</span>
+                    <Link to={`/store/${sellerId}`} style={{ color: 'var(--gold)', fontWeight: 'bold', textDecoration: 'none' }}>
+                      Visit Store →
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>
