@@ -1,5 +1,6 @@
 import express from 'express';
 import { protect } from '../middleware/auth.js';
+import { paymentLimiter } from '../middleware/rateLimiter.js';
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import User from '../models/User.js';
@@ -16,7 +17,7 @@ const FLW_SECRET_KEY = process.env.FLW_SECRET_KEY || 'FLWSECK_TEST-sandbox-key';
  * @desc    Initialize a payment transaction (escrow, boost, or verification)
  * @access  Private
  */
-router.post('/initialize', protect, async (req, res) => {
+router.post('/initialize', protect, paymentLimiter, async (req, res) => {
   const { orderType, productId, pickupDate, pickupTime, meetingPoint, buyerNote } = req.body;
   const buyerId = req.user._id;
 

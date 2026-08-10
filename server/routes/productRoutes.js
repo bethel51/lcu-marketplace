@@ -2,6 +2,7 @@ import express from 'express';
 import Product from '../models/Product.js';
 import User from '../models/User.js';
 import { protect } from '../middleware/auth.js';
+import { writeLimiter } from '../middleware/rateLimiter.js';
 import multer from 'multer';
 import path from 'path';
 import { createNotification } from './notificationRoutes.js';
@@ -98,8 +99,13 @@ router.get('/', async (req, res) => {
 
     const products = await Product.find(query)
       .populate('seller', 'name isVerifiedStudent email isPro')
-      .sort({ isBoosted: -1, isFeatured: -1, createdAt: -1 });
-      
+      .sort({ isBoosted: -1, isFeatured: -1, createdAt: -1 })
+      .lean();
+
+    // Short browser cache — 10s for general listing; 0 for seller-specific views
+    if (!seller) {
+      res.set('Cache-Control', 'public, max-age=10, stale-while-revalidate=30');
+    }
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -211,11 +217,13 @@ router.get('/:id', async (req, res) => {
       .populate({
         path: 'seller',
         select: 'name email hostel faculty isVerifiedStudent ratings isPro storefrontBio'
-      });
+      })
+      .lean();
       
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
+    res.set('Cache-Control', 'public, max-age=15, stale-while-revalidate=60');
     res.json(product);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -257,7 +265,7 @@ router.post('/:id/enquiry', protect, async (req, res) => {
 });
 
 // ── Create product ─────────────────────────────────────────────
-router.post('/', protect, handleUpload, async (req, res) => {
+router.post('/', protect, writeLimiter, handleUpload, async (req, res) => {
   try {
     const {
       name, price, originalPrice, description, category,

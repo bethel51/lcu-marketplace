@@ -5,6 +5,7 @@ import Product from '../models/Product.js';
 import Notification from '../models/Notification.js';
 import Order from '../models/Order.js';
 import { protect } from '../middleware/auth.js';
+import { strictLimiter } from '../middleware/rateLimiter.js';
 import multer from 'multer';
 import path from 'path';
 import { sendOTPEmail, sendWelcomeEmail, sendResetPasswordEmail, sendBroadcastEmail } from '../utils/email.js';
@@ -31,7 +32,7 @@ const generateToken = (id) => {
 };
 
 // Admin Access via secure PIN Code
-router.post('/verify-admin-pin', async (req, res) => {
+router.post('/verify-admin-pin', strictLimiter, async (req, res) => {
   try {
     const { pin } = req.body;
     
@@ -88,7 +89,7 @@ router.post('/verify-admin-pin', async (req, res) => {
 });
 
 // Register
-router.post('/register', async (req, res) => {
+router.post('/register', strictLimiter, async (req, res) => {
   try {
     const { name, email, password, hostel, faculty, department, matricNumber, phoneNumber, requestVerification } = req.body;
     
@@ -145,7 +146,7 @@ router.post('/register', async (req, res) => {
 });
 
 // Login
-router.post('/login', async (req, res) => {
+router.post('/login', strictLimiter, async (req, res) => {
   try {
     const { email, password, role } = req.body;
     

@@ -397,9 +397,10 @@ export default function PostProduct() {
 
     setLoading(true);
     try {
-      for (const slot of slotsToSubmit) {
-        await submitProduct(forms[slot], slot === 0 ? id : null);
-      }
+      // Run all submissions in parallel — eliminates sequential lag for dual listings
+      await Promise.all(
+        slotsToSubmit.map(slot => submitProduct(forms[slot], slot === 0 ? id : null))
+      );
       showToast(
         isEdit
           ? 'Listing updated successfully! 🎉'
