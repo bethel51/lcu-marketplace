@@ -549,7 +549,7 @@ export default function Dashboard() {
                       </h3>
                     </div>
                     <p style={{ color: 'var(--text-gray)', fontSize: '0.85rem', lineHeight: '1.5', margin: 0 }}>
-                      Unlock private performance analytics, dual listings (post 2 items at once), <strong>5 photos</strong> per product (vs 2 standard), and custom discount pricing banners. Up to 20 active listings. Only <strong>₦2,000 / month</strong>.
+                      Unlock private performance analytics, dual listings (post 2 items at once), <strong>5 photos</strong> per product (vs 2 standard), and custom discount pricing banners. Up to 20 active listings. Only <strong style={{ color: '#fbbf24', textDecoration: 'line-through', marginRight: '6px' }}>₦40,000</strong> <strong style={{ color: '#34d399', fontSize: '1rem' }}>₦25,000 / 45 days</strong> promo price!
                     </p>
                   </div>
                   <button onClick={handleUpgradeToPro} className="pro-storefront-link" style={{ border: 'none', cursor: 'pointer' }}>

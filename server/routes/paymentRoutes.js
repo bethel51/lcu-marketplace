@@ -58,11 +58,11 @@ router.post('/initialize', protect, async (req, res) => {
     } else if (orderType === 'verification') {
       amount = 1000; // ₦1,000 flat fee for LCU Student Verification badge
     } else if (orderType === 'pro_upgrade') {
-      // PRO Seller subscription — ₦2,000 / month
+      // PRO Seller subscription — ₦25,000 promo price (originally ₦40,000)
       if (req.user.isPro) {
         return res.status(400).json({ message: 'You are already a PRO seller.' });
       }
-      amount = 2000;
+      amount = 25000;
     } else {
       return res.status(400).json({ message: 'Invalid order type' });
     }
