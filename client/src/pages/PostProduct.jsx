@@ -107,7 +107,7 @@ function ProductForm({ form, onChange, isPro, slotLabel = '' }) {
 
       <div className="pp-grid-2">
         <div className="pp-field">
-          <label className="pp-label">Selling Price (₦) *</label>
+          <label className="pp-label">Price (₦) *</label>
           <input
             className="pp-input"
             type="number"
@@ -118,30 +118,6 @@ function ProductForm({ form, onChange, isPro, slotLabel = '' }) {
             onChange={e => onChange('price', e.target.value)}
           />
         </div>
-        {isPro && (
-          <div className="pp-field">
-            <label className="pp-label">
-              Original Price (₦)
-              <span className="pp-pro-tag">⭐ PRO</span>
-            </label>
-            <input
-              className="pp-input"
-              type="number"
-              placeholder="e.g. 40000 (optional)"
-              min="0"
-              value={form.originalPrice}
-              onChange={e => onChange('originalPrice', e.target.value)}
-            />
-            {discountPct && (
-              <div className="pp-discount-preview">
-                <span className="pp-discount-original">₦{Number(form.originalPrice).toLocaleString()}</span>
-                <span className="pp-discount-arrow">→</span>
-                <span className="pp-discount-sale">₦{Number(form.price).toLocaleString()}</span>
-                <span className="pp-discount-badge">{discountPct}% OFF</span>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       <div className="pp-grid-2">
@@ -415,10 +391,6 @@ export default function PostProduct() {
       if (!f.name.trim() || !f.price || !f.description.trim()) {
         showToast(`Please fill out all required fields in Product ${slot + 1}.`, 'error');
         setActiveSlot(slot);
-        return;
-      }
-      if (f.originalPrice && Number(f.originalPrice) <= Number(f.price)) {
-        showToast(`Original price must be higher than selling price (Product ${slot + 1}).`, 'error');
         return;
       }
     }
