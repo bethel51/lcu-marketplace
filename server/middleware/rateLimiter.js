@@ -21,7 +21,7 @@ const onLimitReached = (req, res) => {
 // ── 1. Strict — login / register / OTP (brute-force protection) ──
 export const strictLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10,
+  max: 100, // relaxed limit to prevent accidental lockout
   standardHeaders: true,
   legacyHeaders: false,
   handler: onLimitReached,
