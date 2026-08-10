@@ -272,12 +272,13 @@ router.get('/profile', protect, async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select('-password').populate('wishlist');
     
-    // Auto-expire PRO status if subscription has lapsed
+    // Auto-expire PRO status if subscription has lapsed (with a 2-hour grace period)
     if (user.isPro && user.proExpiresAt) {
       const now = new Date();
-      const expiresAt = new Date(user.proExpiresAt);
+      // 2 hours after expiration
+      const gracePeriodExpires = new Date(new Date(user.proExpiresAt).getTime() + 2 * 60 * 60 * 1000);
       
-      if (now > expiresAt) {
+      if (now > gracePeriodExpires) {
         user.isPro = false;
         await user.save();
         

@@ -13,11 +13,11 @@ export default function Checkout() {
 
   const searchParams = new URLSearchParams(location.search);
   const amount = parseFloat(searchParams.get('amount') || '0');
-  const type = searchParams.get('type') || 'buy'; // buy, boost, verification
+  const type = searchParams.get('type') || 'buy';
 
-  const [activeTab, setActiveTab] = useState('card'); // card, transfer, ussd
+  const [activeTab, setActiveTab] = useState('card');
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState('input'); // input, otp, success
+  const [step, setStep] = useState('input');
   const [txRef, setTxRef] = useState('');
 
   // Card details state
@@ -26,14 +26,14 @@ export default function Checkout() {
   const [cardCvv, setCardCvv] = useState('');
   const [cardPin, setCardPin] = useState('');
   const [isFlipped, setIsFlipped] = useState(false);
-  const [cardType, setCardType] = useState('generic'); // visa, mastercard, generic
+  const [cardType, setCardType] = useState('generic');
 
   // OTP state
   const [otp, setOtp] = useState('');
 
   // Bank Transfer state
   const [transferDetails, setTransferDetails] = useState(null);
-  const [countdown, setCountdown] = useState(600); // 10 minutes
+  const [countdown, setCountdown] = useState(600);
 
   // USSD state
   const [selectedBank, setSelectedBank] = useState('');
@@ -214,7 +214,6 @@ export default function Checkout() {
       if (res.ok) {
         showToast(type === 'pro_upgrade' ? '⭐ Welcome to PRO! Redirecting to your new dashboard...' : 'Payment verified successfully!', 'success');
         setStep('success');
-        // Refresh profile so AuthContext picks up isPro = true
         await fetchProfile();
         setTimeout(() => {
           navigate(type === 'pro_upgrade' ? '/pro-dashboard' : '/profile');
@@ -298,7 +297,7 @@ export default function Checkout() {
       <style>{`
         .checkout-page-root {
           min-height: 100vh;
-          background: #080e1b;
+          background: #090f1d;
           color: #fff;
           display: flex;
           align-items: center;
@@ -310,16 +309,16 @@ export default function Checkout() {
           display: flex;
           width: 100%;
           max-width: 1000px;
-          background: rgba(20, 27, 45, 0.6);
+          background: rgba(20, 27, 45, 0.45);
           border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 20px;
+          border-radius: 24px;
           overflow: hidden;
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+          box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
           backdrop-filter: blur(20px);
         }
         .checkout-left-summary {
           flex: 1;
-          background: rgba(13, 19, 34, 0.8);
+          background: rgba(13, 19, 34, 0.7);
           padding: 40px;
           border-right: 1px solid rgba(255, 255, 255, 0.08);
           display: flex;
@@ -327,19 +326,20 @@ export default function Checkout() {
           justify-content: space-between;
         }
         .checkout-right-portal {
-          flex: 1.2;
+          flex: 1.25;
           padding: 40px;
           display: flex;
           flex-direction: column;
+          background: rgba(20, 27, 45, 0.15);
         }
         .summary-header {
           display: flex;
           align-items: center;
-          gap: 12px;
-          margin-bottom: 30px;
+          justify-content: space-between;
+          margin-bottom: 24px;
         }
         .summary-title {
-          font-size: 1.3rem;
+          font-size: 1.25rem;
           font-weight: 700;
           color: #fff;
         }
@@ -347,12 +347,12 @@ export default function Checkout() {
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          background: rgba(16, 185, 129, 0.1);
-          border: 1px solid rgba(16, 185, 129, 0.2);
+          background: rgba(16, 185, 129, 0.12);
+          border: 1px solid rgba(16, 185, 129, 0.25);
           color: #10b981;
-          padding: 4px 10px;
-          border-radius: 6px;
-          font-size: 0.72rem;
+          padding: 6px 12px;
+          border-radius: 8px;
+          font-size: 0.76rem;
           font-weight: 700;
           text-transform: uppercase;
         }
@@ -369,6 +369,9 @@ export default function Checkout() {
           font-size: 0.9rem;
           color: #9ca3af;
         }
+        .detail-row:last-child {
+          margin-bottom: 0;
+        }
         .detail-val-highlight {
           color: #fff;
           font-weight: 600;
@@ -380,9 +383,10 @@ export default function Checkout() {
           margin-top: 20px;
         }
         .total-pay-val {
-          font-size: 2rem;
-          font-weight: 800;
+          font-size: 2.2rem;
+          font-weight: 900;
           color: var(--gold);
+          text-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
         }
         .secure-footer {
           display: flex;
@@ -390,13 +394,13 @@ export default function Checkout() {
           gap: 10px;
           color: #6b7280;
           font-size: 0.78rem;
-          margin-top: 40px;
+          margin-top: 36px;
         }
         .portal-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 30px;
+          margin-bottom: 24px;
         }
         .cancel-link {
           color: #9ca3af;
@@ -413,8 +417,9 @@ export default function Checkout() {
           gap: 8px;
           background: rgba(13, 19, 34, 0.6);
           padding: 6px;
-          border-radius: 12px;
-          margin-bottom: 30px;
+          border-radius: 14px;
+          margin-bottom: 28px;
+          border: 1px solid rgba(255, 255, 255, 0.05);
         }
         .checkout-method-tab {
           flex: 1;
@@ -424,7 +429,7 @@ export default function Checkout() {
           padding: 12px;
           font-size: 0.88rem;
           font-weight: 600;
-          border-radius: 8px;
+          border-radius: 10px;
           cursor: pointer;
           transition: all 0.2s;
           display: flex;
@@ -435,7 +440,7 @@ export default function Checkout() {
         .checkout-method-tab.active {
           background: var(--gold);
           color: #0d1322;
-          box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);
+          box-shadow: 0 6px 16px rgba(212, 175, 55, 0.3);
         }
         .payment-panel {
           animation: fadeIn 0.3s ease-in-out;
@@ -448,24 +453,25 @@ export default function Checkout() {
           font-size: 0.75rem;
           font-weight: 700;
           letter-spacing: 1px;
+          text-transform: uppercase;
           color: #9ca3af;
           margin-bottom: 8px;
-          text-transform: uppercase;
         }
         .form-input-custom {
           width: 100%;
-          background: rgba(13, 19, 34, 0.8);
+          background: rgba(13, 19, 34, 0.5);
           border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 10px;
-          padding: 14px;
+          border-radius: 12px;
+          padding: 14px 16px;
           color: #fff;
-          font-size: 0.95rem;
-          box-sizing: border-box;
+          font-size: 1rem;
           outline: none;
-          transition: border-color 0.2s;
+          transition: border-color 0.2s, box-shadow 0.2s;
+          box-sizing: border-box;
         }
         .form-input-custom:focus {
           border-color: var(--gold);
+          box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
         }
         .form-row-custom {
           display: flex;
@@ -476,26 +482,30 @@ export default function Checkout() {
         }
         .card-preview-container {
           perspective: 1000px;
-          margin-bottom: 30px;
+          margin-bottom: 28px;
         }
         .payment-card-visual {
           width: 100%;
           height: 180px;
-          border-radius: 15px;
-          background: linear-gradient(135deg, #1e3a8a, #3b82f6);
           position: relative;
-          transition: transform 0.6s;
           transform-style: preserve-3d;
-          box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+          transition: transform 0.6s;
+          border-radius: 16px;
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
         }
         .payment-card-visual.flipped {
           transform: rotateY(180deg);
         }
         .card-side {
           position: absolute;
-          inset: 0;
+          width: 100%;
+          height: 100%;
           backface-visibility: hidden;
+          border-radius: 16px;
           padding: 24px;
+          box-sizing: border-box;
+          background: linear-gradient(135deg, #1e4ed8 0%, #1e1b4b 100%);
+          border: 1px solid rgba(255, 255, 255, 0.1);
           display: flex;
           flex-direction: column;
           justify-content: space-between;
