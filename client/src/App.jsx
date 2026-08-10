@@ -20,6 +20,7 @@ const BuyerDashboard = lazy(() => import('./pages/BuyerDashboard'));
 const Checkout       = lazy(() => import('./pages/Checkout'));
 const ProDashboard   = lazy(() => import('./pages/ProDashboard'));
 const ProStorefront  = lazy(() => import('./pages/ProStorefront'));
+const Bag            = lazy(() => import('./pages/Bag'));
 
 // ── Eagerly import Dashboard (Seller dashboard — most visited by logged-in sellers) ──
 import Dashboard from './pages/Dashboard';
@@ -242,6 +243,7 @@ function AppContent() {
                   <Route path="/post"        element={<PrivateRoute><SellerRoute><PostProduct /></SellerRoute></PrivateRoute>} />
                   <Route path="/edit/:id"    element={<PrivateRoute><SellerRoute><PostProduct /></SellerRoute></PrivateRoute>} />
                   <Route path="/profile"     element={<PrivateRoute><RoleBasedDashboard /></PrivateRoute>} />
+                  <Route path="/bag"         element={<PrivateRoute><Bag /></PrivateRoute>} />
                   {/* /pro-dashboard is strictly for active PRO sellers — ProRoute enforces this */}
                   <Route path="/pro-dashboard" element={<ProRoute><ProDashboard /></ProRoute>} />
                   <Route path="/store/:userId" element={<PrivateRoute><ProStorefront /></PrivateRoute>} />

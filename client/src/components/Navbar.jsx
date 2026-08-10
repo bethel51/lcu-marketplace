@@ -349,9 +349,9 @@ export default function Navbar() {
                         )}
                       </div>
                       {cartItems.length > 0 && (
-                        <div style={{ padding: '12px 14px', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ padding: '12px 14px', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                           <span style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-primary)' }}>Total: ₦{cartItems.reduce((s, i) => s + (i.price || 0), 0).toLocaleString()}</span>
-                          <button onClick={() => { setCartOpen(false); navigate('/marketplace'); }} className="btn-primary" style={{ padding: '6px 14px', fontSize: '0.78rem' }}>Browse More</button>
+                          <button onClick={() => { setCartOpen(false); navigate('/bag'); }} className="btn-primary" style={{ padding: '6px 14px', fontSize: '0.78rem' }}>👜 View My Bag</button>
                         </div>
                       )}
                     </div>
@@ -467,6 +467,23 @@ export default function Navbar() {
           </Link>
 
 
+
+          {/* 2. Bag */}
+          <Link to="/bag" className={`btab-item${isActive('/bag') ? ' btab-active' : ''}`} aria-label="My Bag">
+            <span className="btab-icon" style={{ position: 'relative' }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/>
+                <path d="M16 10a4 4 0 01-8 0"/>
+              </svg>
+              {cartItems.length > 0 && (
+                <span style={{ position: 'absolute', top: '-4px', right: '-4px', background: 'var(--gold)', color: '#000', fontSize: '0.6rem', fontWeight: '900', minWidth: '16px', height: '16px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid var(--bg-card)' }}>
+                  {cartItems.length > 9 ? '9+' : cartItems.length}
+                </span>
+              )}
+            </span>
+            <span className="btab-label">Bag</span>
+            {isActive('/bag') && <span className="btab-dot" />}
+          </Link>
 
           {/* 3. Center FAB — Sellers only */}
           {user.role !== 'Buyer' && (

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
@@ -134,7 +134,7 @@ export default function ProDashboard() {
     }
   };
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const profile = await fetchProfile();
@@ -143,7 +143,7 @@ export default function ProDashboard() {
       const userId = profile?._id || profile?.id || user?._id;
       if (!userId) return;
 
-      // Parallelize fetching of products and analytics
+      // Fetch products and analytics in parallel
       const [pRes, aRes] = await Promise.all([
         fetch(`${API_URL}/api/products?seller=${userId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
@@ -153,22 +153,23 @@ export default function ProDashboard() {
         })
       ]);
 
-      if (pRes.ok) {
-        const data = await pRes.json();
-        setMyProducts(Array.isArray(data) ? data : (data.products || []));
-      }
-      if (aRes.ok) {
-        setAnalytics(await aRes.json());
-      }
+      // Parse JSON concurrently as well — eliminates sequential await overhead
+      const [productsData, analyticsData] = await Promise.all([
+        pRes.ok ? pRes.json() : Promise.resolve(null),
+        aRes.ok ? aRes.json() : Promise.resolve(null),
+      ]);
+
+      if (productsData) setMyProducts(Array.isArray(productsData) ? productsData : (productsData.products || []));
+      if (analyticsData) setAnalytics(analyticsData);
 
     } catch {
       showToast('Failed to load PRO dashboard', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, user?._id]);  // stable dependency array — won't re-create on every render
 
-  useEffect(() => { if (token) loadData(); }, [token]);
+  useEffect(() => { if (token) loadData(); }, [token, loadData]);
 
   // ── Listing actions ─────────────────────────────────────────
   const handleStatusChange = async (id, newStatus) => {
@@ -314,6 +315,22 @@ export default function ProDashboard() {
         <button className="pro-action-btn" onClick={() => setActiveTab('listings')}>
           <span className="pro-action-icon"><PackageIcon size={16} /></span>
           <span>My Listings</span>
+        </button>
+        <button
+          className="pro-action-btn"
+          onClick={() => {
+            const storeUrl = `${window.location.origin}/store/${user?._id}`;
+            navigator.clipboard.writeText(storeUrl);
+            showToast('Store link copied to clipboard!', 'success');
+          }}
+        >
+          <span className="pro-action-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
+          </span>
+          <span>Copy Link</span>
         </button>
       </div>
 
