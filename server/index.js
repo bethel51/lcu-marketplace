@@ -33,18 +33,19 @@ if (fs.existsSync(logoSrc)) {
     const clientPublicLogo = path.join(__dirname, '../client/public/logo.png');
     const clientAssetsLogo = path.join(__dirname, '../client/assets/logo.png');
     
-    fs.copyFileSync(logoSrc, clientPublicLogo);
-    fs.copyFileSync(logoSrc, clientAssetsLogo);
+    const logoBuffer = fs.readFileSync(logoSrc);
+    fs.writeFileSync(clientPublicLogo, logoBuffer);
+    fs.writeFileSync(clientAssetsLogo, logoBuffer);
     
     // Overwrite PWA webp icons with the new logo
     const sizes = [48, 72, 96, 128, 192, 256, 512];
     for (const s of sizes) {
       const destPath = path.join(__dirname, `../client/icons/icon-${s}.webp`);
       if (fs.existsSync(destPath) || fs.existsSync(path.dirname(destPath))) {
-        fs.copyFileSync(logoSrc, destPath);
+        fs.writeFileSync(destPath, logoBuffer);
       }
     }
-    console.log("LCU Logo Updater (Server): Successfully updated all client logos and PWA icons.");
+    console.log("LCU Logo Updater (Server): FORCED update of all client logos and PWA icons.");
   } catch (e) {
     console.error("LCU Logo Updater (Server) Error:", e);
   }
