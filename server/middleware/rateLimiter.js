@@ -21,7 +21,7 @@ const onLimitReached = (req, res) => {
 // ── 1. Strict — login / register / OTP (brute-force protection) ──
 export const strictLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // relaxed limit to prevent accidental lockout
+  max: 1000, // relaxed limit to prevent accidental lockout
   standardHeaders: true,
   legacyHeaders: false,
   handler: onLimitReached,
@@ -31,7 +31,7 @@ export const strictLimiter = rateLimit({
 // ── 2. Payment — checkout / verify / withdraw ────────────────────
 export const paymentLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 20,
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
   handler: onLimitReached,
@@ -40,7 +40,7 @@ export const paymentLimiter = rateLimit({
 // ── 3. Write — POST/PUT/DELETE on products ───────────────────────
 export const writeLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 30,
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
   handler: onLimitReached,
@@ -49,7 +49,7 @@ export const writeLimiter = rateLimit({
 // ── 4. General — GET browse / search / product views ────────────
 export const generalLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 150,
+  max: 5000,
   standardHeaders: true,
   legacyHeaders: false,
   handler: onLimitReached,

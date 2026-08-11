@@ -27,6 +27,7 @@ export default function ProductDetails() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeImgIndex, setActiveImgIndex] = useState(0);
   
   // Review form state
   const [rating, setRating] = useState(5);
@@ -52,6 +53,7 @@ export default function ProductDetails() {
       const data = await response.json();
       if (response.ok) {
         setProduct(data);
+        setActiveImgIndex(0);
         
         // Track view count for analytics
         fetch(`${API_URL}/api/products/${id}/view`, { method: 'POST' }).catch(err => console.error(err));
@@ -192,6 +194,13 @@ export default function ProductDetails() {
       }
     } catch (err) {
       showToast('Error submitting review', 'error');
+    }
+  };
+
+  const handleScroll = (e) => {
+    const index = Math.round(e.target.scrollLeft / e.target.clientWidth);
+    if (!isNaN(index)) {
+      setActiveImgIndex(index);
     }
   };
 
@@ -347,25 +356,90 @@ export default function ProductDetails() {
         </button>
 
         {/* Main Product Image */}
-        {product.image ? (
-          <img 
-            src={product.image} 
-            alt={product.name} 
-            style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
-          />
-        ) : (
-          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', fontSize: '3rem' }}>
-            🖼️
-          </div>
-        )}
+        {(() => {
+          const imagesList = (product.images && product.images.length > 0) ? product.images : (product.image ? [product.image] : []);
+          return (
+            <>
+              {imagesList.length > 0 ? (
+                <div 
+                  onScroll={handleScroll}
+                  style={{ 
+                    display: 'flex', 
+                    overflowX: 'auto', 
+                    scrollSnapType: 'x mandatory', 
+                    WebkitOverflowScrolling: 'touch', 
+                    width: '100%', 
+                    height: '100%',
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none'
+                  }}
+                  className="product-gallery-scroll-container"
+                >
+                  {imagesList.map((img, idx) => (
+                    <div 
+                      key={idx} 
+                      style={{ 
+                        flex: '0 0 100%', 
+                        width: '100%', 
+                        height: '100%', 
+                        scrollSnapAlign: 'start',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      <img 
+                        src={img} 
+                        alt={`${product.name} - view ${idx + 1}`} 
+                        style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', fontSize: '3rem' }}>
+                  🖼️
+                </div>
+              )}
 
-        {/* Mock Carousel Dots */}
-        <div style={{ position: 'absolute', bottom: '16px', left: '0', right: '0', display: 'flex', justifyContent: 'center', gap: '6px' }}>
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--gold)' }} />
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(255,255,255,0.4)', border: '1px solid rgba(0,0,0,0.1)' }} />
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(255,255,255,0.4)', border: '1px solid rgba(0,0,0,0.1)' }} />
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(255,255,255,0.4)', border: '1px solid rgba(0,0,0,0.1)' }} />
-        </div>
+              {/* Interactive Thumbnail Row */}
+              {imagesList.length > 1 && (
+                <div style={{ position: 'absolute', bottom: '16px', left: '0', right: '0', display: 'flex', justifyContent: 'center', gap: '8px', zIndex: 10 }}>
+                  {imagesList.map((img, idx) => (
+                    <button
+                      key={idx}
+                      onClick={(e) => {
+                        // Find the scroll container relative to this button row and scroll smoothly
+                        const container = e.currentTarget.parentElement.previousSibling;
+                        if (container) {
+                          container.scrollTo({
+                            left: idx * container.clientWidth,
+                            behavior: 'smooth'
+                          });
+                        }
+                        setActiveImgIndex(idx);
+                      }}
+                      style={{
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '8px',
+                        border: activeImgIndex === idx ? '2px solid var(--gold)' : '2px solid rgba(255,255,255,0.5)',
+                        padding: 0,
+                        overflow: 'hidden',
+                        cursor: 'pointer',
+                        background: '#1a1a1a',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                        transition: 'border-color 0.2s'
+                      }}
+                    >
+                      <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          );
+        })()}
       </div>
 
       {/* ── Product Info Panel ── */}
@@ -415,14 +489,14 @@ export default function ProductDetails() {
                     gap: '2px',
                     boxShadow: '0 2px 5px rgba(245,158,11,0.2)'
                   }}>
-                    ⭐ PRO
+                    PRO
                   </span>
                 )}
               </div>
               <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', display: 'flex', gap: '6px', alignItems: 'center' }}>
                 <span>LCU Student</span>
                 <span>•</span>
-                <span>⭐ {averageRating || '4.8'} ({sellerObj.ratings?.length || '23'})</span>
+                <span>★ {averageRating || '4.8'} ({sellerObj.ratings?.length || '23'})</span>
                 {sellerObj.isPro && (
                   <>
                     <span>•</span>
@@ -443,7 +517,7 @@ export default function ProductDetails() {
                 fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer' 
               }}
             >
-              💬 Chat
+              Chat
             </button>
           )}
         </div>
@@ -482,7 +556,7 @@ export default function ProductDetails() {
       <div style={{ position: 'sticky', bottom: 0, width: '100%', background: 'var(--bg-nav)', borderTop: '1px solid var(--border-color)', padding: '16px 20px calc(16px + env(safe-area-inset-bottom, 0px)) 20px', display: 'flex', gap: '12px', zIndex: 100, boxSizing: 'border-box', marginTop: '30px' }}>
         {user?.role !== 'Buyer' ? (
           <div style={{ width: '100%', color: 'var(--gold)', fontSize: '0.86rem', fontWeight: '600', padding: '8px 0', textAlign: 'center' }}>
-            🔒 Seller accounts cannot purchase or add products to bag.
+            Seller accounts cannot purchase or add products to bag.
           </div>
         ) : (
           <>
@@ -546,20 +620,20 @@ export default function ProductDetails() {
         <div className="profile-modal-overlay" onClick={() => setShowPickupModal(false)}>
           <div className="profile-modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '520px' }}>
             <div className="profile-modal-header">
-              <h3 className="profile-modal-title">🤝 Schedule Campus Pickup</h3>
+              <h3 className="profile-modal-title">Schedule Campus Pickup</h3>
               <button className="profile-modal-close" onClick={() => setShowPickupModal(false)}>✕</button>
             </div>
 
             <form onSubmit={handleBuyNowWithPickup} className="profile-modal-body" style={{ gap: '16px' }}>
               <div style={{ background: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(59, 130, 246, 0.25)', borderRadius: '10px', padding: '14px 16px', fontSize: '0.85rem' }}>
-                <p style={{ fontWeight: '700', color: 'var(--gold)', marginBottom: '4px' }}>🛡️ Escrow Buyer Protection</p>
+                <p style={{ fontWeight: '700', color: 'var(--gold)', marginBottom: '4px' }}>Escrow Buyer Protection</p>
                 <p style={{ color: 'var(--text-secondary)' }}>
                   Your <strong>₦{product.price?.toLocaleString()}</strong> payment will be held safely in escrow. Funds are only released to <strong>{sellerObj.name || 'the seller'}</strong> after you inspect and accept the item at your meeting point.
                 </p>
               </div>
 
               <div className="dash-settings-field">
-                <label className="dash-settings-label">📍 Hostel / Campus Meeting Point</label>
+                <label className="dash-settings-label">Hostel / Campus Meeting Point</label>
                 <select value={meetingPoint} onChange={e => setMeetingPoint(e.target.value)} className="glass-input" required>
                   {LCU_MEETING_POINTS.map(mp => (
                     <option key={mp} value={mp} style={{ background: 'var(--bg-input)', color: 'var(--text-primary)' }}>
@@ -571,17 +645,17 @@ export default function ProductDetails() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                 <div className="dash-settings-field">
-                  <label className="dash-settings-label">📅 Pickup Date</label>
+                  <label className="dash-settings-label">Pickup Date</label>
                   <input
-                    type="date"
-                    required
-                    value={pickupDate}
-                    onChange={e => setPickupDate(e.target.value)}
-                    className="glass-input"
+                     type="date"
+                     required
+                     value={pickupDate}
+                     onChange={e => setPickupDate(e.target.value)}
+                     className="glass-input"
                   />
                 </div>
                 <div className="dash-settings-field">
-                  <label className="dash-settings-label">⏰ Preferred Time Slot</label>
+                  <label className="dash-settings-label">Preferred Time Slot</label>
                   <select value={pickupTime} onChange={e => setPickupTime(e.target.value)} className="glass-input" required>
                     {PICKUP_TIME_SLOTS.map(ts => (
                       <option key={ts} value={ts} style={{ background: 'var(--bg-input)', color: 'var(--text-primary)' }}>
@@ -593,7 +667,7 @@ export default function ProductDetails() {
               </div>
 
               <div className="dash-settings-field">
-                <label className="dash-settings-label">📝 Buyer Note / Instructions (Optional)</label>
+                <label className="dash-settings-label">Buyer Note / Instructions (Optional)</label>
                 <input
                   type="text"
                   placeholder="e.g., I'll be wearing a blue hoodie at the gate..."
@@ -608,7 +682,7 @@ export default function ProductDetails() {
                   Cancel
                 </button>
                 <button type="submit" className="btn-primary" style={{ padding: '10px 22px', fontSize: '0.85rem' }}>
-                  💳 Proceed to Escrow (₦{product.price?.toLocaleString()})
+                  Proceed to Escrow (₦{product.price?.toLocaleString()})
                 </button>
               </div>
             </form>

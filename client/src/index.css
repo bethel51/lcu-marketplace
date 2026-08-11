@@ -5025,3 +5025,6 @@ body.light-theme .splash-title {
   border-radius: 4px;
 }
 
+.product-gallery-scroll-container::-webkit-scrollbar {
+  display: none;
+}

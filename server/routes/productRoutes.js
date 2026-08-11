@@ -292,14 +292,14 @@ router.post('/', protect, writeLimiter, handleUpload, async (req, res) => {
     const host = req.get('host');
     let imageUrls = [];
     if (req.files && req.files.length > 0) {
-      // Enforce image limit: 8 for PRO, 4 for standard
-      const maxPhotos = seller.isPro ? 8 : 4;
+      // Enforce image limit: 5 for PRO, 2 for standard
+      const maxPhotos = seller.isPro ? 5 : 2;
       const filesToUse = req.files.slice(0, maxPhotos);
       imageUrls = filesToUse.map(f => `${req.protocol}://${host}/uploads/${f.filename}`);
     } else if (req.body.images) {
       // Base64/URL fallback
       const imgs = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
-      const maxPhotos = seller.isPro ? 8 : 4;
+      const maxPhotos = seller.isPro ? 5 : 2;
       imageUrls = imgs.slice(0, maxPhotos);
     } else if (req.body.image) {
       imageUrls = [req.body.image];
@@ -362,12 +362,12 @@ router.put('/:id', protect, handleUpload, async (req, res) => {
     const host = req.get('host');
     let imageUrls = product.images || [];
     if (req.files && req.files.length > 0) {
-      const maxPhotos = seller.isPro ? 8 : 4;
+      const maxPhotos = seller.isPro ? 5 : 2;
       const filesToUse = req.files.slice(0, maxPhotos);
       imageUrls = filesToUse.map(f => `${req.protocol}://${host}/uploads/${f.filename}`);
     } else if (req.body.images) {
       const imgs = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
-      const maxPhotos = seller.isPro ? 8 : 4;
+      const maxPhotos = seller.isPro ? 5 : 2;
       imageUrls = imgs.slice(0, maxPhotos);
     }
     
