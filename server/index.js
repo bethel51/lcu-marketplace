@@ -40,10 +40,11 @@ if (fs.existsSync(logoSrc)) {
     // Overwrite PWA webp icons with the new logo
     const sizes = [48, 72, 96, 128, 192, 256, 512];
     for (const s of sizes) {
-      const destPath = path.join(__dirname, `../client/icons/icon-${s}.webp`);
-      if (fs.existsSync(destPath) || fs.existsSync(path.dirname(destPath))) {
+      const destPath = path.join(__dirname, `../client/public/icons/icon-${s}.webp`);
+      try {
+        fs.mkdirSync(path.dirname(destPath), { recursive: true });
         fs.writeFileSync(destPath, logoBuffer);
-      }
+      } catch(_) {}
     }
     console.log("LCU Logo Updater (Server): FORCED update of all client logos and PWA icons.");
   } catch (e) {
