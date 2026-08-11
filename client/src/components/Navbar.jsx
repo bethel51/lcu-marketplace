@@ -227,7 +227,7 @@ export default function Navbar() {
       <nav className="top-nav glass-panel">
         <div className="top-nav-container">
           <Link to="/admin" className="nav-brand">
-            <img src="/logo.png" alt="LCU Logo" width="34" height="34" className="nav-logo-img" style={{ borderRadius:'50%', border:'2px solid rgba(59,130,246,0.5)' }} />
+            <img src="/logo.png" alt="LCU Logo" width="36" height="36" className="nav-logo-img" style={{ borderRadius:'10px', objectFit:'contain' }} />
             <div className="nav-brand-text">
               <span className="nav-brand-title">Lead City</span>
               <span className="nav-brand-sub">ADMIN</span>
@@ -249,8 +249,8 @@ export default function Navbar() {
 
           {/* Brand */}
           <Link to={user ? '/marketplace' : '/'} className="nav-brand">
-            <img src="/logo.png" alt="LCU Logo" width="36" height="36" className="nav-logo-img"
-              style={{ borderRadius:'50%', border:'2px solid rgba(59,130,246,0.45)', boxShadow:'0 0 12px rgba(59,130,246,0.2)' }}
+            <img src="/logo.png" alt="LCU Logo" width="38" height="38" className="nav-logo-img"
+              style={{ borderRadius:'10px', objectFit:'contain' }}
               fetchpriority="high" decoding="async" loading="eager"
             />
             <div className="nav-brand-text">

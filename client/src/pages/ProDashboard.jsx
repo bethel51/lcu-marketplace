@@ -284,51 +284,6 @@ export default function ProDashboard() {
             <Link to={`/store/${user?._id}`} className="pro-storefront-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
               <StoreIcon size={16} /> View My Storefront
             </Link>
-            
-            <div className="dash-wallet-card" style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-start', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', padding: '10px 14px', borderRadius: '12px', width: '200px', boxSizing: 'border-box' }}>
-              <span className="dash-wallet-label" style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Wallet Balance</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', justifyContent: 'space-between' }}>
-                <span className="dash-wallet-amount" style={{ fontSize: '1.25rem', fontWeight: '800', color: '#fff' }}>
-                  {showBalance ? `₦${(profileData?.walletBalance || 0).toLocaleString()}` : '••••••'}
-                </span>
-                <button 
-                  onClick={() => setShowBalance(!showBalance)}
-                  style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
-                  title={showBalance ? "Hide balance" : "Show balance"}
-                >
-                  {showBalance ? (
-                    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                    </svg>
-                  ) : (
-                    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-              <button
-                onClick={() => navigate('/withdraw')}
-                className="btn-primary"
-                style={{
-                  background: 'linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%)',
-                  color: '#fff',
-                  border: 'none',
-                  padding: '6px 12px',
-                  borderRadius: '8px',
-                  fontSize: '0.74rem',
-                  fontWeight: '700',
-                  cursor: 'pointer',
-                  marginTop: '4px',
-                  width: '100%',
-                  boxShadow: '0 2px 8px rgba(59, 130, 246, 0.2)',
-                  transition: 'all 0.2s'
-                }}
-              >
-                💸 Withdraw
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -339,6 +294,61 @@ export default function ProDashboard() {
         <StatCard icon={<BookmarkIcon size={20} />} label="Total Saves"    value={analytics?.totalSaves}     color="#ec4899" />
         <StatCard icon={<SendIcon size={20} />} label="Enquiries"      value={analytics?.totalEnquiries} color="#a78bfa" />
         <StatCard icon={<PackageIcon size={20} />} label="Active Listings" value={analytics?.activeCount}   color="#10b981" />
+      </div>
+
+      {/* ── PRO Wallet Balance Card ───────────────────────────── */}
+      <div style={{
+        background: 'linear-gradient(135deg, #1c1506 0%, #2d1f04 50%, #1a1200 100%)',
+        border: '1.5px solid rgba(245,158,11,0.4)',
+        borderRadius: '16px',
+        padding: '20px 24px',
+        marginBottom: '20px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '16px',
+        boxShadow: '0 4px 20px rgba(245,158,11,0.12)',
+        flexWrap: 'wrap'
+      }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '0.70rem', fontWeight: '700', color: 'rgba(251,191,36,0.65)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>PRO Wallet Balance</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '1.8rem', fontWeight: '900', color: '#fbbf24', letterSpacing: '-0.02em' }}>
+              {showBalance ? `₦${(profileData?.walletBalance || 0).toLocaleString()}` : '● ● ● ● ●'}
+            </span>
+            <button
+              onClick={() => setShowBalance(!showBalance)}
+              style={{ background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.3)', color: '#fbbf24', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px 9px', gap: '4px', fontSize: '0.72rem', fontWeight: '700' }}
+            >
+              {showBalance ? (
+                <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
+              ) : (
+                <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+              )}
+              {showBalance ? 'Hide' : 'Show'}
+            </button>
+          </div>
+          <span style={{ fontSize: '0.74rem', color: 'rgba(251,191,36,0.45)' }}>Available for withdrawal</span>
+        </div>
+        <button
+          onClick={() => navigate('/withdraw')}
+          style={{
+            background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+            color: '#1a0f00',
+            border: 'none',
+            padding: '12px 26px',
+            borderRadius: '10px',
+            fontSize: '0.85rem',
+            fontWeight: '800',
+            cursor: 'pointer',
+            boxShadow: '0 4px 14px rgba(245,158,11,0.35)',
+            transition: 'all 0.2s',
+            whiteSpace: 'nowrap',
+            letterSpacing: '0.02em'
+          }}
+        >
+          Withdraw Funds
+        </button>
       </div>
 
       {/* ── Quick Actions ─────────────────────────────────────── */}
