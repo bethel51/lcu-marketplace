@@ -203,7 +203,7 @@ export default function Auth() {
         {/* ── LCU Logo ──────────────────────────────────────── */}
         <div style={styles.logoWrap}>
           <img
-            src="/logo.png"
+            src="/logo.png?v=2"
             alt="LCU Marketplace Logo"
             style={styles.logoImg}
             fetchpriority="high"

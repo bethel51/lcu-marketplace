@@ -170,7 +170,7 @@ function SplashScreen({ fadeOut }) {
   return (
     <div className={`splash-screen-container${fadeOut ? ' splash-fade-out' : ''}`}>
       <div className="splash-content splash-logo-animate">
-        <img src="/logo.png" alt="LCU Logo" className="splash-logo" />
+        <img src="/logo.png?v=2" alt="LCU Logo" className="splash-logo" />
         <h1 className="splash-title">Lead City Marketplace</h1>
         <p className="splash-subtitle">LCU Errands & Student Hub</p>
         <div className="splash-loader">

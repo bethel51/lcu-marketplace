@@ -1,7 +1,7 @@
 // LCU Marketplace — Service Worker v1
 // Cache-first for static assets, network-first for API calls
 
-const CACHE_NAME = 'lcu-market-v1';
+const CACHE_NAME = 'lcu-market-v2';
 const STATIC_ASSETS = ['/', '/manifest.json'];
 
 self.addEventListener('install', (e) => {
