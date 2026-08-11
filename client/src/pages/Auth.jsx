@@ -92,7 +92,7 @@ export default function Auth() {
           return;
         }
         const res = await register(name, email, password, hostel, faculty, department, matricNumber, phoneNumber, requestVerification, role);
-        setSuccessMsg(res.message || 'OTP verification code has been sent to your email.');
+        setSuccessMsg((res.message || 'OTP verification code has been sent.') + (res.devOtp ? ` (Testing Code: ${res.devOtp})` : ''));
         setView('verifyOtp');
       }
     } catch (err) {
@@ -104,7 +104,7 @@ export default function Auth() {
     clearFeedback();
     try {
       const res = await resendOtp(email);
-      setSuccessMsg(res.message || 'Verification code resent successfully!');
+      setSuccessMsg((res.message || 'Verification code resent successfully!') + (res.devOtp ? ` (Testing Code: ${res.devOtp})` : ''));
     } catch (err) {
       setError(err.message || 'Failed to resend verification code.');
     }
@@ -123,7 +123,7 @@ export default function Auth() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Request failed');
-      setSuccessMsg(data.message);
+      setSuccessMsg((data.message || 'Verification code sent.') + (data.devOtp ? ` (Testing Code: ${data.devOtp})` : ''));
       setView('forgotVerify');
     } catch (err) {
       setError(err.message);

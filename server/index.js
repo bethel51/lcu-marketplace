@@ -54,6 +54,7 @@ if (fs.existsSync(logoSrc)) {
 connectDB();
 
 const app = express();
+app.set('trust proxy', 1); // trust first proxy (e.g. Render, Heroku)
 
 // ── Static files ─────────────────────────────────────────────────
 app.use('/uploads', express.static(uploadsDir));
