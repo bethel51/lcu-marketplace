@@ -159,6 +159,7 @@ router.post('/verify', protect, async (req, res) => {
         const product = await Product.findById(order.product);
         if (product) {
           product.status = 'Sold';
+          product.productStatus = 'Sold';
           await product.save();
 
           // Notify seller: someone bought their item

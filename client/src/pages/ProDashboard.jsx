@@ -97,13 +97,14 @@ function AnalyticsBar({ products }) {
 }
 
 export default function ProDashboard() {
-  const { user, token, fetchProfile, deleteAccount } = useAuth();
+  const { user, token, fetchProfile, deleteAccount, verifyStudent } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast();
 
   const [activeTab, setActiveTab]     = useState('overview');
   const [analytics, setAnalytics]     = useState(null);
   const [myProducts, setMyProducts]   = useState([]);
+  const [orders, setOrders]           = useState({ bought: [], sold: [] });
   const [loading, setLoading]         = useState(true);
   const [listingSearch, setListingSearch] = useState('');
   const [statusFilter, setStatusFilter]   = useState('All');
@@ -111,6 +112,30 @@ export default function ProDashboard() {
   const [profileData, setProfileData] = useState(null);
   const [deleteSaving, setDeleteSaving] = useState(false);
   const [showBalance, setShowBalance]   = useState(false);
+
+  // ── Settings edit state ─────────────────────────────────────
+  const [editHostel, setEditHostel]   = useState('Off-Campus');
+  const [editFaculty, setEditFaculty] = useState('Information Technology & Applied Sciences');
+  const [editDept, setEditDept]       = useState('');
+  const [editPhone, setEditPhone]     = useState('');
+  const [editSaving, setEditSaving]   = useState(false);
+
+  // ── Verification state ──────────────────────────────────────
+  const [showVerifyForm, setShowVerifyForm] = useState(false);
+  const [matricInput, setMatricInput]       = useState('');
+  const [idCardFile, setIdCardFile]         = useState(null);
+  const [idCardLabel, setIdCardLabel]       = useState('');
+
+  const HOSTELS   = ['Bronze Hostel','Silver Hostel','Gold Hostel','Platinum Hostel','Jasper Hall','Emerald Hall','Pearl Hall','Sapphire Hall','Off-Campus'];
+  const FACULTIES = ['Information Technology & Applied Sciences','Basic Medical & Health Sciences','Social & Management Sciences','Arts, Education & Humanities','Law'];
+  const DEPTS_BY_FACULTY = {
+    'Information Technology & Applied Sciences': ['Computer Science','Information Technology','Cyber Security','Software Engineering','Biochemistry','Industrial Chemistry','Microbiology','Physics with Electronics'],
+    'Basic Medical & Health Sciences': ['Medicine & Surgery','Nursing Science','Medical Laboratory Science','Pharmacology','Physiotherapy','Public Health'],
+    'Social & Management Sciences': ['Accounting','Banking & Finance','Business Administration','Economics','Mass Communication','Political Science','Sociology'],
+    'Arts, Education & Humanities': ['English Language','History & International Studies','Philosophy','Education & English','Education & Mathematics'],
+    'Law': ['Law'],
+  };
+  const currentDepts = DEPTS_BY_FACULTY[editFaculty] || [];
 
   const handleDeleteAccount = async () => {
     const firstConfirm = window.confirm(
@@ -140,35 +165,48 @@ export default function ProDashboard() {
     try {
       const profile = await fetchProfile();
       setProfileData(profile);
+      if (profile) {
+        setEditHostel(profile.hostel || 'Off-Campus');
+        setEditFaculty(profile.faculty || 'Information Technology & Applied Sciences');
+        setEditDept(profile.department || '');
+        setEditPhone(profile.phoneNumber || '');
+      }
 
       const userId = profile?._id || profile?.id || user?._id;
       if (!userId) return;
 
-      // Fetch products and analytics in parallel
-      const [pRes, aRes] = await Promise.all([
+      // Fetch products, analytics, and orders in parallel — all cache-busted for instant updates
+      const [pRes, aRes, oRes] = await Promise.all([
         fetch(`${API_URL}/api/products?seller=${userId}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { 'Authorization': `Bearer ${token}` },
+          cache: 'no-store'
         }),
         fetch(`${API_URL}/api/products/analytics/seller`, {
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { 'Authorization': `Bearer ${token}` },
+          cache: 'no-store'
+        }),
+        fetch(`${API_URL}/api/payments/my-orders`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+          cache: 'no-store'
         })
       ]);
 
-      // Parse JSON concurrently as well — eliminates sequential await overhead
-      const [productsData, analyticsData] = await Promise.all([
+      const [productsData, analyticsData, ordersData] = await Promise.all([
         pRes.ok ? pRes.json() : Promise.resolve(null),
         aRes.ok ? aRes.json() : Promise.resolve(null),
+        oRes.ok ? oRes.json() : Promise.resolve(null),
       ]);
 
       if (productsData) setMyProducts(Array.isArray(productsData) ? productsData : (productsData.products || []));
       if (analyticsData) setAnalytics(analyticsData);
+      if (ordersData)   setOrders(ordersData);
 
     } catch {
       showToast('Failed to load PRO dashboard', 'error');
     } finally {
       setLoading(false);
     }
-  }, [token, user?._id]);  // stable dependency array — won't re-create on every render
+  }, [token, user?._id]);
 
   useEffect(() => { if (token) loadData(); }, [token, loadData]);
 
@@ -222,21 +260,85 @@ export default function ProDashboard() {
     } catch { showToast('Failed to update featured', 'error'); }
   };
 
-  // ── Filtered products ────────────────────────────────────────
+  // ── Confirm escrow delivery ──────────────────────────────────
+  const handleConfirmDelivery = async (orderId) => {
+    if (!window.confirm('Have you physically received the product? This will release the escrowed funds to the seller.')) return;
+    try {
+      const res = await fetch(`${API_URL}/api/payments/confirm-delivery/${orderId}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) { showToast('Funds released to seller! 🤝', 'success'); loadData(); }
+      else showToast(data.message || 'Failed to release funds', 'error');
+    } catch { showToast('Error releasing funds', 'error'); }
+  };
+
+  // ── Save profile settings ────────────────────────────────────
+  const handleSaveSettings = async () => {
+    if (!token) return;
+    setEditSaving(true);
+    try {
+      const res = await fetch(`${API_URL}/api/auth/profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ hostel: editHostel, faculty: editFaculty, department: editDept, phoneNumber: editPhone })
+      });
+      const data = await res.json();
+      if (res.ok) { showToast('Profile updated! 🎓', 'success'); loadData(); }
+      else showToast(data.message || 'Update failed', 'error');
+    } catch { showToast('Error updating profile', 'error'); }
+    finally { setEditSaving(false); }
+  };
+
+  // ── Student verification handlers ────────────────────────────
+  const handleVerifySubmit = async (e) => {
+    e.preventDefault();
+    if (!matricInput.trim()) return;
+    await verifyStudent(idCardFile);
+    showToast('Verification request submitted! 🎓', 'success');
+    setShowVerifyForm(false);
+    setMatricInput(''); setIdCardFile(null); setIdCardLabel('');
+    loadData();
+  };
+
+  const handlePayVerificationFee = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/payments/initialize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ orderType: 'verification' })
+      });
+      const data = await res.json();
+      if (!res.ok) { showToast(data.message || 'Verification init failed', 'error'); return; }
+      navigate(`/checkout/${data.order._id}?amount=${data.amount}&type=verification`);
+    } catch { showToast('Error initializing verification', 'error'); }
+  };
+
+  // ── Filtered products (case-insensitive status matching) ─────
   const filteredProducts = useMemo(() => {
     return myProducts.filter(p => {
       const matchSearch = listingSearch
         ? p.name.toLowerCase().includes(listingSearch.toLowerCase())
         : true;
+      const pStatus = (p.productStatus || p.status || 'Available');
       const matchStatus = statusFilter === 'All'
         ? true
-        : (p.productStatus || p.status) === statusFilter;
+        : pStatus.toLowerCase() === statusFilter.toLowerCase();
       return matchSearch && matchStatus;
     });
   }, [myProducts, listingSearch, statusFilter]);
 
-  const activeProducts = myProducts.filter(p => p.status === 'Available');
-  const soldProducts   = myProducts.filter(p => p.productStatus === 'Sold' || p.status === 'Sold');
+  const activeProducts   = myProducts.filter(p => (p.productStatus || p.status || '').toLowerCase() === 'available');
+  const soldProducts     = myProducts.filter(p => (p.productStatus || p.status || '').toLowerCase() === 'sold');
+  const reservedProducts = myProducts.filter(p => (p.productStatus || p.status || '').toLowerCase() === 'reserved');
+
+  // ── Pending escrow: sold orders held but not yet released ────
+  const pendingEscrow = useMemo(() =>
+    (orders.sold || [])
+      .filter(o => o.paymentStatus === 'Paid' && o.escrowStatus === 'Held')
+      .reduce((sum, o) => sum + (o.amount || 0), 0)
+  , [orders.sold]);
 
   // ── Average rating ───────────────────────────────────────────
   const avgRating = useMemo(() => {
@@ -310,45 +412,55 @@ export default function ProDashboard() {
         boxShadow: '0 4px 20px rgba(245,158,11,0.12)',
         flexWrap: 'wrap'
       }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <span style={{ fontSize: '0.70rem', fontWeight: '700', color: 'rgba(251,191,36,0.65)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>PRO Wallet Balance</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '1.8rem', fontWeight: '900', color: '#fbbf24', letterSpacing: '-0.02em' }}>
-              {showBalance ? `₦${(profileData?.walletBalance || 0).toLocaleString()}` : '● ● ● ● ●'}
-            </span>
-            <button
-              onClick={() => setShowBalance(!showBalance)}
-              style={{ background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.3)', color: '#fbbf24', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px 9px', gap: '4px', fontSize: '0.72rem', fontWeight: '700' }}
-            >
-              {showBalance ? (
-                <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
-              ) : (
-                <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-              )}
-              {showBalance ? 'Hide' : 'Show'}
-            </button>
+        <div style={{ display: 'flex', gap: '28px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+          {/* Available balance */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <span style={{ fontSize: '0.70rem', fontWeight: '700', color: 'rgba(251,191,36,0.65)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Available Balance</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '1.8rem', fontWeight: '900', color: '#fbbf24', letterSpacing: '-0.02em' }}>
+                {showBalance ? `₦${(profileData?.walletBalance || 0).toLocaleString()}` : '● ● ● ●'}
+              </span>
+              <button
+                onClick={() => setShowBalance(!showBalance)}
+                style={{ background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.3)', color: '#fbbf24', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px 9px', gap: '4px', fontSize: '0.72rem', fontWeight: '700' }}
+              >
+                {showBalance ? (
+                  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
+                ) : (
+                  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                )}
+                {showBalance ? 'Hide' : 'Show'}
+              </button>
+            </div>
+            <span style={{ fontSize: '0.74rem', color: 'rgba(251,191,36,0.45)' }}>Ready to withdraw</span>
           </div>
-          <span style={{ fontSize: '0.74rem', color: 'rgba(251,191,36,0.45)' }}>Available for withdrawal</span>
+
+          {/* Pending escrow */}
+          {pendingEscrow > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', borderLeft: '1px solid rgba(245,158,11,0.2)', paddingLeft: '24px' }}>
+              <span style={{ fontSize: '0.70rem', fontWeight: '700', color: 'rgba(251,191,36,0.5)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>In Escrow (Pending)</span>
+              <span style={{ fontSize: '1.4rem', fontWeight: '800', color: 'rgba(251,191,36,0.7)' }}>
+                ₦{pendingEscrow.toLocaleString()}
+              </span>
+              <span style={{ fontSize: '0.72rem', color: 'rgba(251,191,36,0.35)' }}>Awaiting buyer confirmation</span>
+            </div>
+          )}
         </div>
-        <button
-          onClick={() => navigate('/withdraw')}
-          style={{
-            background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-            color: '#1a0f00',
-            border: 'none',
-            padding: '12px 26px',
-            borderRadius: '10px',
-            fontSize: '0.85rem',
-            fontWeight: '800',
-            cursor: 'pointer',
-            boxShadow: '0 4px 14px rgba(245,158,11,0.35)',
-            transition: 'all 0.2s',
-            whiteSpace: 'nowrap',
-            letterSpacing: '0.02em'
-          }}
-        >
-          Withdraw Funds
-        </button>
+
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <button
+            onClick={() => setActiveTab('transactions')}
+            style={{ background: 'rgba(245,158,11,0.1)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.3)', padding: '10px 18px', borderRadius: '10px', fontSize: '0.82rem', fontWeight: '700', cursor: 'pointer', whiteSpace: 'nowrap' }}
+          >
+            💳 My Orders
+          </button>
+          <button
+            onClick={() => navigate('/withdraw')}
+            style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: '#1a0f00', border: 'none', padding: '10px 22px', borderRadius: '10px', fontSize: '0.85rem', fontWeight: '800', cursor: 'pointer', boxShadow: '0 4px 14px rgba(245,158,11,0.35)', whiteSpace: 'nowrap' }}
+          >
+            Withdraw Funds
+          </button>
+        </div>
       </div>
 
       {/* ── Quick Actions ─────────────────────────────────────── */}
@@ -393,9 +505,12 @@ export default function ProDashboard() {
       {/* ── Tabs ─────────────────────────────────────────────── */}
       <div className="pro-tabs">
         {[
-          { key: 'overview',   label: 'Overview', icon: <HomeIcon size={14} style={{ marginRight: 6 }} />   },
-          { key: 'listings',   label: 'My Products', icon: <PackageIcon size={14} style={{ marginRight: 6 }} /> },
-          { key: 'analytics',  label: 'Analytics', icon: <ChartIcon size={14} style={{ marginRight: 6 }} />  },
+          { key: 'overview',      label: 'Overview',      icon: <HomeIcon size={14} style={{ marginRight: 6 }} /> },
+          { key: 'listings',      label: 'My Products',   icon: <PackageIcon size={14} style={{ marginRight: 6 }} /> },
+          { key: 'transactions',  label: 'Transactions',  icon: <CheckCircleIcon size={14} style={{ marginRight: 6 }} /> },
+          { key: 'bag',           label: 'My Bag',        icon: <BookmarkIcon size={14} style={{ marginRight: 6 }} /> },
+          { key: 'analytics',     label: 'Analytics',     icon: <ChartIcon size={14} style={{ marginRight: 6 }} /> },
+          { key: 'settings',      label: 'Settings',      icon: <span style={{ marginRight: 6, fontSize: '0.9em' }}>⚙️</span> },
         ].map(t => (
           <button
             key={t.key}
@@ -505,7 +620,7 @@ export default function ProDashboard() {
 
           <div className="pro-listings-summary">
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><PackageIcon size={14} /> {activeProducts.length} active</span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><StarIcon size={14} /> {myProducts.filter(p => p.productStatus === 'Reserved').length} reserved</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><StarIcon size={14} /> {reservedProducts.length} reserved</span>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><CheckCircleIcon size={14} /> {soldProducts.length} sold</span>
           </div>
 
@@ -599,48 +714,221 @@ export default function ProDashboard() {
         </div>
       )}
 
-      {/* Danger Zone */}
-      <div className="pro-settings-section" style={{
-        marginTop: '36px',
-        border: '1px solid rgba(239, 68, 68, 0.2)',
-        background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.03) 0%, rgba(0, 0, 0, 0) 100%)',
-        borderRadius: '16px',
-        padding: '24px',
-        maxWidth: '900px',
-        marginLeft: 'auto',
-        marginRight: 'auto'
-      }}>
-        <p className="dash-settings-title" style={{ color: '#ef4444', display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 12px 0', fontSize: '1.1rem', fontWeight: 'bold' }}>
-          ⚠️ Danger Zone
-        </p>
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-gray)', marginBottom: '20px', lineHeight: '1.5' }}>
-          Once you delete your account, there is no going back. All of your products, orders, history, and profile data will be permanently removed.
-        </p>
-        <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-          <button
-            onClick={handleDeleteAccount}
-            disabled={deleteSaving}
-            className="btn-danger"
-            style={{
-              background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
-              color: '#fff',
-              border: 'none',
-              padding: '12px 24px',
-              borderRadius: '12px',
-              fontSize: '0.88rem',
-              fontWeight: '700',
-              cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(220, 38, 38, 0.25)',
-              transition: 'all 0.2s',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            {deleteSaving ? 'Deleting Account…' : '🗑️ Delete Account Permanently'}
-          </button>
+      {/* ═══════════════════════════════════════════════════════ */}
+      {/* TRANSACTIONS TAB                                        */}
+      {/* ═══════════════════════════════════════════════════════ */}
+      {activeTab === 'transactions' && (
+        <div className="pro-tab-content animate-fade-in">
+          <h2 className="pro-section-title" style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>💳 Transactions</h2>
+
+          {/* Things Sold */}
+          <div style={{ marginBottom: 32 }}>
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#fbbf24', marginBottom: 14 }}>💰 Things You Sold</h3>
+            {orders.sold?.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {orders.sold.map(o => (
+                  <div key={o._id} style={{ background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 14, padding: '16px 20px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, alignItems: 'flex-start' }}>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)', marginBottom: 4 }}>{o.product ? o.product.name : 'Deleted Product'}</div>
+                        <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                          <span>Buyer: <strong>{o.buyer?.name || 'Unknown'}</strong></span>
+                          <span style={{ color: o.paymentStatus === 'Paid' ? 'var(--success)' : 'var(--warning)' }}>Payment: {o.paymentStatus}</span>
+                          <span style={{ color: o.escrowStatus === 'Released' ? 'var(--success)' : o.escrowStatus === 'Held' ? '#f59e0b' : 'var(--text-muted)' }}>Escrow: {o.escrowStatus}</span>
+                        </div>
+                        {o.meetingPoint && (
+                          <div style={{ marginTop: 8, fontSize: '0.78rem', color: 'var(--text-secondary)' }}>📍 {o.meetingPoint} · {o.pickupDate || 'Flexible'} {o.pickupTime ? `at ${o.pickupTime}` : ''}</div>
+                        )}
+                      </div>
+                      <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fbbf24' }}>₦{o.amount?.toLocaleString()}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="pro-empty-state"><p>You haven't sold anything yet.</p></div>
+            )}
+          </div>
+
+          {/* Things Bought */}
+          <div>
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 14 }}>🛒 Things You Bought</h3>
+            {orders.bought?.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {orders.bought.map(o => (
+                  <div key={o._id} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 14, padding: '16px 20px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, alignItems: 'flex-start' }}>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)', marginBottom: 4 }}>{o.product ? o.product.name : 'Deleted Product'}</div>
+                        <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                          <span>Seller: <strong>{o.seller?.name || 'Unknown'}</strong></span>
+                          <span style={{ color: o.paymentStatus === 'Paid' ? 'var(--success)' : 'var(--warning)' }}>Payment: {o.paymentStatus}</span>
+                          <span>Escrow: {o.escrowStatus}</span>
+                        </div>
+                        {o.meetingPoint && (
+                          <div style={{ marginTop: 8, fontSize: '0.78rem', color: 'var(--text-secondary)' }}>📍 {o.meetingPoint} · {o.pickupDate || 'Flexible'}</div>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
+                        <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)' }}>₦{o.amount?.toLocaleString()}</div>
+                        {o.paymentStatus === 'Paid' && o.escrowStatus === 'Held' && (
+                          <button
+                            onClick={() => handleConfirmDelivery(o._id)}
+                            style={{ background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: 10, fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                          >
+                            🤝 Confirm & Release
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="pro-empty-state"><p>You haven't bought anything yet.</p></div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════ */}
+      {/* MY BAG TAB                                              */}
+      {/* ═══════════════════════════════════════════════════════ */}
+      {activeTab === 'bag' && (
+        <div className="pro-tab-content animate-fade-in">
+          <h2 className="pro-section-title" style={{ marginBottom: 20 }}>👜 My Bag</h2>
+          {profileData?.wishlist?.length > 0 ? (
+            <div className="pro-products-list">
+              {profileData.wishlist.map(p => (
+                <div key={p._id} style={{ display: 'flex', gap: 14, padding: '14px 16px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 14, alignItems: 'center' }}>
+                  {(p.images?.[0] || p.image) ? (
+                    <img src={p.images?.[0] || p.image} alt={p.name} style={{ width: 64, height: 64, borderRadius: 10, objectFit: 'cover', border: '1px solid var(--border-color)', flexShrink: 0 }} />
+                  ) : (
+                    <div style={{ width: 64, height: 64, borderRadius: 10, background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', flexShrink: 0 }}>🖼️</div>
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                    <div style={{ fontWeight: 800, color: '#10b981', fontSize: '0.95rem' }}>₦{p.price?.toLocaleString()}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>📍 {p.hostelLocation}</div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                    <Link to={`/product/${p._id}`} style={{ background: 'rgba(59,130,246,0.15)', color: '#60a5fa', border: '1px solid rgba(59,130,246,0.3)', padding: '7px 12px', borderRadius: 8, fontSize: '0.78rem', fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>💳 View</Link>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const res = await fetch(`${API_URL}/api/products/${p._id}/wishlist`, {
+                            method: 'POST', headers: { 'Authorization': `Bearer ${token}` }
+                          });
+                          if (res.ok) { showToast('Removed from Bag', 'info'); loadData(); }
+                        } catch { showToast('Error removing item', 'error'); }
+                      }}
+                      style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)', padding: '7px 10px', borderRadius: 8, fontSize: '0.82rem', cursor: 'pointer' }}
+                      title="Remove from Bag"
+                    >🗑️</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="pro-empty-state">
+              <div style={{ marginBottom: 12, fontSize: '3rem' }}>👜</div>
+              <p>Your bag is empty. Browse the marketplace and save items you love.</p>
+              <Link to="/marketplace" style={{ display: 'inline-block', marginTop: 12, background: 'rgba(245,158,11,0.15)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.3)', padding: '10px 22px', borderRadius: 10, fontWeight: 700, textDecoration: 'none', fontSize: '0.85rem' }}>🛍️ Browse Marketplace</Link>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════ */}
+      {/* SETTINGS TAB                                            */}
+      {/* ═══════════════════════════════════════════════════════ */}
+      {activeTab === 'settings' && (
+        <div className="pro-tab-content animate-fade-in">
+          <h2 className="pro-section-title" style={{ marginBottom: 20 }}>⚙️ Account Settings</h2>
+
+          {/* Profile info */}
+          <div style={{ background: 'rgba(245,158,11,0.04)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: 16, padding: '20px 24px', marginBottom: 20 }}>
+            <p style={{ fontWeight: 700, color: '#fbbf24', marginBottom: 16, fontSize: '0.95rem' }}>Profile Information</p>
+            <div className="dash-settings-grid">
+              <div className="dash-settings-field">
+                <label className="dash-settings-label">Hostel / Location</label>
+                <select value={editHostel} onChange={e => setEditHostel(e.target.value)} className="glass-input">
+                  {HOSTELS.map(h => <option key={h} value={h} style={{ background: 'var(--bg-input)', color: 'var(--text-primary)' }}>{h}</option>)}
+                </select>
+              </div>
+              <div className="dash-settings-field">
+                <label className="dash-settings-label">Faculty</label>
+                <select value={editFaculty} onChange={e => { setEditFaculty(e.target.value); setEditDept(''); }} className="glass-input">
+                  {FACULTIES.map(f => <option key={f} value={f} style={{ background: 'var(--bg-input)', color: 'var(--text-primary)' }}>{f}</option>)}
+                </select>
+              </div>
+              <div className="dash-settings-field">
+                <label className="dash-settings-label">Department</label>
+                <select value={editDept} onChange={e => setEditDept(e.target.value)} className="glass-input">
+                  <option value="" style={{ background: 'var(--bg-input)', color: 'var(--text-primary)' }}>— Select —</option>
+                  {currentDepts.map(d => <option key={d} value={d} style={{ background: 'var(--bg-input)', color: 'var(--text-primary)' }}>{d}</option>)}
+                </select>
+              </div>
+              <div className="dash-settings-field">
+                <label className="dash-settings-label">Phone Number</label>
+                <input type="tel" maxLength="11" placeholder="e.g. 08012345678" value={editPhone} onChange={e => setEditPhone(e.target.value.replace(/\D/g, ''))} className="glass-input" />
+              </div>
+            </div>
+            <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
+              <button onClick={handleSaveSettings} disabled={editSaving} style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#1a0f00', border: 'none', padding: '10px 24px', borderRadius: 10, fontSize: '0.88rem', fontWeight: 800, cursor: editSaving ? 'not-allowed' : 'pointer', opacity: editSaving ? 0.7 : 1 }}>
+                {editSaving ? 'Saving…' : '💾 Save Changes'}
+              </button>
+            </div>
+          </div>
+
+          {/* Student Verification */}
+          {!user?.isVerifiedStudent ? (
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 16, padding: '20px 24px', marginBottom: 20 }}>
+              <p style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8, fontSize: '0.95rem' }}>🎓 Student Verification</p>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: 16 }}>Get verified to build trust with buyers and unlock premium features.</p>
+              {showVerifyForm ? (
+                <form onSubmit={handleVerifySubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <input type="text" required placeholder="Your Student Matric Number" value={matricInput} onChange={e => setMatricInput(e.target.value)} className="glass-input" style={{ maxWidth: 300 }} />
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <label htmlFor="pro-id-upload" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '8px 14px', borderRadius: 8, fontSize: '0.82rem', cursor: 'pointer' }}>
+                      {idCardLabel || '📎 Upload Student ID / Matric Card'}
+                    </label>
+                    <input id="pro-id-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { setIdCardFile(e.target.files[0]); setIdCardLabel(e.target.files[0]?.name || ''); }} />
+                    <button type="submit" style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)', color: '#1a0f00', border: 'none', padding: '8px 16px', borderRadius: 8, fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer' }}>Submit</button>
+                    <button type="button" onClick={() => setShowVerifyForm(false)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '8px 14px', borderRadius: 8, fontSize: '0.82rem', cursor: 'pointer' }}>Cancel</button>
+                  </div>
+                </form>
+              ) : (
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  <button onClick={() => setShowVerifyForm(true)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '8px 16px', borderRadius: 8, fontSize: '0.82rem', cursor: 'pointer' }}>📎 Submit Matric Form</button>
+                  <button onClick={handlePayVerificationFee} style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)', color: '#1a0f00', border: 'none', padding: '10px 22px', borderRadius: 10, fontSize: '0.85rem', fontWeight: 800, cursor: 'pointer' }}>🎓 Instant Verified (₦1,000)</button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div style={{ background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 16, padding: '16px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: '1.5rem' }}>🎓</span>
+              <div>
+                <div style={{ fontWeight: 700, color: '#10b981', fontSize: '0.9rem' }}>LCU Student Verified</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Your account is verified as an LCU student.</div>
+              </div>
+            </div>
+          )}
+
+          {/* Danger Zone */}
+          <div style={{ marginTop: 32, border: '1px solid rgba(239,68,68,0.2)', background: 'linear-gradient(135deg, rgba(239,68,68,0.03) 0%, rgba(0,0,0,0) 100%)', borderRadius: 16, padding: 24 }}>
+            <p style={{ color: '#ef4444', display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 12px 0', fontSize: '1.05rem', fontWeight: 'bold' }}>⚠️ Danger Zone</p>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-gray)', marginBottom: 20, lineHeight: '1.5' }}>Once you delete your account, there is no going back. All of your products, orders, history, and profile data will be permanently removed.</p>
+            <button
+              onClick={handleDeleteAccount}
+              disabled={deleteSaving}
+              style={{ background: 'linear-gradient(135deg, #dc2626, #b91c1c)', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: 12, fontSize: '0.88rem', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(220,38,38,0.25)', display: 'flex', alignItems: 'center', gap: 8 }}
+            >
+              {deleteSaving ? 'Deleting Account…' : '🗑️ Delete Account Permanently'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -697,7 +985,7 @@ function ProProductRow({ product, onStatusChange, onDelete, onBoost, onFeature, 
       <div className="pro-product-actions">
         {/* Status changer */}
         <select
-          value={status}
+          value={status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()}
           onChange={e => onStatusChange(product._id, e.target.value)}
           className="pro-status-select"
           disabled={boostingId === product._id}

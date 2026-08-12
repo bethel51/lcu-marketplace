@@ -2120,6 +2120,28 @@ body.light-theme .skeleton-line {
     padding: 8px 10px !important;
     font-size: 0.76rem !important;
   }
+
+  .pro-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed var(--border-color);
+    border-radius: var(--border-radius);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    gap: 8px;
+  }
+
+  .pro-products-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 14px;
+  }
 }
 
 /* ── Very Small Smartphones (≤380px) ────────────────────────── */

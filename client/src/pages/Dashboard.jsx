@@ -116,10 +116,12 @@ export default function Dashboard() {
         // Fetch products and orders IN PARALLEL — much faster
         const [productsRes, ordersRes] = await Promise.all([
           fetch(`${API_URL}/api/products?seller=${activeUserId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'Authorization': `Bearer ${token}` },
+            cache: 'no-store'
           }),
           fetch(`${API_URL}/api/payments/my-orders`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'Authorization': `Bearer ${token}` },
+            cache: 'no-store'
           })
         ]);
 
