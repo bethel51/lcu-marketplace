@@ -57,6 +57,19 @@ const orderSchema = new mongoose.Schema({
   buyerNote: {
     type: String,
     default: ''
+  },
+  deliveryMethod: {
+    type: String,
+    enum: ['pickup', 'errands'],
+    default: 'pickup'
+  },
+  errandId: {
+    type: String,
+    default: ''
+  },
+  deliveryStatus: {
+    type: String,
+    default: ''
   }
 }, {
   timestamps: true

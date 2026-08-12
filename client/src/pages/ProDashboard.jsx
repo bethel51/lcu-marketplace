@@ -274,6 +274,26 @@ export default function ProDashboard() {
     } catch { showToast('Error releasing funds', 'error'); }
   };
 
+  const handleAssignMessenger = async (orderId) => {
+    try {
+      const res = await fetch(`${API_URL}/api/integration/errands/initialize-delivery/${orderId}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.redirectUrl) {
+        if (!data.hasErrandsAccount) {
+          showToast("You'll be taken to LCU Errands to create an account first.", 'info');
+        }
+        setTimeout(() => { window.location.href = data.redirectUrl; }, data.hasErrandsAccount ? 0 : 1200);
+      } else {
+        showToast(data.message || 'Failed to initialise delivery dispatch', 'error');
+      }
+    } catch {
+      showToast('Error initialising delivery integration', 'error');
+    }
+  };
+
   // ── Save profile settings ────────────────────────────────────
   const handleSaveSettings = async () => {
     if (!token) return;
@@ -505,21 +525,22 @@ export default function ProDashboard() {
       {/* ── Tabs ─────────────────────────────────────────────── */}
       <div className="pro-tabs">
         {[
-          { key: 'overview',      label: 'Overview',      icon: <HomeIcon size={14} style={{ marginRight: 6 }} /> },
-          { key: 'listings',      label: 'My Products',   icon: <PackageIcon size={14} style={{ marginRight: 6 }} /> },
-          { key: 'transactions',  label: 'Transactions',  icon: <CheckCircleIcon size={14} style={{ marginRight: 6 }} /> },
-          { key: 'bag',           label: 'My Bag',        icon: <BookmarkIcon size={14} style={{ marginRight: 6 }} /> },
-          { key: 'analytics',     label: 'Analytics',     icon: <ChartIcon size={14} style={{ marginRight: 6 }} /> },
-          { key: 'settings',      label: 'Settings',      icon: <span style={{ marginRight: 6, fontSize: '0.9em' }}>⚙️</span> },
+          { key: 'overview',      label: 'Overview',      icon: <HomeIcon size={15} />,          mobileIcon: '🏠' },
+          { key: 'listings',      label: 'My Products',   icon: <PackageIcon size={15} />,       mobileIcon: '📦' },
+          { key: 'transactions',  label: 'Transactions',  icon: <CheckCircleIcon size={15} />,   mobileIcon: '💳' },
+          { key: 'bag',           label: 'My Bag',        icon: <BookmarkIcon size={15} />,      mobileIcon: '🛍️' },
+          { key: 'analytics',     label: 'Analytics',     icon: <ChartIcon size={15} />,         mobileIcon: '📊' },
+          { key: 'settings',      label: 'Settings',      icon: null,                            mobileIcon: '⚙️' },
         ].map(t => (
           <button
             key={t.key}
             className={`pro-tab-btn${activeTab === t.key ? ' pro-tab-btn--active' : ''}`}
             onClick={() => setActiveTab(t.key)}
-            style={{ display: 'inline-flex', alignItems: 'center' }}
+            title={t.label}
           >
-            {t.icon}
-            {t.label}
+            <span className="pro-tab-icon-mobile">{t.mobileIcon}</span>
+            <span className="pro-tab-icon-desktop">{t.icon}</span>
+            <span className="pro-tab-label">{t.label}</span>
           </button>
         ))}
       </div>
@@ -739,6 +760,34 @@ export default function ProDashboard() {
                         {o.meetingPoint && (
                           <div style={{ marginTop: 8, fontSize: '0.78rem', color: 'var(--text-secondary)' }}>📍 {o.meetingPoint} · {o.pickupDate || 'Flexible'} {o.pickupTime ? `at ${o.pickupTime}` : ''}</div>
                         )}
+
+                        {/* Errands messenger assignment and tracking */}
+                        {o.paymentStatus === 'Paid' && o.orderType === 'escrow' && o.escrowStatus !== 'Released' && !o.errandId && (
+                          <div style={{ marginTop: '12px', borderTop: '1px solid rgba(245,158,11,0.15)', paddingTop: '12px' }}>
+                            <button
+                              onClick={() => handleAssignMessenger(o._id)}
+                              style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#1a0f00', border: 'none', padding: '8px 16px', borderRadius: 8, fontSize: '0.78rem', fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                            >
+                              🚚 Assign a Messenger
+                            </button>
+                            <div style={{ fontSize: '0.72rem', color: 'rgba(251,191,36,0.6)', marginTop: '4px' }}>
+                              Register an account with Leadcity Errands to assign a messenger.
+                            </div>
+                          </div>
+                        )}
+
+                        {o.errandId && (
+                          <div style={{ marginTop: '12px', borderTop: '1px solid rgba(245,158,11,0.15)', paddingTop: '12px' }}>
+                            <strong style={{ fontSize: '0.8rem', color: '#fbbf24' }}>🚚 Delivery Status ({o.deliveryStatus || 'Pending'})</strong>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '6px', fontSize: '0.76rem', color: 'var(--text-secondary)' }}>
+                              <div>{['messenger_assigned', 'item_picked_up', 'out_for_delivery', 'delivered', 'completed'].includes(o.deliveryStatus) ? '✓' : '○'} Messenger Assigned</div>
+                              <div>{['item_picked_up', 'out_for_delivery', 'delivered', 'completed'].includes(o.deliveryStatus) ? '✓' : '○'} Item Picked Up</div>
+                              <div>{['out_for_delivery', 'delivered', 'completed'].includes(o.deliveryStatus) ? '✓' : '○'} Out for Delivery</div>
+                              <div>{['delivered', 'completed'].includes(o.deliveryStatus) ? '✓' : '○'} Delivered</div>
+                              <div>{o.deliveryStatus === 'completed' ? '✓' : '○'} Buyer Confirmed</div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                       <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fbbf24' }}>₦{o.amount?.toLocaleString()}</div>
                     </div>
@@ -768,6 +817,27 @@ export default function ProDashboard() {
                         {o.meetingPoint && (
                           <div style={{ marginTop: 8, fontSize: '0.78rem', color: 'var(--text-secondary)' }}>📍 {o.meetingPoint} · {o.pickupDate || 'Flexible'}</div>
                         )}
+                        {o.deliveryMethod === 'errands' && (
+                          <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed var(--border-color)', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                            <strong style={{ color: '#fbbf24' }}>🚚 Delivery Tracking ({o.deliveryStatus || 'Pending'})</strong>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', fontSize: '0.74rem', marginTop: '4px' }}>
+                              <span style={{ color: o.paymentStatus === 'Paid' ? 'var(--success)' : 'inherit' }}>{o.paymentStatus === 'Paid' ? '✓' : '○'} Paid</span>
+                              <span style={{ color: ['messenger_assigned', 'item_picked_up', 'out_for_delivery', 'delivered', 'completed'].includes(o.deliveryStatus) ? 'var(--success)' : 'inherit' }}>
+                                {['messenger_assigned', 'item_picked_up', 'out_for_delivery', 'delivered', 'completed'].includes(o.deliveryStatus) ? '✓' : '○'} Assigned
+                              </span>
+                              <span style={{ color: ['item_picked_up', 'out_for_delivery', 'delivered', 'completed'].includes(o.deliveryStatus) ? 'var(--success)' : 'inherit' }}>
+                                {['item_picked_up', 'out_for_delivery', 'delivered', 'completed'].includes(o.deliveryStatus) ? '✓' : '○'} Picked Up
+                              </span>
+                              <span style={{ color: ['out_for_delivery', 'delivered', 'completed'].includes(o.deliveryStatus) ? 'var(--success)' : 'inherit' }}>
+                                {['out_for_delivery', 'delivered', 'completed'].includes(o.deliveryStatus) ? '✓' : '○'} Out for Delivery
+                              </span>
+                              <span style={{ color: ['delivered', 'completed'].includes(o.deliveryStatus) ? 'var(--success)' : 'inherit' }}>
+                                {['delivered', 'completed'].includes(o.deliveryStatus) ? '✓' : '○'} Delivered
+                              </span>
+                              <span style={{ color: o.deliveryStatus === 'completed' ? 'var(--success)' : 'inherit' }}>{o.deliveryStatus === 'completed' ? '✓' : '○'} Confirmed</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
                         <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)' }}>₦{o.amount?.toLocaleString()}</div>
@@ -776,7 +846,7 @@ export default function ProDashboard() {
                             onClick={() => handleConfirmDelivery(o._id)}
                             style={{ background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: 10, fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
                           >
-                            🤝 Confirm & Release
+                            {o.deliveryMethod === 'errands' ? '🤝 Confirm Delivery' : '🤝 Confirm & Release'}
                           </button>
                         )}
                       </div>

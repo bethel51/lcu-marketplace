@@ -4465,6 +4465,36 @@ body.light-theme .splash-title {
   border-bottom-color: #f59e0b;
 }
 
+@media (max-width: 768px) {
+  .pro-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .pro-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .pro-tab-btn {
+    flex-shrink: 0;
+  }
+}
+
+/* Tab icon/label visibility control */
+.pro-tab-icon-desktop { display: inline-flex; align-items: center; margin-right: 6px; }
+.pro-tab-icon-mobile  { display: none; font-size: 1.1rem; }
+.pro-tab-label        { display: inline; }
+.pro-tab-btn          { display: inline-flex; align-items: center; gap: 5px; }
+
+@media (max-width: 600px) {
+  /* Compact icon-only tabs on small mobile */
+  .pro-tab-icon-desktop { display: none; }
+  .pro-tab-icon-mobile  { display: inline; }
+  .pro-tab-label        { display: none; }
+  .pro-tab-btn          { padding: 10px 14px; font-size: 0.82rem; }
+  .pro-tab-btn--active  { background: rgba(245,158,11,0.08); border-radius: 8px 8px 0 0; }
+}
+
 /* Performance Overview Section */
 .pro-section-header {
   display: flex;

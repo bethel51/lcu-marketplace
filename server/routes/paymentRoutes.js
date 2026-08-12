@@ -296,6 +296,9 @@ router.post('/confirm-delivery/:orderId', protect, async (req, res) => {
 
     // Release escrow
     order.escrowStatus = 'Released';
+    if (order.deliveryMethod === 'errands') {
+      order.deliveryStatus = 'completed';
+    }
     await order.save();
 
     // Credit seller's wallet

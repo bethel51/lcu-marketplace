@@ -122,6 +122,11 @@ const userSchema = new mongoose.Schema({
   proExpiresAt: {
     type: Date,
     default: null
+  },
+  // LCU Errands integration
+  errandsUserId: {
+    type: String,
+    default: ''   // Set when the seller links their LCU Errands account
   }
 }, {
   timestamps: true
