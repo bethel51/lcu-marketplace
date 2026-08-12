@@ -102,10 +102,8 @@ router.get('/', async (req, res) => {
       .sort({ isBoosted: -1, isFeatured: -1, createdAt: -1 })
       .lean();
 
-    // Short browser cache — 10s for general listing; 0 for seller-specific views
-    if (!seller) {
-      res.set('Cache-Control', 'public, max-age=10, stale-while-revalidate=30');
-    }
+    // No caching — always return fresh listings so new posts appear immediately
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -223,7 +221,7 @@ router.get('/:id', async (req, res) => {
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
-    res.set('Cache-Control', 'public, max-age=15, stale-while-revalidate=60');
+    res.set('Cache-Control', 'no-store');
     res.json(product);
   } catch (error) {
     res.status(500).json({ message: error.message });

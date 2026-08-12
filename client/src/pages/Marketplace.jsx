@@ -58,8 +58,8 @@ export default function Marketplace() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      // Fetch featured products
-      const featRes = await fetch(`${API_URL}/api/products/featured`);
+      // Fetch featured products — no-store so new PRO featured listings appear instantly
+      const featRes = await fetch(`${API_URL}/api/products/featured`, { cache: 'no-store' });
       if (featRes.ok) {
         setFeaturedProducts(await featRes.json());
       }
@@ -71,7 +71,8 @@ export default function Marketplace() {
       if (minPrice) url += `&minPrice=${encodeURIComponent(minPrice)}`;
       if (maxPrice) url += `&maxPrice=${encodeURIComponent(maxPrice)}`;
 
-      const response = await fetch(url);
+      // cache: 'no-store' forces browser to bypass cache — new listings appear immediately
+      const response = await fetch(url, { cache: 'no-store' });
       const data = await response.json();
       if (response.ok) {
         const activeAndSafe = data.filter(p => !p.reports || p.reports.length <= 2);
