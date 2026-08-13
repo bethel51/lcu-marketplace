@@ -294,7 +294,7 @@ router.get('/profile', protect, async (req, res) => {
         });
       } else {
         // Calculate remaining time in milliseconds and convert to days
-        const timeLeft = expiresAt.getTime() - now.getTime();
+        const timeLeft = user.proExpiresAt.getTime() - now.getTime();
         const daysLeft = timeLeft / (1000 * 60 * 60 * 24);
         
         // If 2 days (48 hours) or less remain, send a renewal warning reminder notification
@@ -319,6 +319,20 @@ router.get('/profile', protect, async (req, res) => {
       }
     }
     res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get wallet balance only — fast, lightweight, always fresh
+router.get('/wallet', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('walletBalance');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    // Ensure response is never cached by proxies or browsers
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.json({ walletBalance: user.walletBalance || 0 });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -352,6 +366,13 @@ router.post('/verify-student', protect, upload.single('idCard'), async (req, res
   try {
     const user = await User.findById(req.user._id);
     if (user) {
+      const { matricNumber } = req.body;
+      if (!matricNumber) {
+        return res.status(400).json({ message: 'Matric number is required for verification.' });
+      }
+      if (matricNumber.trim().toUpperCase() !== user.matricNumber.toUpperCase()) {
+        return res.status(400).json({ message: 'Submitted matric number does not match your registered matric number.' });
+      }
       user.isVerifiedStudent = true;
       await user.save();
       res.json({ message: 'Verification badge granted!', isVerifiedStudent: true });

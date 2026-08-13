@@ -60,7 +60,11 @@ const app = express();
 app.set('trust proxy', 1); // trust first proxy (e.g. Render, Heroku)
 
 // ── Static files ─────────────────────────────────────────────────
-app.use('/uploads', express.static(uploadsDir));
+app.use('/uploads', express.static(uploadsDir, {
+  maxAge: '1d',
+  etag: true,
+  lastModified: true
+}));
 
 // ── CORS ─────────────────────────────────────────────────────────
 const clientUrl = process.env.CLIENT_URL || '*';

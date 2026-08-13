@@ -44,6 +44,7 @@ export default function Dashboard() {
   const [orders,      setOrders]        = useState({ bought: [], sold: [] });
   const [listingSearch, setListingSearch] = useState('');
   const [showBalance, setShowBalance]     = useState(false);
+  const [walletBalance, setWalletBalance] = useState(0);
   const [subTab, setSubTab]               = useState('active'); // 'active' | 'sold' | 'drafts'
 
   const [readCounts, setReadCounts] = useState(() => ({
@@ -108,18 +109,23 @@ export default function Dashboard() {
         setEditFaculty(profile.faculty || FACULTIES[0]);
         setEditDept(profile.department || '');
         setEditPhone(profile.phoneNumber || '');
+        setWalletBalance(profile.walletBalance || 0);
       }
 
       const activeUserId = profile?._id || profile?.id || user?._id || user?.id;
 
       if (activeUserId) {
-        // Fetch products and orders IN PARALLEL — much faster
-        const [productsRes, ordersRes] = await Promise.all([
+        // Fetch products, orders and wallet IN PARALLEL — much faster
+        const [productsRes, ordersRes, walletRes] = await Promise.all([
           fetch(`${API_URL}/api/products?seller=${activeUserId}`, {
             headers: { 'Authorization': `Bearer ${token}` },
             cache: 'no-store'
           }),
           fetch(`${API_URL}/api/payments/my-orders`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+            cache: 'no-store'
+          }),
+          fetch(`${API_URL}/api/auth/wallet`, {
             headers: { 'Authorization': `Bearer ${token}` },
             cache: 'no-store'
           })
@@ -133,6 +139,10 @@ export default function Dashboard() {
         if (ordersRes.ok) {
           const ordersData = await ordersRes.json();
           setOrders(ordersData);
+        }
+        if (walletRes.ok) {
+          const wData = await walletRes.json();
+          setWalletBalance(wData.walletBalance || 0);
         }
       }
     } catch {
@@ -216,12 +226,23 @@ export default function Dashboard() {
   // ── Verify student ────────────────────────────────────────────
   const handleVerifySubmit = async (e) => {
     e.preventDefault();
-    if (!matricInput.trim()) return;
-    await verifyStudent(idCardFile);
-    showToast('Verification request submitted! 🎓', 'success');
-    setShowVerifyForm(false);
-    setMatricInput(''); setIdCardFile(null); setIdCardLabel('');
-    loadDashboard();
+    const cleanMatric = matricInput.trim();
+    if (!cleanMatric) return;
+
+    if (cleanMatric.toUpperCase() !== (profileData?.matricNumber || '').toUpperCase()) {
+      showToast('Submitted matric number does not match your registered matric number.', 'error');
+      return;
+    }
+
+    try {
+      await verifyStudent(idCardFile, cleanMatric);
+      showToast('Verification request submitted! 🎓', 'success');
+      setShowVerifyForm(false);
+      setMatricInput(''); setIdCardFile(null); setIdCardLabel('');
+      loadDashboard();
+    } catch (err) {
+      showToast(err.message || 'Verification failed. Please try again.', 'error');
+    }
   };
 
   // ── Listing actions ───────────────────────────────────────────
@@ -257,6 +278,17 @@ export default function Dashboard() {
       const data = await res.json();
       if (res.ok) {
         showToast('Escrow funds released to the seller! 🤝', 'success');
+        // Immediately refresh wallet balance without waiting for full dashboard reload
+        try {
+          const wRes = await fetch(`${API_URL}/api/auth/wallet`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+            cache: 'no-store'
+          });
+          if (wRes.ok) {
+            const wData = await wRes.json();
+            setWalletBalance(wData.walletBalance || 0);
+          }
+        } catch { /* non-fatal */ }
         loadDashboard();
       } else {
         showToast(data.message || 'Failed to release funds', 'error');
@@ -492,7 +524,7 @@ export default function Dashboard() {
               <span className="dash-wallet-label">Wallet Balance</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span className="dash-wallet-amount">
-                  {showBalance ? `₦${(profileData?.walletBalance || 0).toLocaleString()}` : '****'}
+                  {showBalance ? `₦${walletBalance.toLocaleString()}` : '****'}
                 </span>
                 <button 
                   onClick={() => setShowBalance(!showBalance)}

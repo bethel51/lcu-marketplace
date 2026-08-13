@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { API_URL } from '../config';
 import { compressImage } from '../utils/imageCompressor';
+import { UploadIcon, SettingsIcon, EditIcon, StoreIcon, StarIcon, XIcon } from '../components/Icons';
 
 // ── PRO: Shared form field definitions ────────────────────────────
 const CATEGORIES  = ['Hostel Items', 'Gadgets', 'Clothing & Fashion', 'Textbooks & Handouts', 'Services', 'Others'];
@@ -59,6 +60,7 @@ function ProductForm({ form, onChange, isPro, slotLabel = '' }) {
   const processFile = async (file) => {
     if (!file || !file.type.startsWith('image/')) return null;
     setCompressing(true);
+    await new Promise((resolve) => setTimeout(resolve, 50));
     try {
       const blob = await compressImage(file);
       return new Promise((resolve) => {
@@ -73,8 +75,17 @@ function ProductForm({ form, onChange, isPro, slotLabel = '' }) {
   const handleFilesChange = async (files) => {
     const remaining = maxPhotos - form.images.length;
     const toProcess = Array.from(files).slice(0, remaining);
-    const results   = await Promise.all(toProcess.map(processFile));
-    const valid     = results.filter(Boolean);
+    // Process images SEQUENTIALLY with a yield between each to keep the UI responsive.
+    // Concurrent canvas operations saturate the main thread and cause visible freezing.
+    const valid = [];
+    for (const file of toProcess) {
+      const result = await processFile(file);
+      if (result) {
+        valid.push(result);
+        // Yield to the browser paint loop between files so the spinner stays smooth
+        await new Promise(r => setTimeout(r, 20));
+      }
+    }
     if (valid.length > 0) {
       onChange('images', [...form.images, ...valid]);
     }
@@ -218,7 +229,7 @@ function ProductForm({ form, onChange, isPro, slotLabel = '' }) {
                 type="button"
                 className="pp-image-remove"
                 onClick={() => removeImage(idx)}
-              >✕</button>
+              ><XIcon size={12} /></button>
               {idx === 0 && <div className="pp-image-main-label">Main</div>}
             </div>
           ))}
@@ -249,12 +260,12 @@ function ProductForm({ form, onChange, isPro, slotLabel = '' }) {
           >
             {compressing ? (
               <div className="pp-upload-placeholder">
-                <span className="pp-upload-icon">⚙️</span>
+                <span className="pp-upload-icon"><SettingsIcon size={24} className="animate-spin" /></span>
                 <span>Compressing images…</span>
               </div>
             ) : (
               <div className="pp-upload-placeholder">
-                <span className="pp-upload-icon">📷</span>
+                <span className="pp-upload-icon"><UploadIcon size={24} /></span>
                 <span>Tap to add photos ({maxPhotos - form.images.length} remaining)</span>
                 <span className="pp-upload-hint">
                   {isPro ? `PRO: up to ${maxPhotos} photos` : `Standard: up to ${maxPhotos} photos`} · Auto-compressed · Max 5 MB each
@@ -434,10 +445,14 @@ export default function PostProduct() {
 
           {/* ── Header ── */}
           <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-            <div className="pp-badge">
-              {isPro && <span className="pro-badge" style={{ marginRight: 6 }}>⭐ PRO</span>}
-              <span>{isEdit ? '✏️' : '🏪'}</span>
-              {isEdit ? 'Edit Mode' : 'New Listing'}
+            <div className="pp-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              {isPro && (
+                <span className="pro-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
+                  <StarIcon size={12} style={{ fill: 'currentColor' }} /> PRO
+                </span>
+              )}
+              {isEdit ? <EditIcon size={14} /> : <StoreIcon size={14} />}
+              <span>{isEdit ? 'Edit Mode' : 'New Listing'}</span>
             </div>
             <h1 style={styles.title}>
               {isEdit ? 'Update Your Listing' : 'Publish a Product'}

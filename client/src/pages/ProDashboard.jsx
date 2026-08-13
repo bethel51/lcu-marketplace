@@ -19,7 +19,14 @@ import {
   ZapIcon,
   CheckCircleIcon,
   RefreshIcon,
-  ImageIcon
+  ImageIcon,
+  SettingsIcon,
+  CreditCardIcon,
+  BagIcon,
+  GraduationIcon,
+  CheckIcon,
+  UploadIcon,
+  AlertIcon
 } from '../components/Icons';
 
 // ── Discount calculator helper ─────────────────────────────────
@@ -110,6 +117,7 @@ export default function ProDashboard() {
   const [statusFilter, setStatusFilter]   = useState('All');
   const [boostingId, setBoostingId]   = useState(null);
   const [profileData, setProfileData] = useState(null);
+  const [walletBalance, setWalletBalance] = useState(0);
   const [deleteSaving, setDeleteSaving] = useState(false);
   const [showBalance, setShowBalance]   = useState(false);
 
@@ -160,6 +168,21 @@ export default function ProDashboard() {
     }
   };
 
+  // ── Fetch only wallet balance (fast, always-fresh) ──────────
+  const fetchWallet = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_URL}/api/auth/wallet`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        cache: 'no-store'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setWalletBalance(data.walletBalance || 0);
+      }
+    } catch { /* non-fatal */ }
+  }, [token]);
+
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
@@ -170,13 +193,15 @@ export default function ProDashboard() {
         setEditFaculty(profile.faculty || 'Information Technology & Applied Sciences');
         setEditDept(profile.department || '');
         setEditPhone(profile.phoneNumber || '');
+        // Initialise wallet from full profile, then refresh via dedicated endpoint
+        setWalletBalance(profile.walletBalance || 0);
       }
 
       const userId = profile?._id || profile?.id || user?._id;
       if (!userId) return;
 
-      // Fetch products, analytics, and orders in parallel — all cache-busted for instant updates
-      const [pRes, aRes, oRes] = await Promise.all([
+      // Fetch products, analytics, orders and wallet in parallel
+      const [pRes, aRes, oRes, wRes] = await Promise.all([
         fetch(`${API_URL}/api/products?seller=${userId}`, {
           headers: { 'Authorization': `Bearer ${token}` },
           cache: 'no-store'
@@ -188,18 +213,24 @@ export default function ProDashboard() {
         fetch(`${API_URL}/api/payments/my-orders`, {
           headers: { 'Authorization': `Bearer ${token}` },
           cache: 'no-store'
+        }),
+        fetch(`${API_URL}/api/auth/wallet`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+          cache: 'no-store'
         })
       ]);
 
-      const [productsData, analyticsData, ordersData] = await Promise.all([
+      const [productsData, analyticsData, ordersData, walletData] = await Promise.all([
         pRes.ok ? pRes.json() : Promise.resolve(null),
         aRes.ok ? aRes.json() : Promise.resolve(null),
         oRes.ok ? oRes.json() : Promise.resolve(null),
+        wRes.ok ? wRes.json() : Promise.resolve(null),
       ]);
 
       if (productsData) setMyProducts(Array.isArray(productsData) ? productsData : (productsData.products || []));
       if (analyticsData) setAnalytics(analyticsData);
       if (ordersData)   setOrders(ordersData);
+      if (walletData)   setWalletBalance(walletData.walletBalance || 0);
 
     } catch {
       showToast('Failed to load PRO dashboard', 'error');
@@ -269,7 +300,12 @@ export default function ProDashboard() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
-      if (res.ok) { showToast('Funds released to seller! 🤝', 'success'); loadData(); }
+      if (res.ok) {
+        showToast('Funds released to seller! 🤝', 'success');
+        // Refresh wallet balance immediately without full reload
+        fetchWallet();
+        loadData();
+      }
       else showToast(data.message || 'Failed to release funds', 'error');
     } catch { showToast('Error releasing funds', 'error'); }
   };
@@ -314,12 +350,23 @@ export default function ProDashboard() {
   // ── Student verification handlers ────────────────────────────
   const handleVerifySubmit = async (e) => {
     e.preventDefault();
-    if (!matricInput.trim()) return;
-    await verifyStudent(idCardFile);
-    showToast('Verification request submitted! 🎓', 'success');
-    setShowVerifyForm(false);
-    setMatricInput(''); setIdCardFile(null); setIdCardLabel('');
-    loadData();
+    const cleanMatric = matricInput.trim();
+    if (!cleanMatric) return;
+
+    if (cleanMatric.toUpperCase() !== (profileData?.matricNumber || '').toUpperCase()) {
+      showToast('Submitted matric number does not match your registered matric number.', 'error');
+      return;
+    }
+
+    try {
+      await verifyStudent(idCardFile, cleanMatric);
+      showToast('Verification request submitted! 🎓', 'success');
+      setShowVerifyForm(false);
+      setMatricInput(''); setIdCardFile(null); setIdCardLabel('');
+      loadData();
+    } catch (err) {
+      showToast(err.message || 'Verification failed. Please try again.', 'error');
+    }
   };
 
   const handlePayVerificationFee = async () => {
@@ -438,7 +485,7 @@ export default function ProDashboard() {
             <span style={{ fontSize: '0.70rem', fontWeight: '700', color: 'rgba(251,191,36,0.65)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Available Balance</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <span style={{ fontSize: '1.8rem', fontWeight: '900', color: '#fbbf24', letterSpacing: '-0.02em' }}>
-                {showBalance ? `₦${(profileData?.walletBalance || 0).toLocaleString()}` : '● ● ● ●'}
+                {showBalance ? `₦${walletBalance.toLocaleString()}` : '● ● ● ●'}
               </span>
               <button
                 onClick={() => setShowBalance(!showBalance)}
@@ -470,9 +517,9 @@ export default function ProDashboard() {
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <button
             onClick={() => setActiveTab('transactions')}
-            style={{ background: 'rgba(245,158,11,0.1)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.3)', padding: '10px 18px', borderRadius: '10px', fontSize: '0.82rem', fontWeight: '700', cursor: 'pointer', whiteSpace: 'nowrap' }}
+            style={{ background: 'rgba(245,158,11,0.1)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.3)', padding: '10px 18px', borderRadius: '10px', fontSize: '0.82rem', fontWeight: '700', cursor: 'pointer', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 6 }}
           >
-            💳 My Orders
+            <CreditCardIcon size={14} /> My Orders
           </button>
           <button
             onClick={() => navigate('/withdraw')}
@@ -525,12 +572,12 @@ export default function ProDashboard() {
       {/* ── Tabs ─────────────────────────────────────────────── */}
       <div className="pro-tabs">
         {[
-          { key: 'overview',      label: 'Overview',      icon: <HomeIcon size={15} />,          mobileIcon: '🏠' },
-          { key: 'listings',      label: 'My Products',   icon: <PackageIcon size={15} />,       mobileIcon: '📦' },
-          { key: 'transactions',  label: 'Transactions',  icon: <CheckCircleIcon size={15} />,   mobileIcon: '💳' },
-          { key: 'bag',           label: 'My Bag',        icon: <BookmarkIcon size={15} />,      mobileIcon: '🛍️' },
-          { key: 'analytics',     label: 'Analytics',     icon: <ChartIcon size={15} />,         mobileIcon: '📊' },
-          { key: 'settings',      label: 'Settings',      icon: null,                            mobileIcon: '⚙️' },
+          { key: 'overview',      label: 'Overview',      icon: <HomeIcon size={15} />,          mobileIcon: <HomeIcon size={16} /> },
+          { key: 'listings',      label: 'My Products',   icon: <PackageIcon size={15} />,       mobileIcon: <PackageIcon size={16} /> },
+          { key: 'transactions',  label: 'Transactions',  icon: <CheckCircleIcon size={15} />,   mobileIcon: <CreditCardIcon size={16} /> },
+          { key: 'bag',           label: 'My Bag',        icon: <BookmarkIcon size={15} />,      mobileIcon: <BagIcon size={16} /> },
+          { key: 'analytics',     label: 'Analytics',     icon: <ChartIcon size={15} />,         mobileIcon: <ChartIcon size={16} /> },
+          { key: 'settings',      label: 'Settings',      icon: <SettingsIcon size={15} />,      mobileIcon: <SettingsIcon size={16} /> },
         ].map(t => (
           <button
             key={t.key}
@@ -876,45 +923,44 @@ export default function ProDashboard() {
                   ) : (
                     <div style={{ width: 64, height: 64, borderRadius: 10, background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', flexShrink: 0 }}>🖼️</div>
                   )}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
-                    <div style={{ fontWeight: 800, color: '#10b981', fontSize: '0.95rem' }}>₦{p.price?.toLocaleString()}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>📍 {p.hostelLocation}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{p.name}</div>
+                    <div style={{ fontWeight: 800, color: '#fbbf24' }}>₦{p.price?.toLocaleString()}</div>
                   </div>
-                  <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                    <Link to={`/product/${p._id}`} style={{ background: 'rgba(59,130,246,0.15)', color: '#60a5fa', border: '1px solid rgba(59,130,246,0.3)', padding: '7px 12px', borderRadius: 8, fontSize: '0.78rem', fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>💳 View</Link>
-                    <button
-                      onClick={async () => {
-                        try {
-                          const res = await fetch(`${API_URL}/api/products/${p._id}/wishlist`, {
-                            method: 'POST', headers: { 'Authorization': `Bearer ${token}` }
-                          });
-                          if (res.ok) { showToast('Removed from Bag', 'info'); loadData(); }
-                        } catch { showToast('Error removing item', 'error'); }
-                      }}
-                      style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)', padding: '7px 10px', borderRadius: 8, fontSize: '0.82rem', cursor: 'pointer' }}
-                      title="Remove from Bag"
-                    >🗑️</button>
-                  </div>
+                  <button
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      try {
+                        const res = await fetch(`${API_URL}/api/products/${p._id}/wishlist`, {
+                          method: 'POST', headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (res.ok) { showToast('Removed from Bag', 'info'); loadData(); }
+                      } catch { showToast('Error removing item', 'error'); }
+                    }}
+                    style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)', padding: '7px 10px', borderRadius: 8, fontSize: '0.82rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                    title="Remove from Bag"
+                  ><TrashIcon size={14} /></button>
                 </div>
               ))}
             </div>
           ) : (
             <div className="pro-empty-state">
-              <div style={{ marginBottom: 12, fontSize: '3rem' }}>👜</div>
+              <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center' }}><BagIcon size={44} style={{ color: 'var(--text-gray)' }} /></div>
               <p>Your bag is empty. Browse the marketplace and save items you love.</p>
-              <Link to="/marketplace" style={{ display: 'inline-block', marginTop: 12, background: 'rgba(245,158,11,0.15)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.3)', padding: '10px 22px', borderRadius: 10, fontWeight: 700, textDecoration: 'none', fontSize: '0.85rem' }}>🛍️ Browse Marketplace</Link>
+              <Link to="/marketplace" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 12, background: 'rgba(245,158,11,0.15)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.3)', padding: '10px 22px', borderRadius: 10, fontWeight: 700, textDecoration: 'none', fontSize: '0.85rem' }}><BagIcon size={14} /> Browse Marketplace</Link>
             </div>
           )}
         </div>
       )}
 
       {/* ═══════════════════════════════════════════════════════ */}
-      {/* SETTINGS TAB                                            */}
+      {/* SETTINGS TAB                                           */}
       {/* ═══════════════════════════════════════════════════════ */}
       {activeTab === 'settings' && (
         <div className="pro-tab-content animate-fade-in">
-          <h2 className="pro-section-title" style={{ marginBottom: 20 }}>⚙️ Account Settings</h2>
+          <h2 className="pro-section-title" style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <SettingsIcon size={20} /> Account Settings
+          </h2>
 
           {/* Profile info */}
           <div style={{ background: 'rgba(245,158,11,0.04)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: 16, padding: '20px 24px', marginBottom: 20 }}>
@@ -945,8 +991,8 @@ export default function ProDashboard() {
               </div>
             </div>
             <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
-              <button onClick={handleSaveSettings} disabled={editSaving} style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#1a0f00', border: 'none', padding: '10px 24px', borderRadius: 10, fontSize: '0.88rem', fontWeight: 800, cursor: editSaving ? 'not-allowed' : 'pointer', opacity: editSaving ? 0.7 : 1 }}>
-                {editSaving ? 'Saving…' : '💾 Save Changes'}
+              <button onClick={handleSaveSettings} disabled={editSaving} style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#1a0f00', border: 'none', padding: '10px 24px', borderRadius: 10, fontSize: '0.88rem', fontWeight: 800, cursor: editSaving ? 'not-allowed' : 'pointer', opacity: editSaving ? 0.7 : 1, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                {editSaving ? 'Saving…' : <><CheckIcon size={14} /> Save Changes</>}
               </button>
             </div>
           </div>
@@ -954,14 +1000,16 @@ export default function ProDashboard() {
           {/* Student Verification */}
           {!user?.isVerifiedStudent ? (
             <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 16, padding: '20px 24px', marginBottom: 20 }}>
-              <p style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8, fontSize: '0.95rem' }}>🎓 Student Verification</p>
+              <p style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <GraduationIcon size={20} /> Student Verification
+              </p>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: 16 }}>Get verified to build trust with buyers and unlock premium features.</p>
               {showVerifyForm ? (
                 <form onSubmit={handleVerifySubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <input type="text" required placeholder="Your Student Matric Number" value={matricInput} onChange={e => setMatricInput(e.target.value)} className="glass-input" style={{ maxWidth: 300 }} />
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                    <label htmlFor="pro-id-upload" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '8px 14px', borderRadius: 8, fontSize: '0.82rem', cursor: 'pointer' }}>
-                      {idCardLabel || '📎 Upload Student ID / Matric Card'}
+                    <label htmlFor="pro-id-upload" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '8px 14px', borderRadius: 8, fontSize: '0.82rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <UploadIcon size={14} /> {idCardLabel || 'Upload Student ID / Matric Card'}
                     </label>
                     <input id="pro-id-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { setIdCardFile(e.target.files[0]); setIdCardLabel(e.target.files[0]?.name || ''); }} />
                     <button type="submit" style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)', color: '#1a0f00', border: 'none', padding: '8px 16px', borderRadius: 8, fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer' }}>Submit</button>
@@ -970,14 +1018,14 @@ export default function ProDashboard() {
                 </form>
               ) : (
                 <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                  <button onClick={() => setShowVerifyForm(true)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '8px 16px', borderRadius: 8, fontSize: '0.82rem', cursor: 'pointer' }}>📎 Submit Matric Form</button>
-                  <button onClick={handlePayVerificationFee} style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)', color: '#1a0f00', border: 'none', padding: '10px 22px', borderRadius: 10, fontSize: '0.85rem', fontWeight: 800, cursor: 'pointer' }}>🎓 Instant Verified (₦1,000)</button>
+                  <button onClick={() => setShowVerifyForm(true)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '8px 16px', borderRadius: 8, fontSize: '0.82rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}><UploadIcon size={14} /> Submit Matric Form</button>
+                  <button onClick={handlePayVerificationFee} style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)', color: '#1a0f00', border: 'none', padding: '10px 22px', borderRadius: 10, fontSize: '0.85rem', fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}><GraduationIcon size={14} /> Instant Verified (₦1,000)</button>
                 </div>
               )}
             </div>
           ) : (
             <div style={{ background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 16, padding: '16px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ fontSize: '1.5rem' }}>🎓</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', color: '#10b981' }}><GraduationIcon size={24} /></span>
               <div>
                 <div style={{ fontWeight: 700, color: '#10b981', fontSize: '0.9rem' }}>LCU Student Verified</div>
                 <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Your account is verified as an LCU student.</div>
@@ -987,14 +1035,14 @@ export default function ProDashboard() {
 
           {/* Danger Zone */}
           <div style={{ marginTop: 32, border: '1px solid rgba(239,68,68,0.2)', background: 'linear-gradient(135deg, rgba(239,68,68,0.03) 0%, rgba(0,0,0,0) 100%)', borderRadius: 16, padding: 24 }}>
-            <p style={{ color: '#ef4444', display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 12px 0', fontSize: '1.05rem', fontWeight: 'bold' }}>⚠️ Danger Zone</p>
+            <p style={{ color: '#ef4444', display: 'inline-flex', alignItems: 'center', gap: 8, margin: '0 0 12px 0', fontSize: '1.05rem', fontWeight: 'bold' }}><AlertIcon size={20} /> Danger Zone</p>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-gray)', marginBottom: 20, lineHeight: '1.5' }}>Once you delete your account, there is no going back. All of your products, orders, history, and profile data will be permanently removed.</p>
             <button
               onClick={handleDeleteAccount}
               disabled={deleteSaving}
-              style={{ background: 'linear-gradient(135deg, #dc2626, #b91c1c)', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: 12, fontSize: '0.88rem', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(220,38,38,0.25)', display: 'flex', alignItems: 'center', gap: 8 }}
+              style={{ background: 'linear-gradient(135deg, #dc2626, #b91c1c)', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: 12, fontSize: '0.88rem', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(220,38,38,0.25)', display: 'inline-flex', alignItems: 'center', gap: 6 }}
             >
-              {deleteSaving ? 'Deleting Account…' : '🗑️ Delete Account Permanently'}
+              {deleteSaving ? 'Deleting Account…' : <><TrashIcon size={14} /> Delete Account Permanently</>}
             </button>
           </div>
         </div>

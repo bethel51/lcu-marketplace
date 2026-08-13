@@ -555,6 +555,7 @@ router.post('/verify-custom-charge', protect, async (req, res) => {
       const product = await Product.findById(order.product);
       if (product) {
         product.status = 'Sold';
+        product.productStatus = 'Sold';
         await product.save();
       }
 

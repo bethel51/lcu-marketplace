@@ -94,7 +94,8 @@ export const AuthProvider = ({ children }) => {
     if (!activeToken) return null;
     try {
       const response = await fetch(`${API_URL}/api/auth/profile`, {
-        headers: { 'Authorization': `Bearer ${activeToken}` }
+        headers: { 'Authorization': `Bearer ${activeToken}` },
+        cache: 'no-store'   // Always get fresh data — wallet balance, isPro, etc.
       });
       const data = await response.json();
       if (response.ok) {
@@ -111,25 +112,33 @@ export const AuthProvider = ({ children }) => {
     return null;
   };
 
-  const verifyStudent = async (idCardFile) => {
+  const verifyStudent = async (idCardFile, matricNumber) => {
     if (!token) return;
     try {
       const formData = new FormData();
       if (idCardFile) {
         formData.append('idCard', idCardFile);
       }
+      if (matricNumber) {
+        formData.append('matricNumber', matricNumber);
+      }
       const response = await fetch(`${API_URL}/api/auth/verify-student`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData
       });
+      const data = await response.json();
       if (response.ok) {
         const updated = { ...user, isVerifiedStudent: true };
         setUser(updated);
         localStorage.setItem('lcu_user', JSON.stringify(updated));
+        return { success: true };
+      } else {
+        throw new Error(data.message || 'Verification failed');
       }
     } catch (err) {
       console.error(err);
+      throw err;
     }
   };
 

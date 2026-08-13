@@ -358,16 +358,18 @@ router.put('/:id', protect, handleUpload, async (req, res) => {
 
     // Process uploaded images
     const host = req.get('host');
-    let imageUrls = product.images || [];
-    if (req.files && req.files.length > 0) {
-      const maxPhotos = seller.isPro ? 5 : 2;
-      const filesToUse = req.files.slice(0, maxPhotos);
-      imageUrls = filesToUse.map(f => `${req.protocol}://${host}/uploads/${f.filename}`);
-    } else if (req.body.images) {
-      const imgs = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
-      const maxPhotos = seller.isPro ? 5 : 2;
-      imageUrls = imgs.slice(0, maxPhotos);
+    let existingImages = [];
+    if (req.body.images) {
+      existingImages = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
     }
+    
+    let newImages = [];
+    if (req.files && req.files.length > 0) {
+      newImages = req.files.map(f => `${req.protocol}://${host}/uploads/${f.filename}`);
+    }
+    
+    const maxPhotos = seller.isPro ? 5 : 2;
+    let imageUrls = [...existingImages, ...newImages].slice(0, maxPhotos);
     
     product.name        = name        || product.name;
     product.price       = price !== undefined ? Number(price) : product.price;
