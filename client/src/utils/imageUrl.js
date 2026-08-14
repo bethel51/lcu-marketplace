@@ -1,8 +1,8 @@
-import { API_URL } from '../config';
+import { API_URL, getBaseApiUrl } from '../config';
 
 /**
  * Resolves a product image URL so it always points to a working, reachable URL
- * across all devices (Desktop, Mobile, Android, PWA, etc.).
+ * across all environments and devices (Desktop, Mobile, Android, Production, Dev).
  */
 export function resolveImageUrl(url) {
   if (!url) return '';
@@ -32,12 +32,11 @@ export function resolveImageUrl(url) {
     return url;
   }
 
+  const baseUrl = getBaseApiUrl();
+
   // If the URL references server uploads (/uploads/...)
   if (url.includes('/uploads/')) {
     const uploadPath = url.substring(url.indexOf('/uploads/'));
-    const baseUrl = (API_URL && API_URL.length > 0)
-      ? API_URL
-      : (typeof window !== 'undefined' ? `http://${window.location.hostname}:5000` : '');
     return `${baseUrl}${uploadPath}`;
   }
 
@@ -47,7 +46,6 @@ export function resolveImageUrl(url) {
     if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
       if (url.includes('localhost:5000') || url.includes('127.0.0.1:5000')) {
         const uploadPath = url.substring(url.indexOf(':5000') + 5);
-        const baseUrl = (API_URL && API_URL.length > 0) ? API_URL : `http://${window.location.hostname}:5000`;
         return `${baseUrl}${uploadPath}`;
       }
     }
@@ -56,9 +54,6 @@ export function resolveImageUrl(url) {
 
   // Fallback for relative paths starting with '/'
   if (url.startsWith('/')) {
-    const baseUrl = (API_URL && API_URL.length > 0)
-      ? API_URL
-      : (typeof window !== 'undefined' ? window.location.origin : '');
     return `${baseUrl}${url}`;
   }
 
