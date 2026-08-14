@@ -351,7 +351,7 @@ export default function BuyerDashboard() {
                   <div key={o._id} className="buyer-dash-order-card">
                     <div className="buyer-dash-order-left">
                       {o.product?.image
-                        ? <img src={o.product.image} alt={o.product?.name} className="buyer-dash-order-img" />
+                        ? <img src={resolveImageUrl(o.product.image)} alt={o.product?.name} className="buyer-dash-order-img" />
                         : <div className="buyer-dash-order-img-placeholder">🛍️</div>
                       }
                       <div className="buyer-dash-order-info">
@@ -438,7 +438,7 @@ export default function BuyerDashboard() {
                   <div key={o._id} className="buyer-dash-order-card buyer-dash-order-card--full">
                     <div className="buyer-dash-order-left">
                       {o.product?.image
-                        ? <img src={o.product.image} alt={o.product?.name} className="buyer-dash-order-img" />
+                        ? <img src={resolveImageUrl(o.product.image)} alt={o.product?.name} className="buyer-dash-order-img" />
                         : <div className="buyer-dash-order-img-placeholder">🛍️</div>
                       }
                       <div className="buyer-dash-order-info">

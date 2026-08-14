@@ -5,6 +5,7 @@ import { useToast } from '../context/ToastContext';
 import { API_URL } from '../config';
 import { compressImage } from '../utils/imageCompressor';
 import { UploadIcon, SettingsIcon, EditIcon, StoreIcon, StarIcon, XIcon } from '../components/Icons';
+import { resolveImageUrl } from '../utils/imageUrl';
 
 // ── PRO: Shared form field definitions ────────────────────────────
 const CATEGORIES  = ['Hostel Items', 'Gadgets', 'Clothing & Fashion', 'Textbooks & Handouts', 'Services', 'Others'];
@@ -224,7 +225,7 @@ function ProductForm({ form, onChange, isPro, slotLabel = '' }) {
         <div className="pp-images-grid">
           {form.images.map((img, idx) => (
             <div key={idx} className="pp-image-thumb">
-              <img src={img.preview || img} alt={`Photo ${idx + 1}`} />
+              <img src={resolveImageUrl(img.preview || img)} alt={`Photo ${idx + 1}`} />
               <button
                 type="button"
                 className="pp-image-remove"

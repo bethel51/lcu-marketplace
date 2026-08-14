@@ -1097,7 +1097,7 @@ function ProProductRow({ product, onStatusChange, onDelete, onBoost, onFeature, 
       {/* Thumbnail */}
       <div className="pro-product-thumb">
         {imgSrc ? (
-          <img src={imgSrc} alt={product.name} className="pro-product-thumb-img" />
+          <img src={resolveImageUrl(imgSrc)} alt={product.name} className="pro-product-thumb-img" />
         ) : (
           <div className="pro-product-thumb-placeholder"><ImageIcon size={20} /></div>
         )}

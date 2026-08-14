@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { API_URL } from '../config';
+import { resolveImageUrl } from '../utils/imageUrl';
 
 // ── Inline SVG icons ───────────────────────────────────────────
 const BagIcon = ({ size = 24, color = 'currentColor' }) => (
@@ -209,7 +210,7 @@ export default function Bag() {
                 {/* Thumbnail */}
                 <div style={{ width: '80px', height: '80px', borderRadius: '12px', overflow: 'hidden', flexShrink: 0, background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
                   {item.image || (item.images && item.images[0]) ? (
-                    <img src={item.image || item.images[0]} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={resolveImageUrl(item.image || item.images[0])} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
                     <ImageIcon size={28} />
                   )}
