@@ -1822,9 +1822,8 @@ body.light-theme .skeleton-line {
   justify-content: center;
   position: relative;
   background: #0f172a;
-  transform: translateZ(0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
 }
 
 .premium-card-img {
@@ -1832,11 +1831,8 @@ body.light-theme .skeleton-line {
   height: 100%;
   object-fit: cover;
   object-position: center;
-  transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
-  transform: translateZ(0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  will-change: transform;
+  display: block;
+  transition: transform 0.4s ease;
 }
 
 .premium-card-img-overlay {

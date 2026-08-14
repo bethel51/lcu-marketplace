@@ -5,7 +5,27 @@ import { API_URL } from '../config';
  * across all devices (Desktop, Mobile, Android, PWA, etc.).
  */
 export function resolveImageUrl(url) {
-  if (!url || typeof url !== 'string') return '';
+  if (!url) return '';
+
+  // If url is an object (e.g. { preview: '...', url: '...' })
+  if (typeof url === 'object' && url !== null) {
+    url = url.preview || url.url || url.src || url.path || '';
+  }
+
+  // If url is a JSON array string e.g. '["/uploads/img.jpg"]'
+  if (typeof url === 'string' && url.trim().startsWith('[')) {
+    try {
+      const parsed = JSON.parse(url);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        url = parsed[0];
+      }
+    } catch {
+      // ignore parse error
+    }
+  }
+
+  if (typeof url !== 'string' || !url.trim()) return '';
+  url = url.trim();
 
   // Return blob or data URLs directly (used for local uploads/previews)
   if (url.startsWith('blob:') || url.startsWith('data:')) {
@@ -51,9 +71,11 @@ export function resolveImageUrl(url) {
  */
 export function getProductImage(product) {
   if (!product) return '';
-  const raw = (product.images && product.images.length > 0)
-    ? product.images[0]
-    : (product.image || '');
+  let raw = '';
+  if (Array.isArray(product.images) && product.images.length > 0) {
+    raw = product.images[0];
+  } else if (product.image) {
+    raw = product.image;
+  }
   return resolveImageUrl(raw);
 }
-

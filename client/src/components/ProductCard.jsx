@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { resolveImageUrl } from '../utils/imageUrl';
+import { resolveImageUrl, getProductImage } from '../utils/imageUrl';
 
 const ProductCard = React.memo(function ProductCard({ product }) {
   const { _id, name, price, originalPrice, image, images, category, hostelLocation, seller, status, productStatus, isBoosted, isFeatured, condition } = product;
@@ -36,7 +36,7 @@ const ProductCard = React.memo(function ProductCard({ product }) {
   const discountPct = showDiscount ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
   
   const pStatus = productStatus || status || 'Available';
-  const displayImage = images && images.length > 0 ? images[0] : image;
+  const displayImage = getProductImage(product);
 
   return (
     <div 
@@ -59,9 +59,11 @@ const ProductCard = React.memo(function ProductCard({ product }) {
         {displayImage ? (
           <>
             <img
-              src={resolveImageUrl(displayImage)}
+              src={displayImage}
               alt={name}
               className="premium-card-img"
+              loading="eager"
+              decoding="async"
             />
             <div className="premium-card-img-overlay" />
             {images && images.length > 1 && (
