@@ -293,7 +293,7 @@ router.post('/', protect, writeLimiter, handleUpload, async (req, res) => {
       // Enforce image limit: 5 for PRO, 2 for standard
       const maxPhotos = seller.isPro ? 5 : 2;
       const filesToUse = req.files.slice(0, maxPhotos);
-      imageUrls = filesToUse.map(f => `${req.protocol}://${host}/uploads/${f.filename}`);
+      imageUrls = filesToUse.map(f => `/uploads/${f.filename}`);
     } else if (req.body.images) {
       // Base64/URL fallback
       const imgs = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
@@ -365,7 +365,7 @@ router.put('/:id', protect, handleUpload, async (req, res) => {
     
     let newImages = [];
     if (req.files && req.files.length > 0) {
-      newImages = req.files.map(f => `${req.protocol}://${host}/uploads/${f.filename}`);
+      newImages = req.files.map(f => `/uploads/${f.filename}`);
     }
     
     const maxPhotos = seller.isPro ? 5 : 2;

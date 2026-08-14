@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 import { API_URL } from '../config';
 import { VerifiedBadge } from '../components/ProductCard';
+import { resolveImageUrl } from '../utils/imageUrl';
 
 const HOSTELS = [
   'Bronze Hostel','Silver Hostel','Gold Hostel','Platinum Hostel',
@@ -397,7 +398,7 @@ export default function BuyerDashboard() {
                   {wishlistItems.slice(0, 4).map(p => (
                     <Link key={p._id} to={`/product/${p._id}`} className="buyer-wish-card">
                       {p.image
-                        ? <img src={p.image} alt={p.name} className="buyer-wish-img" />
+                        ? <img src={resolveImageUrl(p.image)} alt={p.name} className="buyer-wish-img" />
                         : <div className="buyer-wish-img-placeholder">🖼️</div>
                       }
                       <div className="buyer-wish-info">
@@ -507,7 +508,7 @@ export default function BuyerDashboard() {
                   <div key={p._id} className="buyer-full-wish-card">
                     <Link to={`/product/${p._id}`} className="buyer-full-wish-img-wrap">
                       {p.image
-                        ? <img src={p.image} alt={p.name} className="buyer-full-wish-img" />
+                        ? <img src={resolveImageUrl(p.image)} alt={p.name} className="buyer-full-wish-img" />
                         : <div className="buyer-full-wish-placeholder">🖼️</div>
                       }
                       <div className="buyer-full-wish-overlay"><span>View →</span></div>

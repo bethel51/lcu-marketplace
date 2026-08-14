@@ -28,6 +28,7 @@ import {
   UploadIcon,
   AlertIcon
 } from '../components/Icons';
+import { resolveImageUrl } from '../utils/imageUrl';
 
 // ── Discount calculator helper ─────────────────────────────────
 export function calcDiscount(price, originalPrice) {
@@ -243,25 +244,48 @@ export default function ProDashboard() {
 
   // ── Listing actions ─────────────────────────────────────────
   const handleStatusChange = async (id, newStatus) => {
+    // Optimistically update list immediately
+    setMyProducts(prev => prev.map(p => p._id === id ? { ...p, productStatus: newStatus, status: newStatus === 'Sold' ? 'Sold' : 'Available' } : p));
     try {
       const res = await fetch(`${API_URL}/api/products/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ productStatus: newStatus })
       });
-      if (res.ok) { showToast(`Status updated to ${newStatus}!`, 'success'); loadData(); }
-    } catch { showToast('Failed to update status', 'error'); }
+      if (res.ok) {
+        showToast(`Status updated to ${newStatus}!`, 'success');
+      } else {
+        // Revert on failure
+        setMyProducts(prev => prev.map(p => p._id === id ? { ...p, productStatus: p.productStatus, status: p.status } : p));
+        showToast('Failed to update status', 'error');
+        loadData();
+      }
+    } catch {
+      showToast('Failed to update status', 'error');
+      loadData();
+    }
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this listing permanently?')) return;
+    // Optimistically remove from list immediately
+    const removed = myProducts.find(p => p._id === id);
+    setMyProducts(prev => prev.filter(p => p._id !== id));
     try {
       const res = await fetch(`${API_URL}/api/products/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (res.ok) { showToast('Listing deleted!', 'success'); loadData(); }
-    } catch { showToast('Failed to delete', 'error'); }
+      if (res.ok) {
+        showToast('Listing deleted!', 'success');
+      } else {
+        if (removed) setMyProducts(prev => [...prev, removed]);
+        showToast('Failed to delete', 'error');
+      }
+    } catch {
+      if (removed) setMyProducts(prev => [...prev, removed]);
+      showToast('Failed to delete', 'error');
+    }
   };
 
   const handleBoost = async (id, name) => {
@@ -341,7 +365,17 @@ export default function ProDashboard() {
         body: JSON.stringify({ hostel: editHostel, faculty: editFaculty, department: editDept, phoneNumber: editPhone })
       });
       const data = await res.json();
-      if (res.ok) { showToast('Profile updated! 🎓', 'success'); loadData(); }
+      if (res.ok) {
+        showToast('Profile updated! 🎓', 'success');
+        // Optimistically update local profile state without triggering a full reload
+        setProfileData(prev => prev ? {
+          ...prev,
+          hostel: editHostel,
+          faculty: editFaculty,
+          department: editDept,
+          phoneNumber: editPhone,
+        } : prev);
+      }
       else showToast(data.message || 'Update failed', 'error');
     } catch { showToast('Error updating profile', 'error'); }
     finally { setEditSaving(false); }
@@ -919,7 +953,7 @@ export default function ProDashboard() {
               {profileData.wishlist.map(p => (
                 <div key={p._id} style={{ display: 'flex', gap: 14, padding: '14px 16px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 14, alignItems: 'center' }}>
                   {(p.images?.[0] || p.image) ? (
-                    <img src={p.images?.[0] || p.image} alt={p.name} style={{ width: 64, height: 64, borderRadius: 10, objectFit: 'cover', border: '1px solid var(--border-color)', flexShrink: 0 }} />
+                    <img src={resolveImageUrl(p.images?.[0] || p.image)} alt={p.name} style={{ width: 64, height: 64, borderRadius: 10, objectFit: 'cover', border: '1px solid var(--border-color)', flexShrink: 0 }} />
                   ) : (
                     <div style={{ width: 64, height: 64, borderRadius: 10, background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', flexShrink: 0 }}>🖼️</div>
                   )}

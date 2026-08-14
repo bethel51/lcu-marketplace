@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { API_URL } from '../config';
 import { ProBadge } from './ProDashboard';
 import { VerifiedBadge } from '../components/ProductCard';
+import { resolveImageUrl } from '../utils/imageUrl';
 
 // ── Status dot helper ──────────────────────────────────────────
 function statusDot(s) {
@@ -150,7 +151,7 @@ export default function ProStorefront() {
                   {/* Image */}
                   <div className="premium-card-img-container" style={{ position: 'relative' }}>
                     {imgSrc ? (
-                      <img src={imgSrc} alt={p.name} className="premium-card-img" loading="lazy" />
+                      <img src={resolveImageUrl(imgSrc)} alt={p.name} className="premium-card-img" loading="lazy" />
                     ) : (
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-gray)' }}>
                         📷

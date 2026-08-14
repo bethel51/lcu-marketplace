@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 import { API_URL } from '../config';
 import { VerifiedBadge } from '../components/ProductCard';
+import { resolveImageUrl } from '../utils/imageUrl';
 
 const HOSTELS = [
   'Bronze Hostel','Silver Hostel','Gold Hostel','Platinum Hostel',
@@ -212,7 +213,24 @@ export default function Dashboard() {
       const data = await res.json();
       if (res.ok) {
         showToast('Profile updated successfully! 🎓', 'success');
-        loadDashboard();
+        // Optimistically update local profile state — no full reload needed
+        setProfileData(prev => prev ? {
+          ...prev,
+          hostel: editHostel,
+          faculty: editFaculty,
+          department: editDept,
+          phoneNumber: editPhone,
+        } : prev);
+        // Refresh products list in background without blocking the UI
+        const activeUserId = profileData?._id || user?._id;
+        if (activeUserId) {
+          fetch(`${API_URL}/api/products?seller=${activeUserId}`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+            cache: 'no-store'
+          }).then(r => r.ok ? r.json() : null)
+            .then(d => { if (d) setMyProducts(Array.isArray(d) ? d : (d.products || [])); })
+            .catch(() => {});
+        }
       } else {
         showToast(data.message || 'Update failed', 'error');
       }
@@ -248,23 +266,44 @@ export default function Dashboard() {
   // ── Listing actions ───────────────────────────────────────────
   const handleToggleSold = async (id, status) => {
     const next = status === 'Available' ? 'Sold' : 'Available';
+    // Optimistically update the list immediately
+    setMyProducts(prev => prev.map(p => p._id === id ? { ...p, status: next } : p));
     try {
       const res = await fetch(`${API_URL}/api/products/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ status: next })
       });
-      if (res.ok) { showToast(`Marked as ${next}! 🤝`, 'success'); loadDashboard(); }
-    } catch { showToast('Failed to update status', 'error'); }
+      if (res.ok) {
+        showToast(`Marked as ${next}! 🤝`, 'success');
+      } else {
+        // Revert on failure
+        setMyProducts(prev => prev.map(p => p._id === id ? { ...p, status } : p));
+        showToast('Failed to update status', 'error');
+      }
+    } catch {
+      // Revert on error
+      setMyProducts(prev => prev.map(p => p._id === id ? { ...p, status } : p));
+      showToast('Failed to update status', 'error');
+    }
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this listing permanently?')) return;
+    // Optimistically remove from list immediately
+    const removed = myProducts.find(p => p._id === id);
+    setMyProducts(prev => prev.filter(p => p._id !== id));
     try {
       const res = await fetch(`${API_URL}/api/products/${id}`, {
         method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (res.ok) { showToast('Listing deleted!', 'success'); loadDashboard(); }
+      if (res.ok) {
+        showToast('Listing deleted!', 'success');
+      } else {
+        // Revert on failure
+        if (removed) setMyProducts(prev => [...prev, removed]);
+        showToast('Failed to delete', 'error');
+      }
     } catch { showToast('Failed to delete', 'error'); }
   };
 
@@ -754,7 +793,7 @@ export default function Dashboard() {
                     {myProducts.slice(0, 3).map(p => (
                       <div key={p._id} className="dash-listing-card">
                         {p.image
-                          ? <img src={p.image} alt={p.name} className="dash-listing-img" />
+                          ? <img src={resolveImageUrl(p.image)} alt={p.name} className="dash-listing-img" />
                           : <div className="dash-listing-placeholder">🖼️</div>
                         }
                         <div className="dash-listing-info">
@@ -866,7 +905,7 @@ export default function Dashboard() {
                         >
                           {p.image ? (
                             <img 
-                              src={p.image} 
+                              src={resolveImageUrl(p.image)} 
                               alt={p.name} 
                               style={{ width: '80px', height: '80px', borderRadius: '12px', objectFit: 'cover', border: '1px solid var(--border-color)' }} 
                             />
@@ -1102,7 +1141,7 @@ export default function Dashboard() {
                   {profileData.wishlist.map(p => (
                     <div key={p._id} className="dash-listing-card">
                       {p.image
-                        ? <img src={p.image} alt={p.name} className="dash-listing-img" />
+                        ? <img src={resolveImageUrl(p.image)} alt={p.name} className="dash-listing-img" />
                         : <div className="dash-listing-placeholder">🖼️</div>
                       }
                       <div className="dash-listing-info">

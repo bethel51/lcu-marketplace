@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 import { API_URL } from '../config';
+import { resolveImageUrl } from '../utils/imageUrl';
 
 export default function Profile() {
   const { user, token, fetchProfile, verifyStudent } = useAuth();
@@ -236,7 +237,7 @@ export default function Profile() {
                     <div key={p._id} style={styles.listingRow} className="glass-panel">
                       <div style={styles.rowImgContainer}>
                         {p.image ? (
-                          <img src={p.image} alt={p.name} style={styles.rowImg} />
+                          <img src={resolveImageUrl(p.image)} alt={p.name} style={styles.rowImg} />
                         ) : (
                           <div style={styles.rowPlaceholderImg}>No Image</div>
                         )}
@@ -293,7 +294,7 @@ export default function Profile() {
                     <div key={p._id} style={styles.listingRow} className="glass-panel">
                       <div style={styles.rowImgContainer}>
                         {p.image ? (
-                          <img src={p.image} alt={p.name} style={styles.rowImg} />
+                          <img src={resolveImageUrl(p.image)} alt={p.name} style={styles.rowImg} />
                         ) : (
                           <div style={styles.rowPlaceholderImg}>No Image</div>
                         )}

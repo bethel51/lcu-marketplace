@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { API_URL } from '../config';
 import { VerifiedBadge } from '../components/ProductCard';
+import { resolveImageUrl } from '../utils/imageUrl';
 
 export default function AdminDashboard() {
   const { user, token } = useAuth();
@@ -277,7 +278,7 @@ export default function AdminDashboard() {
               <div className="dash-listing-grid">
                 {filteredReports.map(p => (
                   <div key={p._id} className="dash-listing-card" style={{ borderLeft: '3px solid var(--error)' }}>
-                    {p.image ? <img src={p.image} alt={p.name} className="dash-listing-img" /> : <div className="dash-listing-placeholder">🖼️</div>}
+                    {p.image ? <img src={resolveImageUrl(p.image)} alt={p.name} className="dash-listing-img" /> : <div className="dash-listing-placeholder">🖼️</div>}
                     <div className="dash-listing-info">
                       <h4 className="dash-listing-name">{p.name}</h4>
                       <span className="dash-listing-price">₦{p.price?.toLocaleString()}</span>

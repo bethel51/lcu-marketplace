@@ -5,6 +5,7 @@ import { useToast } from '../context/ToastContext';
 import { useCart } from '../context/CartContext';
 import { API_URL } from '../config';
 import { VerifiedBadge } from '../components/ProductCard';
+import { resolveImageUrl } from '../utils/imageUrl';
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -389,7 +390,7 @@ export default function ProductDetails() {
                       }}
                     >
                       <img 
-                        src={img} 
+                        src={resolveImageUrl(img)} 
                         alt={`${product.name} - view ${idx + 1}`} 
                         style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
                       />
@@ -432,7 +433,7 @@ export default function ProductDetails() {
                         transition: 'border-color 0.2s'
                       }}
                     >
-                      <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <img src={resolveImageUrl(img)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </button>
                   ))}
                 </div>

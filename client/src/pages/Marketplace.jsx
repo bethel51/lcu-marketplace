@@ -346,17 +346,23 @@ export default function Marketplace() {
             ))}
           </div>
         ) : (
-          <div className="mkt-empty glass-panel">
-            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="var(--text-gray)" strokeWidth="1.5">
-              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
+          <div className="mkt-empty glass-panel" style={{ padding: '60px 20px', borderRadius: '24px' }}>
+            <div style={{ 
+              width: '80px', height: '80px', borderRadius: '50%', 
+              background: 'rgba(59, 130, 246, 0.1)', display: 'flex', 
+              alignItems: 'center', justifyContent: 'center', marginBottom: '16px' 
+            }}>
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="1.5">
+                <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </div>
             <h3 className="mkt-empty-title">No Listings Found</h3>
             <p className="mkt-empty-sub">
               No products match your current filters. Try adjusting or clearing your search.
             </p>
             {hasActiveFilters && (
-              <button className="btn-primary" style={{ marginTop: '16px' }} onClick={clearFilters}>
-                Clear Filters
+              <button className="btn-primary premium-card-btn" style={{ marginTop: '20px' }} onClick={clearFilters}>
+                Clear All Filters
               </button>
             )}
           </div>

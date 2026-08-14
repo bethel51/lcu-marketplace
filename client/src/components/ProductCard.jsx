@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { resolveImageUrl } from '../utils/imageUrl';
 
 const ProductCard = React.memo(function ProductCard({ product }) {
   const { _id, name, price, originalPrice, image, images, category, hostelLocation, seller, status, productStatus, isBoosted, isFeatured, condition } = product;
@@ -58,11 +59,9 @@ const ProductCard = React.memo(function ProductCard({ product }) {
         {displayImage ? (
           <>
             <img
-              src={displayImage}
+              src={resolveImageUrl(displayImage)}
               alt={name}
               className="premium-card-img"
-              decoding="async"
-              loading="lazy"
             />
             <div className="premium-card-img-overlay" />
             {images && images.length > 1 && (
@@ -117,8 +116,8 @@ const ProductCard = React.memo(function ProductCard({ product }) {
           <div className="premium-card-footer" style={{ display: 'flex', gap: '8px', width: '100%' }}>
             <button 
               onClick={() => navigate(`/product/${_id}`)} 
-              className="btn-secondary" 
-              style={{ flex: 1, padding: '10px', fontSize: '0.8rem', fontWeight: '600' }}
+              className="btn-secondary premium-card-btn" 
+              style={{ flex: 1 }}
             >
               Details
             </button>
@@ -132,12 +131,9 @@ const ProductCard = React.memo(function ProductCard({ product }) {
                     addToCart(product);
                   }
                 }} 
-                className={inCart ? "btn-secondary" : "btn-primary"}
+                className={`premium-card-btn ${inCart ? "btn-secondary" : "btn-primary"}`}
                 style={{ 
                   flex: 1, 
-                  padding: '10px', 
-                  fontSize: '0.8rem', 
-                  fontWeight: '700',
                   background: inCart ? 'rgba(239, 68, 68, 0.15)' : 'var(--gold)',
                   color: inCart ? 'var(--error)' : '#fff',
                   border: inCart ? '1px solid rgba(239, 68, 68, 0.3)' : 'none'
@@ -202,29 +198,30 @@ export function VerifiedBadge({ size = 'sm' }) {
 
 const styles = {
   badgeContainer: {
-    position: 'absolute', top: '10px', left: '10px', zIndex: 2,
-    display: 'flex', gap: '6px', flexWrap: 'wrap',
+    position: 'absolute', top: '12px', left: '12px', zIndex: 2,
+    display: 'flex', gap: '8px', flexWrap: 'wrap',
   },
   categoryBadge: {
-    background:   'rgba(9, 15, 29, 0.78)',
-    backdropFilter: 'blur(8px)',
-    color:        '#93c5fd',
-    border:       '1px solid rgba(147, 197, 253, 0.3)',
-    fontSize:     '0.7rem',
+    background:   'rgba(15, 23, 42, 0.85)',
+    backdropFilter: 'blur(10px)',
+    color:        '#e2e8f0',
+    border:       '1px solid rgba(255, 255, 255, 0.1)',
+    fontSize:     '0.72rem',
     fontWeight:   '600',
-    padding:      '4px 9px',
+    padding:      '4px 10px',
     borderRadius: '999px',
+    boxShadow:    '0 2px 10px rgba(0,0,0,0.1)',
   },
   hostelBadge: {
-    background:   'linear-gradient(135deg, rgba(16, 185, 129, 0.9) 0%, rgba(5, 150, 105, 0.9) 100%)',
-    backdropFilter: 'blur(8px)',
+    background:   'rgba(16, 185, 129, 0.9)',
+    backdropFilter: 'blur(10px)',
     color:        '#fff',
-    border:       '1px solid rgba(16, 185, 129, 0.3)',
-    fontSize:     '0.7rem',
-    fontWeight:   '700',
-    padding:      '4px 9px',
+    border:       '1px solid rgba(16, 185, 129, 0.4)',
+    fontSize:     '0.72rem',
+    fontWeight:   '600',
+    padding:      '4px 10px',
     borderRadius: '999px',
-    boxShadow:    '0 2px 8px rgba(16, 185, 129, 0.25)',
+    boxShadow:    '0 2px 10px rgba(16, 185, 129, 0.2)',
   },
   soldBadge: {
     background:   'rgba(239, 68, 68, 0.9)',

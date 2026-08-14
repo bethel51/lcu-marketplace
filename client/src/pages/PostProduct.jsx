@@ -407,25 +407,27 @@ export default function PostProduct() {
     }
 
     setLoading(true);
+    // Navigate destination
+    const destination = isPro ? '/pro-dashboard' : '/profile';
     try {
       // Run all submissions in parallel — eliminates sequential lag for dual listings
       await Promise.all(
         slotsToSubmit.map(slot => submitProduct(forms[slot], slot === 0 ? id : null))
       );
-      showToast(
-        isEdit
-          ? 'Listing updated successfully! 🎉'
-          : dualMode
-            ? '2 Products listed successfully! 🎉'
-            : 'Product listed successfully! 🎉',
-        'success'
-      );
-      navigate(isPro ? '/pro-dashboard' : '/profile');
+      const successMsg = isEdit
+        ? 'Listing updated successfully! 🎉'
+        : dualMode
+          ? '2 Products listed successfully! 🎉'
+          : 'Product listed successfully! 🎉';
+      // Show toast + navigate instantly — don’t wait for any extra round-trips
+      showToast(successMsg, 'success');
+      navigate(destination);
     } catch (err) {
       showToast(err.message || 'Connection error. Please try again.', 'error');
-    } finally {
       setLoading(false);
     }
+    // Note: setLoading(false) is intentionally omitted on success because
+    // navigate() unmounts this component immediately.
   };
 
   if (fetchingData) {
